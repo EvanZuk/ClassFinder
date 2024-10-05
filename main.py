@@ -33,12 +33,16 @@ limiter.header_mapping = {
 bcrypt = Bcrypt(app)
 scheduler = APScheduler()
 jsondir = os.environ.get('CLASSFINDER_DATA_DIR', '')
+resetpasswordemailids = {}
 if not 'pytest' in sys.modules:
     csrf = CSRFProtect(app)
     try:
         with open(f'{jsondir}users.json', 'r') as f: users = json.load(f)
     except FileNotFoundError:
         users = {'trwy': {'password': bcrypt.generate_password_hash('passwordtrwy'.encode('utf-8')).decode('utf-8'), 'courses': ["p1"], "createdby": "server"}}
+        resetkey = random.randbytes(16).hex()
+        resetpasswordemailids[resetkey] = 'trwy'
+        print(f"After starting the server, go to /reset-password/{resetkey} to reset the password for the trwy account")
         with open(f'{jsondir}users.json', 'w') as f: json.dump(users, f)
     try:
         with open(f'{jsondir}courses.json', 'r') as f: courses = json.load(f)
@@ -55,7 +59,7 @@ else:
         @staticmethod
         def exempt(func):
             return func
-    users = {'pytest': {'password': bcrypt.generate_password_hash('passwordpytestAFu328DF28f'.encode('utf-8')).decode('utf-8'), 'courses': ["p1"], "createdby": "server"}}
+    users = {'pytest': {'password': bcrypt.generate_password_hash(('passwordpytest' + app.secret_key.decode()).encode('utf-8')).decode('utf-8'), 'courses': ["p1"], "createdby": "server"}}
     courses = {"p1": {"name": "Test Course", "room": "Test Room", "period": 1, "hidden": True, "lunch": "B", "canvasid": 1234}}
     requests = {'feature': {}, 'bug': {}, 'other': {}}
 backup_locks = {'courses': Lock(),'users': Lock(), 'requests': Lock()}
@@ -66,7 +70,6 @@ linkcodes = {}
 courseday = 0
 usermessages = {}
 emailids = {}
-resetpasswordemailids = {}
 adminmessages = [f"Server started at {datetime.datetime.now().strftime('%m %d, %Y %H:%M:%S')}"]
 
 def backup(selection: typing.Literal['courses', 'users', 'requests' 'all'] = 'all', bypass: bool = False):
@@ -154,15 +157,28 @@ def authenticate(request):
                     return username
     return None
 
-def createuser(username, password, createdby='server'):
+def createuser(username, password, createdby='server', email=None, backup=True):
     """Create a user
     username: The username of the user
     password: The password of the user
     createdby: The user who created the user"""
-    hashed_password = bcrypt.generate_password_hash((password+username+'AFu328DF28f').encode('utf-8')).decode('utf-8')
-    users[username] = {'password': hashed_password, 'courses': ["p1"], "createdby": createdby}
-    backup('users')
-    return hashed_password
+    users[username] = {'password': '', 'courses': ["p1"], "createdby": createdby, 'email': email}
+    return changepassword(username, password, backup=backup)
+
+def checkpassword(username, password):
+    """Check if a password is correct
+    username: The username of the user
+    password: The password to check"""
+    return bcrypt.check_password_hash(users[username]['password'], (password+username+app.secret_key.decode()).encode('utf-8'))
+
+def changepassword(username, password, backup=True):
+    """Change a user's password
+    username: The username of the user
+    password: The new password"""
+    users[username]['password'] = bcrypt.generate_password_hash((password+username+app.secret_key.decode()).encode('utf-8')).decode('utf-8')
+    if backup:
+        backup('users')
+    return users[username]['password']
 
 def split_list(lst, chunk_size):
     """
@@ -371,9 +387,7 @@ def signupwithID(emailid):
         password = request.json['password']
         if username in users:
             return jsonify({'status': 'failure', 'message': 'Username already exists'}), 400
-        hashed_password = bcrypt.generate_password_hash((password+username+'AFu328DF28f').encode('utf-8')).decode('utf-8')
-        users[username] = {'password': hashed_password, 'courses': ["p1"], "createdby": username, 'email': emailids[emailid]}
-        token = hashed_password
+        token = createuser(username, password, email=emailids[emailid], createdby='emailsignup')
         response = jsonify({'status': 'success', 'message': 'Account created'})
         response.set_cookie('token', token, httponly=True, max_age=604800)
         response.set_cookie('username', username, httponly=True, max_age=604800)
@@ -520,7 +534,7 @@ def login():
     if username not in users:
         return jsonify({'status': 'failure', 'message': 'Username does not exist'}), 400
     password = request.json['password']
-    if not bcrypt.check_password_hash(users[username]['password'], (password+username+'AFu328DF28f').encode('utf-8')):
+    if not checkpassword(username, password):
         return jsonify({'status': 'failure', 'message': 'Incorrect password'}), 400
     token = users[username]['password']  # Generate a token for the user
     response = jsonify({'status': 'success', 'message': 'Logged in'})
@@ -574,7 +588,7 @@ def apilogin():
     if username not in users:
         return jsonify({'status': 'failure', 'message': 'Username does not exist'}), 400
     password = request.json['password']
-    if not bcrypt.check_password_hash(users[username]['password'], (password+username+'AFu328DF28f').encode('utf-8')):
+    if not checkpassword(username, password):
         return jsonify({'status': 'failure', 'message': 'Incorrect password'}), 400
     token = users[username]['password']
     return jsonify({'status': 'success', 'message': 'Logged in', 'token': token})
@@ -623,8 +637,7 @@ def apicurrentperiod(username):
 @csrf.exempt
 def apichange_password(username):
     password = request.json['password']
-    users[username]['password'] = bcrypt.generate_password_hash((password+username+'AFu328DF28f').encode('utf-8')).decode('utf-8')
-    backup('users')
+    changepassword(username, password)
     return jsonify({'status': 'success', 'message': 'Password changed', 'token': users[username]['password']})
 
 @app.route('/api/v1/deleteaccount/', methods=['DELETE'])
@@ -646,8 +659,7 @@ def change_password(username):
     if request.method == 'GET':
         return render_template('change-password.html', username=username)
     password = request.json['password']
-    users[username]['password'] = bcrypt.generate_password_hash((password+username+'AFu328DF28f').encode('utf-8')).decode('utf-8')
-    backup('users')
+    changepassword(username, password)
     response = jsonify({'status': 'success', 'message': 'Password changed'})
     response.set_cookie('token', users[username]['password'], httponly=True, max_age=604800)
     return response
@@ -695,7 +707,7 @@ def resetpasswordwithID(emailid):
     if emailid in resetpasswordemailids:
         username = resetpasswordemailids[emailid]
         password = request.json['password']
-        users[username]['password'] = bcrypt.generate_password_hash((password+username+'AFu328DF28f').encode('utf-8')).decode('utf-8')
+        changepassword(username, password)
         response = jsonify({'status': 'success', 'message': 'Password changed'})
         response.set_cookie('token', users[username]['password'], httponly=True, max_age=604800)
         response.set_cookie('username', username, httponly=True, max_age=604800)
@@ -906,10 +918,7 @@ def admincreateaccount(username):
     password = request.json['password']
     if username in users:
         return jsonify({'status': 'failure', 'message': 'Username already exists'}), 400
-    hashed_password = bcrypt.generate_password_hash((password+username+'AFu328DF28f').encode('utf-8')).decode('utf-8')
-    users[username] = {'password': hashed_password, 'courses': ["p1"], "createdby": requsername, 'email': None}
-    backup('users')
-    token = hashed_password
+    token = createuser(username, password, createdby=requsername)
     login = request.json['login']
     response = jsonify({'status': 'success', 'message': 'Account created', 'token': token})
     response.set_cookie('token', token, httponly=True, max_age=604800) if login else None
