@@ -1,15 +1,16 @@
-from flask import Flask, request, jsonify, render_template, redirect, send_from_directory
-from flask_apscheduler import APScheduler
-from flask_limiter import Limiter, HEADERS
-import typing, platform, shutil, requests
-from werkzeug.middleware.proxy_fix import ProxyFix
-import json, functools, datetime, re, os, waitress, logging, random, smtplib, sys
-from flask_wtf.csrf import CSRFProtect
-from flask_bcrypt import Bcrypt
+# pylint: disable=missing-function-docstring, missing-module-docstring, missing-class-docstring, line-too-long
 from threading import Lock
-from markupsafe import escape
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
+import typing, platform, shutil, json, functools, datetime, re, os, random, sys, logging, smtplib, requests
+from flask import Flask, request, jsonify, render_template, redirect
+from flask_apscheduler import APScheduler
+from flask_limiter import Limiter, HEADERS
+from werkzeug.middleware.proxy_fix import ProxyFix
+from flask_wtf.csrf import CSRFProtect
+from flask_bcrypt import Bcrypt
+from markupsafe import escape
+import waitress
 app = Flask(__name__, template_folder='templates', static_folder='static')
 app.logger.info('Starting ClassFinder...')
 devmode = not platform.uname()[1] == 'classfinder'
@@ -69,6 +70,9 @@ resetpasswordemailids = {}
 adminmessages = [f"Server started at {datetime.datetime.now().strftime('%m %d, %Y %H:%M:%S')}"]
 
 def backup(selection: typing.Literal['courses', 'users', 'requests' 'all'] = 'all', bypass: bool = False):
+    """Backup the data to the json files
+    selection: The data to backup, either 'courses', 'users', 'requests', or 'all'
+    bypass: Whether to bypass the backup lock"""
     if 'pytest' in sys.modules:
         app.logger.debug('Backup bypassed')
         print('Backup bypassed by pytest')
@@ -102,7 +106,13 @@ def backup(selection: typing.Literal['courses', 'users', 'requests' 'all'] = 'al
     else:
         return False
     return True
+
 def verify_user(f=None, *, required: bool = True, onfail=redirect('/login/'), allowedusers: typing.List[str] = None):
+    """Verify the user is logged in
+    required: Whether the user must be logged in
+    onfail: The response to return if the user is not logged in
+    allowedusers: A list of users allowed to access the function"""
+
     def decorator(func):
         @functools.wraps(func)
         def decorated_function(*args, **kwargs):
@@ -123,9 +133,12 @@ def verify_user(f=None, *, required: bool = True, onfail=redirect('/login/'), al
         return decorator(f)
 
 def is_admin(username):
+    """Check if the user is an admin"""
     return username in admins
 
 def authenticate(request):
+    """Authenticate the user
+    Return the username if successful, otherwise return None"""
     # Authenticate the user, return the username if successful, otherwise return None
     if 'token' in request.cookies and 'username' in request.cookies:
         if request.cookies.get('username') in users:
@@ -139,18 +152,30 @@ def authenticate(request):
             if username in users:
                 if users[username]['password'] == token:
                     return username
-                
     return None
 
 def createuser(username, password, createdby='server'):
+    """Create a user
+    username: The username of the user
+    password: The password of the user
+    createdby: The user who created the user"""
     hashed_password = bcrypt.generate_password_hash((password+username+'AFu328DF28f').encode('utf-8')).decode('utf-8')
     users[username] = {'password': hashed_password, 'courses': ["p1"], "createdby": createdby}
     backup('users')
     return hashed_password
 
 def split_list(lst, chunk_size):
+    """
+    Split a list into chunks of a specified size
+    lst: The list to split
+    chunk_size: The size of the chunks
+    """
     return [lst[i:i + chunk_size] for i in range(0, len(lst), chunk_size)]
+
 def message(message: str, username: str = 'admin'):
+    """Send a message to a user
+    message: The message to send
+    username: The user to send the message to"""
     if username == 'admin':
         adminmessages.append(message) if not message in adminmessages else None
     elif username in usermessages:
@@ -173,10 +198,10 @@ def home(username):
     app.logger.debug(allperiods)
     current_period, next_class = get_user_next_class(username)
     app.logger.debug
-    return render_template('index.html', username=username, classes=classes, dayoff=coursetimes == None, currentperiod=current_period[2], devmode=devmode, nextclass=next_class.strftime('%m %d, %Y %H:%M:%S'), p='p', canvas_url=canvas_url)
+    return render_template('index.html', username=username, classes=classes, dayoff=coursetimes is None, currentperiod=current_period[2], devmode=devmode, nextclass=next_class.strftime('%m %d, %Y %H:%M:%S'), p='p', canvas_url=canvas_url)
 
 def get_next_class():
-    if not coursetimes == None:
+    if not coursetimes is None:
         current_period = get_current_period()
     #     next_period = get_current_period()[2] + 1
     #     next_class = datetime.datetime.combine(datetime.datetime.today(), coursetimes[next_period][0]).strftime('%m %d, %Y %H:%M:%S') if next_period < len(coursetimes) else '08 2, 3000 14:55:00'
@@ -194,7 +219,7 @@ def get_next_class():
 def get_user_next_class(username):
     current_period,next_class = get_next_class()
     for id,course in {course: courses[course] for course in users[username]['courses']}.items():
-        if (current_period[2] == course['period']) and (current_period[3]) and course['lunch'] != None:
+        if (current_period[2] == course['period']) and (current_period[3]) and course['lunch'] is not None:
             lunch = lunchtimes[course['lunch']]
             time = datetime.datetime.now().time()
             if lunch:
@@ -207,7 +232,7 @@ def get_user_next_class(username):
                     next_class = datetime.datetime.combine(datetime.datetime.today(), lunch[1])
                 else:
                     app.logger.debug('else')
-                    next_class = datetime.datetime.combine(datetime.datetime.today(), current_period[1]) 
+                    next_class = datetime.datetime.combine(datetime.datetime.today(), current_period[1])
     return current_period,next_class
 
 def get_user_current_class(username):
@@ -278,7 +303,7 @@ def link():
         code = request.json.get('code', None)
         if code is not None and int(code) in linkcodes:
             if linkcodes[int(request.json.get('code'))]['ip'] == request.remote_addr:
-                if not linkcodes[int(request.json.get('code'))]['username'] == None:
+                if not linkcodes[int(request.json.get('code'))]['username'] is None:
                     response = jsonify({'status': 'success', 'token': users[linkcodes[int(request.json.get('code'))]['username']]['password'], 'username': linkcodes[int(request.json.get('code'))]['username']})
                     del linkcodes[int(request.json.get('code'))]
                     return response
@@ -366,7 +391,7 @@ def signup():
         return render_template('signup.html')
     email = request.json['email']
     if not re.match(r'[a-z]*\.[a-z]*(@s.stemk12.org|@stemk12.org)', email):
-        return jsonify({'status': 'failure', 'message': 'Invalid email'}), 400 
+        return jsonify({'status': 'failure', 'message': 'Invalid email'}), 400
     for user in users:
         if 'email' in users[user] and users[user]['email'] == email:
             return jsonify({'status': 'failure', 'message': 'Email already in use'}), 400
@@ -420,12 +445,11 @@ def apkupdates():
     new_version = vers[0]
     new_version_str = vers[1]
     app.logger.debug(f'Current version: {current_version}, New version: {new_version}, New version string: {new_version_str}')
-    if current_version == None:
+    if current_version is None:
         return jsonify({'status': 'failure', 'message': 'No version specified'}), 400
-    elif current_version != new_version:
+    if current_version != new_version:
         return jsonify({'status': 'success', 'message': 'Update available', 'url': '/app-release.apk/', 'version': new_version, 'versionstr': new_version_str, 'newversion': True})
-    else:
-        return jsonify({'status': 'success', 'message': 'No update available', 'version': new_version, 'versionstr': new_version_str, 'newversion': False})
+    return jsonify({'status': 'success', 'message': 'No update available', 'version': new_version, 'versionstr': new_version_str, 'newversion': False})
 
 @app.route('/robots.txt/')
 def robots():
@@ -481,7 +505,7 @@ def login():
         response.set_cookie('username', '', expires=0)
         return response
     if request.method == 'GET':
-        if request.cookies.get('admtoken') != None and request.cookies.get('admusername') != None:
+        if request.cookies.get('admtoken') is not None and request.cookies.get('admusername') is not None:
             token = request.cookies['admtoken']
             username = request.cookies['admusername']
             response = redirect('/')
@@ -490,7 +514,7 @@ def login():
             response.set_cookie('admtoken', '', expires=0)
             response.set_cookie('admusername', '', expires=0)
             return response
-        return render_template('login.html', devmode=devmode, dayoff=coursetimes == None)
+        return render_template('login.html', devmode=devmode, dayoff=coursetimes is None)
     request.get_json()
     username = request.json['username']
     if username not in users:
@@ -574,22 +598,22 @@ def apicurrentcourses(username):
             if period in allperiods:
                 classes.append(courses[course])
     return jsonify({
-        'status': 'success', 
+        'status': 'success',
         'courses': classes,
-        'status': 'success', 
-        'currentperiod': current_period[2], 
+        'status': 'success',
+        'currentperiod': current_period[2],
         'nextclass': int(next_class.timestamp()) if isinstance(next_class, datetime.datetime) else next_class,
-        'dayoff': coursetimes == None
+        'dayoff': coursetimes is None
     })
 
 @app.route('/api/v1/currentperiod/', methods=['GET'])
 @verify_user(onfail=({'status': 'failure', 'message': 'Not logged in'}, 401), required=False)
 @csrf.exempt
 def apicurrentperiod(username):
-    current_period, next_class = (get_next_class()) if username == None else get_user_next_class(username)
+    current_period, next_class = (get_next_class()) if username is None else get_user_next_class(username)
     response = jsonify({
-        'status': 'success', 
-        'currentperiod': current_period[2], 
+        'status': 'success',
+        'currentperiod': current_period[2],
         'nextclass': int(next_class.timestamp()) if isinstance(next_class, datetime.datetime) else next_class
     })
     return response
@@ -685,7 +709,7 @@ def resetpasswordwithID(emailid):
 def account(username):
     newcourses={}
     for id, course in courses.items():
-        if course['canvasid'] == None and id in users[username]['courses']:
+        if course['canvasid'] is None and id in users[username]['courses']:
             newcourses[id] = course
     newclasses = []
     for classn in [courses[course] for course in users[username]['courses']]:
@@ -795,7 +819,6 @@ def set_lunch(username):
             if not (courses[course]['period'] == 6 or courses[course]['period'] == 7):
                 del course_data[course]
         return render_template('setlunch.html', username=username, courses=course_data)
-    
     try:
         course = request.json['course']
         lunch = request.json['lunch']
@@ -804,17 +827,13 @@ def set_lunch(username):
 
     if course not in courses:
         return jsonify({'status': 'failure', 'message': 'Course does not exist'}), 400
-    
     valid_lunch_options = ['A', 'B', 'C', 'None']
     if lunch not in valid_lunch_options:
         return jsonify({'status': 'failure', 'message': 'Invalid lunch'}), 400
-    
     if course not in users[username]['courses']:
         return jsonify({'status': 'failure', 'message': 'You are not enrolled in this course'}), 400
-    
     if not (courses[course]['period'] == 6 or courses[course]['period'] == 7):
         return jsonify({'status': 'failure', 'message': 'Cannot set lunch for this course'}), 400
-
     courses[course]['lunch'] = None if lunch == 'None' else lunch
     backup('courses')
     return jsonify({'status': 'success', 'message': 'Lunch set'})
@@ -825,7 +844,7 @@ def joincourse(username):
     if request.method == 'GET':
         return render_template('joincourse.html', username=username, courses=courses)
     course = request.json['course']
-    if course == None:
+    if course is None:
         return jsonify({'status': 'failure', 'message': 'Course not specified'}), 400
     if course not in courses:
         return jsonify({'status': 'failure', 'message': 'Course does not exist'}), 400
@@ -847,7 +866,7 @@ def adminsetcanvasid(username):
         app.logger.debug(ccourses.json())
         newcourses={}
         for id, course in courses.items():
-            if course['canvasid'] == None and id in users[username]['courses'] and not course['hidden']:
+            if course['canvasid'] is None and id in users[username]['courses'] and not course['hidden']:
                 newcourses[id] = course
         if not len(newcourses) == 0:
             return render_template('setcanvasid.html', username=username, ccourses={course['id']: course['shortName'] for course in ccourses.json()}, courses=newcourses)
@@ -856,7 +875,7 @@ def adminsetcanvasid(username):
     app.logger.debug(request.json)
     newcourses=[]
     for id, course in courses.items():
-        if course['canvasid'] == None and id in users[username]['courses'] and not course['hidden']:
+        if course['canvasid'] is None and id in users[username]['courses'] and not course['hidden']:
             newcourses.append(id)
     for id, course in request.json.items():
         if id in newcourses:
@@ -869,9 +888,9 @@ def adminsetcanvasid(username):
 @app.route('/timer/')
 @verify_user(required=False)
 def timer(username):
-    current_period, next_class = get_user_next_class(username) if username != None else get_next_class()
+    current_period, next_class = get_user_next_class(username) if username is not None else get_next_class()
     print(next_class)
-    if (coursetimes != None) and (current_period != None) and (next_class != None) and (next_class != datetime.datetime(3000, 8, 2, 14, 55)):
+    if (coursetimes is not None) and (current_period is not None) and (next_class is not None) and (next_class != datetime.datetime(3000, 8, 2, 14, 55)):
         return render_template('timer.html', currentperiod=current_period[2], nextclass=next_class.strftime('%Y-%m-%d %H:%M:%S') if isinstance(next_class, datetime.datetime) else next_class)
     return redirect('/')
 
@@ -905,7 +924,7 @@ def admindeletecourse(username):
     if request.method == 'GET':
         return render_template('admin.html', username=username)
     course = request.json['course']
-    if course == None:
+    if course is None:
         return jsonify({'status': 'failure', 'message': 'Course not specified'}), 400
     if course not in courses:
         return jsonify({'status': 'failure', 'message': 'Course does not exist'}), 400
@@ -934,9 +953,10 @@ def adminlogin(username):
     response.set_cookie('username', username, httponly=True, max_age=300)
     return response
 
+# pylint: disable=unused-argument
 @app.route('/admin/addtoall/')
 @verify_user(allowedusers=admins)
-def addtoall(username): 
+def addtoall(username):
     key = request.args.get('key')
     if not key:
         return jsonify({'status': 'failure', 'message': 'No key specified'}), 400
@@ -946,6 +966,7 @@ def addtoall(username):
     backup('courses')
     return jsonify({'status': 'success', 'message': 'Added to all courses'})
 
+# pylint: disable=unused-argument
 @app.route('/admin/removefromall/')
 @verify_user(allowedusers=admins)
 def removefromall(username):
@@ -958,6 +979,7 @@ def removefromall(username):
     backup('courses')
     return jsonify({'status': 'success', 'message': 'Removed from all courses'})
 
+# pylint: disable=unused-argument
 @app.route('/admin/courses/')
 @verify_user(allowedusers=admins)
 def admincourses(username):
@@ -984,13 +1006,14 @@ def backup_task():
     else:
         app.logger.error('Backup failed')
 
+# pylint: disable=global-statement
 @scheduler.task('cron', id='update_course_time', hour=1, minute=0, misfire_grace_time=3600)
 def update_course_time(dayoverride: typing.Optional[int] = None):
     app.logger.debug('Updating course times...')
     global coursetimes
     global lunchtimes
     global courseday
-    day = datetime.datetime.today().weekday() if dayoverride == None else dayoverride
+    day = datetime.datetime.today().weekday() if dayoverride is None else dayoverride
     coursetimes = []
     lunchtimes = {}
     if day == 0:
@@ -1096,7 +1119,7 @@ def update_course_time(dayoverride: typing.Optional[int] = None):
         lunchtimes = None
         courseday = 5
     app.logger.info('Course times updated')
-    app.logger.debug('Coursetimes is none' if coursetimes == None else 'Coursetimes is not none')
+    app.logger.debug('Coursetimes is none' if coursetimes is None else 'Coursetimes is not none')
 
 @scheduler.task('cron', id='delete_login_codes', hour=1, minute=0, misfire_grace_time=3600)
 def delete_login_codes():
@@ -1108,13 +1131,13 @@ def get_current_period():
     # The 5th value is the current lunch
     # The 4th value is if the periods lunch time applies today
     # The 3rd value is the current period
-    if coursetimes == None:
+    if coursetimes is None:
         return (datetime.time(0, 0), datetime.time(0, 0), 0, None)
     now = datetime.datetime.now().time()
     lunch = get_lunch()
     for course in coursetimes:
         if course[0] <= now <= course[1]:
-            return course + ((lunch[1],) if lunch != None else (None,))
+            return course + ((lunch[1],) if lunch is not None else (None,))
     return (datetime.time(0, 0), datetime.time(0, 0), 0, None)
 
 def get_lunch():
@@ -1135,23 +1158,41 @@ def adminchangetimes(username):
         return render_template('changetimes.html', username=username)
     # coursetimes = []
     # for time in request.json['times']:
-    #     if time[0] == None:
+    #     if time[0] is None:
     #         continue
     #     coursetimes.append((datetime.time(time['start']['hour'], time['start']['minute']), datetime.time(time['end']['hour'], time['end']['minute']), time['period']))
-    app.logger.info(f'Updating course times via http by {username}...')
+    app.logger.info('Updating course times via http by %s...', username)
     update_course_time(int(request.json['day']))
     return jsonify({'status': 'success', 'message': 'Course times changed'})
 
 def get_periods():
-    return [course[2] for course in coursetimes] if not coursetimes == None else None
+    """
+    Retrieve the periods for the current day.
+    Returns:
+        list: A list of periods for the current day.
+    """
+    return [course[2] for course in coursetimes] if not coursetimes is None else None
 
 def get_users_with_class(classid):
+    """
+    Retrieve users who are enrolled in a specific class.
+
+    Args:
+        classid (str): The ID of the class to filter users by.
+
+    Returns:
+        dict: A dictionary of users who are enrolled in the specified class, excluding 'pingbot'.
+    """
     newusers = {username: user for username, user in users.items() if classid in user['courses']}
-    if 'pingbot' in newusers: del newusers['pingbot']
+    if 'pingbot' in newusers:
+        del newusers['pingbot']
     return newusers
 
 if __name__ == '__main__':
     update_course_time()
     scheduler.init_app(app)
     scheduler.start()
-    app.run(host='0.0.0.0', port=5200) if not platform.uname()[1] == 'classfinder' else waitress.serve(app, host='0.0.0.0', port=7842)
+    if platform.uname()[1] == 'classfinder':
+        waitress.serve(app, host='0.0.0.0', port=7842)
+    else:
+        app.run(host='0.0.0.0', port=5200)
