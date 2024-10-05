@@ -1,0 +1,78 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/indexa.css">    <link rel="manifest" href="https://class.trey7658.com/manifest.json" />
+    <title>Issue form</title>
+    <script defer data-domain="class.trey7658.com" src="https://analytics.trey7658.com/js/script.js"></script>
+</head>
+<body>
+    {% include 'navbar.html' %}
+    <div id="content">
+        <h1>Issue form</h1>
+            <form id="issueForm" onsubmit="return handleFormSubmit(event)">
+                <input type="hidden" id="csrf_token" name="csrf_token" value="{{ csrf_token() }}">
+                    <label for="type">Type:</label>
+                    <select id="type" name="type" required>
+                        <option value="bug">Bug</option>
+                        <option value="feature">Feature</option>
+                        <option value="other">Other</option>
+                    </select>
+                    <label for="request">Title:</label>
+                    <input type="text" id="request" name="request" required><br><br>
+                    <label for="description">Description:</label>
+                    <textarea id="description" name="description" required></textarea><br><br>
+                    <input type="submit" value="Submit">
+                </form>
+            <p id="status"></p>
+            <script>
+                function handleFormSubmit(event) {
+                    event.preventDefault();
+                    const type = document.getElementById('type').value;
+                    const request = document.getElementById('request').value;
+                    const description = document.getElementById('description').value;
+                    const csrfToken = document.getElementById('csrf_token').value;
+                
+                    const data = {
+                        type: type,
+                        request: request,
+                        description: description
+                    };
+                
+                    fetch(window.location.toString(), {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/json',
+                            'X-CSRFToken': csrfToken
+                        },
+                        body: JSON.stringify(data),
+                        credentials: 'include'
+                    })
+                    .then(response => {
+                        console.log('Response status:', response.status);
+                        if (response.status === 429) {
+                            document.getElementById('status').innerText = 'Only one request per minute is allowed.';
+                            throw new Error('Too many requests');
+                        }
+                        return response.json(); // Parse the JSON from the response
+                    })
+                    .then(data => {
+                        console.log('Response data:', data);
+                        if (data.status === 'success') {
+                            window.location.href = '/';
+                        } else {
+                            document.getElementById('status').innerText = data.message;
+                            console.log('Error:', data);
+                        }
+                    })
+                    .catch((error) => {
+                        console.error('Error:', error);
+                    });
+                    console.log("Form submission prevented");
+                }
+                
+            </script>
+    </div>
+</body>
+</html>

@@ -1,0 +1,130 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Timer</title>
+    <link rel="stylesheet" href="/indexa.css">
+</head>
+<body>
+    <div style="background-color: black; color: white; justify-content: center; align-items: center;"></div>
+        <div style="display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh;">
+            <div style="width: 100%; text-align: center; font-size: 1.2em;" id="time">
+                
+            </div>
+            <div style="width: 100%; text-align: center; font-size: 6em;" id="timel">
+                
+            </div>
+        </div>
+    </div>
+    <script>
+        var countDownDate = new Date("{{nextclass}}").getTime();
+
+        function updatetimer(first=false) {
+            var now = new Date().getTime();
+            var distance = countDownDate - now;
+            var days = Math.floor(distance / (1000 * 60 * 60 * 24));
+            var hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            var minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+            var seconds = Math.floor((distance % (1000 * 60)) / 1000);
+            if (hours === 0 && minutes === 0) {
+                document.getElementById("timel").innerHTML = seconds;
+            } else if (hours === 0) {
+                document.getElementById("timel").innerHTML = minutes + "m " + seconds + "s ";
+            } else {
+                document.getElementById("timel").innerHTML = hours + "h " + minutes + "m " + seconds + "s";
+            }
+            if (hours === 0 && minutes === 0 && seconds === 0) {
+                if (first) {
+                    alert("Please make sure your computer's time is correct.");
+                }
+                clearInterval(x);
+                document.getElementById("timel").innerHTML = "0s";
+                setTimeout(function() {
+                    location.reload();
+                }, 3000);
+            } else if (hours <= 0 && minutes <= 0 && seconds <= 0) {
+                clearInterval(x);
+                setTimeout(function() {
+                    location.reload();
+                }, 500);
+            }
+        }
+        updatetimer()
+        var countDownDateObj = new Date(countDownDate);
+        var hours = countDownDateObj.getHours();
+        var minutes = countDownDateObj.getMinutes();
+        var ampm = hours >= 12 ? 'PM' : 'AM';
+        hours = hours % 12 || 12; // the hour '0' should be '12'
+        minutes = minutes < 10 ? '0' + minutes : minutes;
+        var strTime = hours + ':' + minutes + ' ' + ampm;
+        document.getElementById("time").innerHTML = strTime;
+        var x = setInterval(updatetimer, 500);
+        document.body.addEventListener('keydown', function(event) {
+            if (event.code === 'Space') {
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen();
+            } else {
+                document.exitFullscreen();
+            }
+            } else if (event.code === 'KeyI') {
+                var timel = document.getElementById("timel");
+                var currentSize = parseFloat(window.getComputedStyle(timel, null).getPropertyValue('font-size'));
+                var newSize = currentSize - 10;
+                var url = new URL(window.location);
+                url.searchParams.set("timersize", newSize + "px");
+                window.history.pushState({}, '', url);
+            timel.style.fontSize = newSize + 'px';
+            } else if (event.code === 'KeyO') {
+                var timel = document.getElementById("timel");
+                var currentSize = parseFloat(window.getComputedStyle(timel, null).getPropertyValue('font-size'));
+                var newSize = currentSize + 10;
+                timel.style.fontSize = newSize + 'px';
+                var url = new URL(window.location);
+                url.searchParams.set("timersize", newSize + "px");
+                window.history.pushState({}, '', url);
+            timel.style.fontSize = newSize + 'px';
+            } else if (event.code === 'KeyY') {
+                var time = document.getElementById("time");
+                var currentSize = parseFloat(window.getComputedStyle(time, null).getPropertyValue('font-size'));
+                var newSize = currentSize - 2;
+                time.style.fontSize = newSize + 'px';
+                var url = new URL(window.location);
+                url.searchParams.set("timesize", newSize + "px");
+                window.history.pushState({}, '', url);
+            } else if (event.code === 'KeyU') {
+                var time = document.getElementById("time");
+                var currentSize = parseFloat(window.getComputedStyle(time, null).getPropertyValue('font-size'));
+                var newSize = currentSize + 2;
+                time.style.fontSize = newSize + 'px';
+                var url = new URL(window.location);
+                url.searchParams.set("timesize", newSize + "px");
+                window.history.pushState({}, '', url);
+            } else if (event.code === 'KeyN') {
+                var timel = document.getElementById("timel");
+                var time = document.getElementById("time");
+                timel.style.fontSize = '6em';
+                time.style.fontSize = '1.2em';
+            }
+        });
+        var urlParams = new URLSearchParams(window.location.search);
+        var bgColor = urlParams.get('bg');
+        if (bgColor) {
+            document.body.style.backgroundColor = bgColor;
+        }
+        var textColor = urlParams.get('color');
+        if (textColor) {
+            document.body.style.color = textColor;
+        }
+        var timeSize = urlParams.get('timesize');
+        if (timeSize) {
+            document.getElementById("time").style.fontSize = timeSize;
+        }
+
+        var timerSize = urlParams.get('timersize');
+        if (timerSize) {
+            document.getElementById("timel").style.fontSize = timerSize;
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <link rel="stylesheet" href="/indexa.css">    <link rel="manifest" href="https://class.trey7658.com/manifest.json" />
+    <title>Account settings</title>
+    <script>
+
+        function handleDeleteClick() {
+            const userConfirmed = confirm("Are you sure you want to delete your account?\nCourses you have added will stay in the database, but your assosciaion with them will be removed.");
+            if (userConfirmed) {
+                window.location.href = '/deleteaccount';
+            }
+        }
+    </script>
+    <script defer data-domain="class.trey7658.com" src="https://analytics.trey7658.com/js/script.js"></script>
+</head>
+<body>
+    {% include 'navbar.html' %}
+    <div id="content">
+        <h1>Welcome, {{ username }}!</h1>
+        <p id="csrf_token" style="display:none;">{{ csrf_token() }}</p>
+        {% if devmode%}
+            <p style="color: white;">This is a development build</p>
+        {% endif %}
+        {% if messages | length > 0%}
+            <h2>Messages</h2>
+        {% endif %}
+        {% for message in messages %}
+            <p style="color: white;">{{ message }}</p><button onclick="removeMessage('{{message}}')">Remove</button>
+        {% endfor %}
+        {% if messages | length > 0%}
+            <br><br>
+        {% endif %}
+        <h2>Account</h2>
+        <button onclick="window.location.href='/logout'" >Logout</button>
+        <button onclick="window.location.href='/change-password'">Change password</button>
+        {% if username == 'trwy' %}
+        <button onclick="window.location.href='/admin'">Admin</button>
+        {% endif %}
+        <button onclick="window.location.href='/link'">Link device</button>
+        {% if not classcount >= 9 or username == 'trwy'%}
+        <button onclick="window.location.href='/bulkaddcourse'">Import classes</button>
+        {% endif %}
+        <button id="deleteButton" onclick="handleDeleteClick()">Delete account</button>
+        {% if showcanvasid %}
+        <button onclick="window.location.href='/setcanvasid/'">Import from canvas</button>
+        {% endif %}
+        <h2>Other</h2>
+        <button onclick="window.location.href='/request/'">Issue form</button>
+        <button onclick="window.location.href='/bookmarks/'">Bookmarks</button>
+        <h2>Classes</h2>
+        <div id="classes">
+            {% for class in classes|sort(attribute='period') %}
+                {% if (not class.hidden) or (currentperiod == class.period) %}
+                <div class="class">
+                    <h2 style="display:inline;">{%if class.canvasid != None %}<a href="{{canvas_url}}/courses/{{class.canvasid}}" style="color: inherit; text-decoration: none;">{%endif%}{{ class.name }}{%if class.canvasid != None %}</a>{%endif%}</h2>
+                    <p class="room" style="color: grey;display:inline;">RM {{ class.room }}</p>
+                    {% if (class.period == 6 or class.period == 7) and class.lunch == None %}<button style="background-color: rgb(0, 209, 94); color:white; display:absolute; margin-left: auto;margin-right: 0;" onclick="window.location.href = '/setlunch/?course={{class.room + p + class.period|string}}'">Set lunch</button>{%endif%}
+                    <div id="classusers">
+                    {% for username in class.users %}
+                        <p class="classuser">{{ username }}</p>
+                    {% endfor %}
+                    </div>
+                </div>
+                {% endif %}
+            {% endfor %}
+        </div>
+    </div>
+    <script>
+        function removeMessage(message) {
+            const csrfToken = document.getElementById('csrf_token').innerText;
+
+            fetch('/removemessage', {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': csrfToken
+                },
+                body: JSON.stringify({ message: message }),
+                credentials: 'include'
+            })
+            .then(response => {
+                if (response.status === 200) {
+                    window.location.reload();
+                } else {
+                    console.error('Failed to remove message:', response);
+                }
+            });
+        }
+    </script>
+</body>
+</html>

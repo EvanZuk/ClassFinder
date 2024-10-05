@@ -1,0 +1,9 @@
+flask
+flask-apscheduler
+flask-limiter
+flask-wtf
+flask-bcrypt
+wheel
+waitress
+requests
+flask-cors
