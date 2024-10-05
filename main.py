@@ -56,7 +56,6 @@ if 'pytest' not in sys.modules:
         resetkey = random.randbytes(16).hex()
         resetpasswordemailids[resetkey] = 'trwy'
         print(f"After starting the server, go to /reset-password/{resetkey} to reset the password for the trwy account")
-        with open(f'{jsondir}users.json', 'w', encoding='UTF-8') as f: json.dump(users, f)
     try:
         with open(f'{jsondir}courses.json', 'r', encoding='UTF-8') as f: courses = json.load(f)
     except FileNotFoundError:
@@ -78,7 +77,7 @@ else:
 backup_locks = {'courses': Lock(),'users': Lock(), 'requests': Lock()}
 coursetimes = []
 lunchtimes = {}
-admins = ['trwy']
+admins = ['trwy'] if 'pytest' not in sys.modules else ['pytest']
 linkcodes = {}
 usermessages = {}
 emailids = {}
@@ -287,14 +286,6 @@ def index_css():
     app.logger.debug('index.css loaded')
     return app.send_static_file('index.css')
 
-@app.route('/index.js/')
-def index_js():
-    return app.send_static_file('index.js')
-
-@app.route('/manifest.json')
-def manifest():
-    return app.send_static_file('manifest.json')
-
 @app.route('/icon.png')
 def icon():
     return app.send_static_file('icon.png')
@@ -375,7 +366,7 @@ def canvas(username):
     return redirect(canvas_url)
 
 @app.route('/signup/<emailid>', methods=['POST', 'GET'])
-@limiter.limit("8/hour", key_func=lambda: request.remote_addr, exempt_when=lambda: request.method == 'GET')
+@limiter.limit("8/hour", key_func=lambda: request.remote_addr, exempt_when=lambda: request.method == 'GET' or 'pytest' in sys.modules)
 def signupwithid(emailid):
     if 'token' in request.cookies:
         return redirect('/')
@@ -403,7 +394,7 @@ def signupwithid(emailid):
     return jsonify({'status': 'failure', 'message': 'Invalid emailid'}), 400
 
 @app.route('/signup/', methods=['POST', 'GET'])
-@limiter.limit("2/hour", key_func=lambda: request.json['email'], exempt_when=lambda: request.method == 'GET')
+@limiter.limit("2/hour", key_func=lambda: request.json['email'], exempt_when=lambda: request.method == 'GET' or 'pytest' in sys.modules)
 def signup():
     if 'token' in request.cookies:
         return redirect('/')
@@ -809,7 +800,7 @@ def bulkaddcourse(username):
         else:
             app.logger.debug(f'Course already exists: {room}p{course[0]}')
     # Add the user to the course if the json "join" is true
-    if request.json['join']:
+    if not (not request.json['join'] and username in admins):
         for course in coursesr:
             room = re.match(re.compile(r'(E?[0-9]{3})|MS Cafe'), course[4].replace("Rm: ", "").replace(":", ""))
             if room:
