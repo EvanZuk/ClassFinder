@@ -1,0 +1,10 @@
+name: Pytest
+
+on: [push]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Run pytest
+        uses: pavelzw/pytest-action@v2.1.0
