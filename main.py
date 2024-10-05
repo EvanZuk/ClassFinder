@@ -1,8 +1,20 @@
-# pylint: disable=missing-function-docstring, missing-module-docstring, missing-class-docstring, line-too-long
+# pylint: disable=missing-function-docstring, missing-module-docstring, missing-class-docstring, line-too-long, logging-fstring-interpolation, logging-not-lazy, too-many-return-statements, unused-argument, too-many-branches, too-many-lines
 from threading import Lock
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-import typing, platform, shutil, json, functools, datetime, re, os, random, sys, logging, smtplib, requests
+import typing
+import platform
+import shutil
+import json
+import functools
+import datetime
+import re
+import os
+import random
+import sys
+import logging
+import smtplib
+import requests
 from flask import Flask, request, jsonify, render_template, redirect
 from flask_apscheduler import APScheduler
 from flask_limiter import Limiter, HEADERS
@@ -34,28 +46,29 @@ bcrypt = Bcrypt(app)
 scheduler = APScheduler()
 jsondir = os.environ.get('CLASSFINDER_DATA_DIR', '')
 resetpasswordemailids = {}
-if not 'pytest' in sys.modules:
+if 'pytest' not in sys.modules:
+    # pylint: disable=multiple-statements
     csrf = CSRFProtect(app)
     try:
-        with open(f'{jsondir}users.json', 'r') as f: users = json.load(f)
+        with open(f'{jsondir}users.json', 'r', encoding='UTF-8') as f: users = json.load(f)
     except FileNotFoundError:
         users = {'trwy': {'password': bcrypt.generate_password_hash('passwordtrwy'.encode('utf-8')).decode('utf-8'), 'courses': ["p1"], "createdby": "server"}}
         resetkey = random.randbytes(16).hex()
         resetpasswordemailids[resetkey] = 'trwy'
         print(f"After starting the server, go to /reset-password/{resetkey} to reset the password for the trwy account")
-        with open(f'{jsondir}users.json', 'w') as f: json.dump(users, f)
+        with open(f'{jsondir}users.json', 'w', encoding='UTF-8') as f: json.dump(users, f)
     try:
-        with open(f'{jsondir}courses.json', 'r') as f: courses = json.load(f)
+        with open(f'{jsondir}courses.json', 'r', encoding='UTF-8') as f: courses = json.load(f)
     except FileNotFoundError:
         courses = {"p1": {"name": "Test Course", "room": "Test Room", "period": 1, "hidden": False, "lunch": None, "canvasid": None}}
-        with open(f'{jsondir}courses.json', 'w') as f: json.dump(courses, f)
+        with open(f'{jsondir}courses.json', 'w', encoding='UTF-8') as f: json.dump(courses, f)
     try:
-        with open(f'{jsondir}requests.json', 'r') as f: requests = json.load(f)
+        with open(f'{jsondir}requests.json', 'r', encoding='UTF-8') as f: requests = json.load(f)
     except FileNotFoundError:
-        with open(f'{jsondir}requests.json', 'w') as f: f.write('{"feature": {}, "bug": {}, "other": {}}')
+        with open(f'{jsondir}requests.json', 'w', encoding='UTF-8') as f: f.write('{"feature": {}, "bug": {}, "other": {}}')
         requests = {'feature': {}, 'bug': {}, 'other': {}}
 else:
-    class csrf:
+    class csrf: # pylint: disable=invalid-name, too-few-public-methods
         @staticmethod
         def exempt(func):
             return func
@@ -67,12 +80,11 @@ coursetimes = []
 lunchtimes = {}
 admins = ['trwy']
 linkcodes = {}
-courseday = 0
 usermessages = {}
 emailids = {}
 adminmessages = [f"Server started at {datetime.datetime.now().strftime('%m %d, %Y %H:%M:%S')}"]
 
-def backup(selection: typing.Literal['courses', 'users', 'requests' 'all'] = 'all', bypass: bool = False):
+def backup(selection: typing.Literal['courses', 'users', 'requests', 'all'] = 'all', bypass: bool = False):
     """Backup the data to the json files
     selection: The data to backup, either 'courses', 'users', 'requests', or 'all'
     bypass: Whether to bypass the backup lock"""
@@ -86,21 +98,17 @@ def backup(selection: typing.Literal['courses', 'users', 'requests' 'all'] = 'al
             return False
         try:
             shutil.copyfile(f'{jsondir}{selection}.json', f'{jsondir}{selection}.bak.json')
-        except Exception as e:
-            app.logger.error(f'An error occurred while copying backup {selection}: ' + str(e) + " " + str(vars(e)))
+        except PermissionError:
+            app.logger.error(f'Permission error while copying backup {selection}')
         try:
             if selection == 'courses':
                 globals()['courses'] = {(course['room'] if course['room'] != "N/A" else "") + 'p' + str(course['period']): course for course in sorted(globals()['courses'].values(), key=lambda x: x['period'])}
-            with open(f'{jsondir}{selection}.json', 'w') as f:
-                json.dump(globals()[selection], f, indent=4)
+                globals()['courses'] = sorted(globals()['courses'].values(), key=lambda x: x['period'])
+            with open(f'{jsondir}{selection}.json', 'w', encoding="UTF-8") as file:
+                json.dump(globals()[selection], file, indent=4)
         except PermissionError:
             app.logger.critical(f'Permission error while backing up {selection}')
-            adminmessages.append(f'Permission error while backing up {selection}') if not f'Permission error while backing up {selection}' in adminmessages else None
-        except Exception as e:
-            app.logger.critical('An error occurred while backing up: ' + str(e) + " " + str(vars(e)))
         finally:
-            if selection == 'courses':
-                courses = sorted(globals()['courses'].values(), key=lambda x: x['period'])
             lock.release()
     elif selection == 'all':
         for key in backup_locks:
@@ -110,7 +118,7 @@ def backup(selection: typing.Literal['courses', 'users', 'requests' 'all'] = 'al
         return False
     return True
 
-def verify_user(f=None, *, required: bool = True, onfail=redirect('/login/'), allowedusers: typing.List[str] = None):
+def verify_user(func=None, *, required: bool = True, onfail=redirect('/login/'), allowedusers: typing.List[str] = None):
     """Verify the user is logged in
     required: Whether the user must be logged in
     onfail: The response to return if the user is not logged in
@@ -119,7 +127,7 @@ def verify_user(f=None, *, required: bool = True, onfail=redirect('/login/'), al
     def decorator(func):
         @functools.wraps(func)
         def decorated_function(*args, **kwargs):
-            username = authenticate(request)
+            username = authenticate()
             if required:
                 if username is None:
                     app.logger.debug('Not logged in')
@@ -130,16 +138,15 @@ def verify_user(f=None, *, required: bool = True, onfail=redirect('/login/'), al
             return func(username, *args, **kwargs)
         return decorated_function
 
-    if f is None:
+    if func is None:
         return decorator
-    else:
-        return decorator(f)
+    return decorator(func)
 
 def is_admin(username):
     """Check if the user is an admin"""
     return username in admins
 
-def authenticate(request):
+def authenticate():
     """Authenticate the user
     Return the username if successful, otherwise return None"""
     # Authenticate the user, return the username if successful, otherwise return None
@@ -157,13 +164,13 @@ def authenticate(request):
                     return username
     return None
 
-def createuser(username, password, createdby='server', email=None, backup=True):
+def createuser(username, password, createdby='server', email=None, dobackup=True):
     """Create a user
     username: The username of the user
     password: The password of the user
     createdby: The user who created the user"""
     users[username] = {'password': '', 'courses': ["p1"], "createdby": createdby, 'email': email}
-    return changepassword(username, password, backup=backup)
+    return changepassword(username, password, dobackup=dobackup)
 
 def checkpassword(username, password):
     """Check if a password is correct
@@ -171,12 +178,12 @@ def checkpassword(username, password):
     password: The password to check"""
     return bcrypt.check_password_hash(users[username]['password'], (password+username+app.secret_key.decode()).encode('utf-8'))
 
-def changepassword(username, password, backup=True):
+def changepassword(username, password, dobackup=True):
     """Change a user's password
     username: The username of the user
     password: The new password"""
     users[username]['password'] = bcrypt.generate_password_hash((password+username+app.secret_key.decode()).encode('utf-8')).decode('utf-8')
-    if backup:
+    if dobackup:
         backup('users')
     return users[username]['password']
 
@@ -188,14 +195,16 @@ def split_list(lst, chunk_size):
     """
     return [lst[i:i + chunk_size] for i in range(0, len(lst), chunk_size)]
 
-def message(message: str, username: str = 'admin'):
+def sendmessage(message: str, username: str = 'admin'):
     """Send a message to a user
     message: The message to send
     username: The user to send the message to"""
     if username == 'admin':
-        adminmessages.append(message) if not message in adminmessages else None
+        if not message in adminmessages:
+            adminmessages.append(message)
     elif username in usermessages:
-        usermessages[username].append(message) if not message in usermessages[username] else None
+        if not message in usermessages[username]:
+            usermessages[username].append(message)
     else:
         usermessages[username] = [message]
 
@@ -213,7 +222,6 @@ def home(username):
         app.logger.debug("allperiods is None")
     app.logger.debug(allperiods)
     current_period, next_class = get_user_next_class(username)
-    app.logger.debug
     return render_template('index.html', username=username, classes=classes, dayoff=coursetimes is None, currentperiod=current_period[2], devmode=devmode, nextclass=next_class.strftime('%m %d, %Y %H:%M:%S'), p='p', canvas_url=canvas_url)
 
 def get_next_class():
@@ -234,7 +242,7 @@ def get_next_class():
 
 def get_user_next_class(username):
     current_period,next_class = get_next_class()
-    for id,course in {course: courses[course] for course in users[username]['courses']}.items():
+    for course in {course: courses[course] for course in users[username]['courses']}.values():
         if (current_period[2] == course['period']) and (current_period[3]) and course['lunch'] is not None:
             lunch = lunchtimes[course['lunch']]
             time = datetime.datetime.now().time()
@@ -307,8 +315,8 @@ def apk():
 @verify_user(allowedusers=admins)
 def messageadmin(username):
     if request.method == 'GET':
-        return render_template('message.html', users=[username for username in users])
-    message(request.json['message'], request.json['username'])
+        return render_template('message.html', users=list(users))
+    sendmessage(request.json['message'], request.json['username'])
     return jsonify({'status': 'success', 'message': 'Message sent'})
 
 @app.route('/api/v1/link/', methods=['POST', 'GET'])
@@ -323,12 +331,9 @@ def link():
                     response = jsonify({'status': 'success', 'token': users[linkcodes[int(request.json.get('code'))]['username']]['password'], 'username': linkcodes[int(request.json.get('code'))]['username']})
                     del linkcodes[int(request.json.get('code'))]
                     return response
-                else:
-                    return jsonify({'status': 'failure', 'message': 'No account linked'})
-            else:
-                return jsonify({'status': 'failure', 'message': 'This code does not belong to this device'}), 400
-        else:
-            return jsonify({'status': 'failure', 'message': 'Invalid code'}), 400
+                return jsonify({'status': 'failure', 'message': 'No account linked'})
+            return jsonify({'status': 'failure', 'message': 'This code does not belong to this device'}), 400
+        return jsonify({'status': 'failure', 'message': 'Invalid code'}), 400
     code = random.randint(100000, 999999)
     linkcodes[code] = {'ip': request.remote_addr, 'username': None}
     return jsonify({'status': 'success', 'code': code})
@@ -339,12 +344,14 @@ def link():
 def apimessages(username):
     return jsonify({'status': 'success', 'messages': usermessages[username] if username in usermessages else []})
 
+# pylint disable=unused-argument
 @app.route('/api/v1/adminmessages/', methods=['GET'])
 @verify_user(allowedusers=admins, onfail=({'status': 'failure', 'message': 'Not logged in'}, 401))
 @csrf.exempt
 def apiadminmessages(username):
     return jsonify({'status': 'success', 'messages': adminmessages})
 
+# pylint disable=unused-argument
 @app.route('/api/v1/requests/', methods=['GET'])
 @verify_user(allowedusers=admins, onfail=({'status': 'failure', 'message': 'Not logged in'}, 401))
 @csrf.exempt
@@ -356,7 +363,7 @@ def apirequests(username):
 @csrf.exempt
 def courseusers(username, courseid):
     if courseid in users[username]['courses']:
-        return jsonify({'status': 'success', 'users': [username for username in get_users_with_class(courseid)]})
+        return jsonify({'status': 'success', 'users': list(get_users_with_class(courseid))})
     return jsonify({'status': 'failure', 'message': 'You are not enrolled in this course'}), 400
 
 @app.route('/canvas/')
@@ -369,14 +376,13 @@ def canvas(username):
 
 @app.route('/signup/<emailid>', methods=['POST', 'GET'])
 @limiter.limit("8/hour", key_func=lambda: request.remote_addr, exempt_when=lambda: request.method == 'GET')
-def signupwithID(emailid):
+def signupwithid(emailid):
     if 'token' in request.cookies:
         return redirect('/')
     if request.method == 'GET':
         if emailid in emailids:
             return render_template('signupstage2.html', email=emailids[emailid])
-        else:
-            return redirect('/signup/')
+        return redirect('/signup/')
     if emailid in emailids:
         for user in users:
             if 'email' in users[user] and users[user]['email'] == emailids[emailid]:
@@ -429,7 +435,7 @@ def signup():
 
 @app.route('/canvas/<path>/')
 @verify_user
-def canvaswithPath(username, path):
+def canvaswithpath(username, path):
     current_course = get_user_current_class(username)
     if (current_course and current_course.get('canvasid')) and (not "access" in current_course.get('name').lower()) and (not "study hall" in current_course.get('name').lower()):
         return redirect(f"{canvas_url}/courses/{current_course['canvasid']}/{path}")
@@ -442,8 +448,7 @@ def linkaccount(username):
         code = request.args.get('code', None)
         if code is None or int(code) not in linkcodes:
             return render_template('linkreq.html', username=username, devmode=devmode)
-        else:
-            return render_template('link.html', username=username, code=int(request.args.get('code')), ip=linkcodes[int(request.args.get('code'))]['ip'], currentip=request.remote_addr, devmode=devmode)
+        return render_template('link.html', username=username, code=int(request.args.get('code')), ip=linkcodes[int(request.args.get('code'))]['ip'], currentip=request.remote_addr, devmode=devmode)
     code = int(request.json['code'])
     if code not in linkcodes:
         return jsonify({'status': 'failure', 'message': 'Invalid code'}), 400
@@ -453,8 +458,8 @@ def linkaccount(username):
 @app.route('/app-apk-updates/')
 def apkupdates():
     current_version = request.args.get('version')
-    with open('apkver.txt', 'r') as f:
-        vers = f.read().split('\n')
+    with open('apkver.txt', 'r', encoding="UTF-8") as apkver:
+        vers = apkver.read().split('\n')
     app.logger.debug(vers)
     new_version = vers[0]
     new_version_str = vers[1]
@@ -488,6 +493,7 @@ def clearcolors(username):
 def userdata(username):
     return jsonify({'status': 'success', 'data': {key: value for key, value in users[username].items() if key != 'password'}, 'message': 'Password is not included'})
 
+# pylint disable=unused-argument
 @app.route('/CreateToken.gif/')
 @verify_user
 def createtoken(username):
@@ -500,6 +506,7 @@ def removemessage(username):
         usermessages[username].remove(request.json['message'])
     return jsonify({'status': 'success', 'message': 'Message removed'})
 
+# pylint disable=unused-argument
 @app.route('/admin/removemessage/', methods=['DELETE'])
 @verify_user(allowedusers=admins)
 def adminremovemessage(username):
@@ -509,7 +516,7 @@ def adminremovemessage(username):
 
 @app.route('/login/', methods=['POST', 'GET'])
 @limiter.limit("4/minute", key_func=lambda: request.remote_addr, exempt_when=lambda: request.method == 'GET')
-def login():
+def loginpage():
     if 'token' in request.cookies:
         if request.cookies.get('username') in users:
             if users[request.cookies.get('username')]['password'] == request.cookies.get('token'):
@@ -546,6 +553,7 @@ def login():
 def ping():
     return jsonify({'status': 'success', 'message': 'Pong'})
 
+# pylint disable=unused-argument
 @app.route('/request/', methods=['POST', 'GET'])
 @verify_user
 @limiter.limit("2/day", key_func=lambda: request.cookies.get('username'), exempt_when=lambda: request.method == 'GET' or request.cookies.get('username') == 'trwy')
@@ -569,6 +577,7 @@ def requestform(username):
     backup('requests')
     return jsonify({'status': 'success', 'message': 'Request submitted'})
 
+# pylint disable=unused-argument
 @app.route('/admin/deleterequest/', methods=['DELETE'])
 @verify_user(allowedusers=admins)
 def deleterequest(username):
@@ -614,7 +623,6 @@ def apicurrentcourses(username):
     return jsonify({
         'status': 'success',
         'courses': classes,
-        'status': 'success',
         'currentperiod': current_period[2],
         'nextclass': int(next_class.timestamp()) if isinstance(next_class, datetime.datetime) else next_class,
         'dayoff': coursetimes is None
@@ -698,12 +706,11 @@ def reset_password():
 
 @app.route('/reset-password/<emailid>/', methods=['POST', 'GET'])
 @limiter.limit("8/hour", key_func=lambda: request.remote_addr, exempt_when=lambda: request.method == 'GET')
-def resetpasswordwithID(emailid):
+def resetpasswordwithid(emailid):
     if request.method == 'GET':
         if emailid in resetpasswordemailids:
             return render_template('reset-password-stage2.html', username=resetpasswordemailids[emailid])
-        else:
-            return redirect('/reset-password/')
+        return redirect('/reset-password/')
     if emailid in resetpasswordemailids:
         username = resetpasswordemailids[emailid]
         password = request.json['password']
@@ -720,9 +727,9 @@ def resetpasswordwithID(emailid):
 @verify_user
 def account(username):
     newcourses={}
-    for id, course in courses.items():
-        if course['canvasid'] is None and id in users[username]['courses']:
-            newcourses[id] = course
+    for courseid, course in courses.items():
+        if course['canvasid'] is None and courseid in users[username]['courses']:
+            newcourses[courseid] = course
     newclasses = []
     for classn in [courses[course] for course in users[username]['courses']]:
         classn['users'] = get_users_with_class(classn['room']+'p'+str(classn['period']))
@@ -731,8 +738,10 @@ def account(username):
 
 @app.route('/logout/', methods=['POST', 'GET'])
 def logout():
-    if request.method == 'GET': response = redirect('/login')
-    else: response = jsonify({'status': 'success', 'message': 'Logged out'})
+    if request.method == 'GET':
+        response = redirect('/login')
+    else:
+        response = jsonify({'status': 'success', 'message': 'Logged out'})
     response.set_cookie('token', '', expires=0)
     response.set_cookie('username', '', expires=0)
     return response
@@ -788,7 +797,7 @@ def bulkaddcourse(username):
         if not room:
             app.logger.debug(f'Invalid room: {course[4]}')
             continue
-        if not (2 <= course[0] <= 9):
+        if not 2 <= course[0] <= 9:
             app.logger.debug(f'Invalid period: {course[0]}')
             continue
         # index 0 is the period
@@ -811,7 +820,8 @@ def bulkaddcourse(username):
             course[4] = room
             if courses[course[4].rstrip().lstrip()+'p'+str(course[0])]:
                 if course[4].rstrip().lstrip()+'p'+str(course[0]) not in users[username]['courses']:
-                    users[username]['courses'].append(course[4].rstrip().lstrip()+'p'+str(course[0])) if not course[4].rstrip().lstrip()+'p'+str(course[0]) in users[username]['courses'] else None
+                    if not course[4].rstrip().lstrip()+'p'+str(course[0]) in users[username]['courses']:
+                        users[username]['courses'].append(course[4].rstrip().lstrip()+'p'+str(course[0]))
                 else:
                     app.logger.debug(f'Already in course: {course[4].rstrip().lstrip()}p{course[0]}')
             app.logger.debug(f'Added to course: {course[4].rstrip().lstrip()}p{course[0]}')
@@ -877,21 +887,20 @@ def adminsetcanvasid(username):
         ccourses = requests.get(f'{canvas_url}/api/v1/dashboard/dashboard_cards', headers=headers)
         app.logger.debug(ccourses.json())
         newcourses={}
-        for id, course in courses.items():
-            if course['canvasid'] is None and id in users[username]['courses'] and not course['hidden']:
-                newcourses[id] = course
-        if not len(newcourses) == 0:
+        for courseid, course in courses.items():
+            if course['canvasid'] is None and courseid in users[username]['courses'] and not course['hidden']:
+                newcourses[courseid] = course
+        if len(newcourses) != 0:
             return render_template('setcanvasid.html', username=username, ccourses={course['id']: course['shortName'] for course in ccourses.json()}, courses=newcourses)
-        else:
-            return jsonify({'status': 'failure', "message": 'no classes to be added'})
+        return jsonify({'status': 'failure', "message": 'no classes to be added'})
     app.logger.debug(request.json)
     newcourses=[]
-    for id, course in courses.items():
-        if course['canvasid'] is None and id in users[username]['courses'] and not course['hidden']:
-            newcourses.append(id)
-    for id, course in request.json.items():
-        if id in newcourses:
-            courses[id]['canvasid'] = (course if not course == 'None' else None)
+    for courseid, course in courses.items():
+        if course['canvasid'] is None and courseid in users[username]['courses'] and not course['hidden']:
+            newcourses.append(courseid)
+    for courseid, course in request.json.items():
+        if courseid in newcourses:
+            courses[courseid]['canvasid'] = (course if not course == 'None' else None)
     backup('courses')
     headers = {'Authorization': 'Bearer ' + request.args.get('canvastoken')}
     requests.delete(f'{canvas_url}/login/oauth2/token', headers=headers)
@@ -919,12 +928,13 @@ def admincreateaccount(username):
     if username in users:
         return jsonify({'status': 'failure', 'message': 'Username already exists'}), 400
     token = createuser(username, password, createdby=requsername)
-    login = request.json['login']
+    loginv = request.json['login']
     response = jsonify({'status': 'success', 'message': 'Account created', 'token': token})
-    response.set_cookie('token', token, httponly=True, max_age=604800) if login else None
-    response.set_cookie('username', username, httponly=True, max_age=604800) if login else None
-    response.set_cookie('admtoken', request.cookies['token'], httponly=True, max_age=604800)
-    response.set_cookie('admusername', request.cookies['username'], httponly=True, max_age=604800)
+    if loginv:
+        response.set_cookie('token', token, httponly=True, max_age=604800)
+        response.set_cookie('username', username, httponly=True, max_age=604800)
+        response.set_cookie('admtoken', request.cookies['token'], httponly=True, max_age=604800)
+        response.set_cookie('admusername', request.cookies['username'], httponly=True, max_age=604800)
     return response
 
 @app.route('/admin/deletecourse/', methods=['POST', 'GET'])
@@ -1015,13 +1025,12 @@ def backup_task():
     else:
         app.logger.error('Backup failed')
 
-# pylint: disable=global-statement
+# pylint: disable=too-many-statements, global-statement
 @scheduler.task('cron', id='update_course_time', hour=1, minute=0, misfire_grace_time=3600)
 def update_course_time(dayoverride: typing.Optional[int] = None):
     app.logger.debug('Updating course times...')
     global coursetimes
     global lunchtimes
-    global courseday
     day = datetime.datetime.today().weekday() if dayoverride is None else dayoverride
     coursetimes = []
     lunchtimes = {}
@@ -1031,7 +1040,6 @@ def update_course_time(dayoverride: typing.Optional[int] = None):
         coursetimes.append((datetime.time(9,30), datetime.time(11,10), 4, False))
         coursetimes.append((datetime.time(11, 10), datetime.time(13,15), 6, True))
         coursetimes.append((datetime.time(13,15), datetime.time(14,55), 8, False))
-        courseday = 0
         # lunchtimes.append((datetime.time(11,15), datetime.time(11,45)), "A")
         # lunchtimes.append((datetime.time(12,0), datetime.time(12,30)), "B")
         # lunchtimes.append((datetime.time(12,45), datetime.time(13,15)), "C")
@@ -1044,7 +1052,6 @@ def update_course_time(dayoverride: typing.Optional[int] = None):
         coursetimes.append((datetime.time(9,30), datetime.time(11,10), 5, False))
         coursetimes.append((datetime.time(11, 10), datetime.time(13,15), 7, True))
         coursetimes.append((datetime.time(13,15), datetime.time(14,55), 9, False))
-        courseday = 1
         # lunchtimes.append((datetime.time(11,15), datetime.time(11,45), "A"))
         # lunchtimes.append((datetime.time(12,0), datetime.time(12,30), "B"))
         # lunchtimes.append((datetime.time(12,45), datetime.time(13,15), "C"))
@@ -1058,7 +1065,6 @@ def update_course_time(dayoverride: typing.Optional[int] = None):
         coursetimes.append((datetime.time(10,25), datetime.time(11,40), 4.5, False))
         coursetimes.append((datetime.time(11,40), datetime.time(13,35), 6, True))
         coursetimes.append((datetime.time(13,35), datetime.time(14,55), 8, False))
-        courseday = 2
         # lunchtimes.append((datetime.time(11,45), datetime.time(12,15), "A"))
         # lunchtimes.append((datetime.time(12,25), datetime.time(12,55), "B"))
         # lunchtimes.append((datetime.time(13,5), datetime.time(13,35), "C"))
@@ -1072,7 +1078,6 @@ def update_course_time(dayoverride: typing.Optional[int] = None):
         coursetimes.append((datetime.time(10,25), datetime.time(11,40), 4.5, False))
         coursetimes.append((datetime.time(11,40), datetime.time(13,35), 7, True))
         coursetimes.append((datetime.time(13,35), datetime.time(14,55), 9, False))
-        courseday = 3
         # lunchtimes.append((datetime.time(11,45), datetime.time(12,15), "A"))
         # lunchtimes.append((datetime.time(12,25), datetime.time(12,55), "B"))
         # lunchtimes.append((datetime.time(13,5), datetime.time(13,35), "C"))
@@ -1090,7 +1095,6 @@ def update_course_time(dayoverride: typing.Optional[int] = None):
         coursetimes.append((datetime.time(12,40), datetime.time(13,25), 7, False))
         coursetimes.append((datetime.time(13,25), datetime.time(14,10), 8, False))
         coursetimes.append((datetime.time(14,10), datetime.time(14,55), 9, False))
-        courseday = 4
         # lunchtimes.append((datetime.time(10,55), datetime.time(11,25), "A"))
         # lunchtimes.append((datetime.time(11,32), datetime.time(12,2), "B"))
         # lunchtimes.append((datetime.time(12,10), datetime.time(12,40), "C"))
@@ -1103,7 +1107,6 @@ def update_course_time(dayoverride: typing.Optional[int] = None):
         coursetimes.append((datetime.time(8,45), datetime.time(9,40), 4, False))
         coursetimes.append((datetime.time(9,40), datetime.time(11,25), 6, True))
         coursetimes.append((datetime.time(11,25), datetime.time(12,20), 8, False))
-        courseday = 6
         # lunchtimes.append((datetime.time(9,45), datetime.time(10,15), "A"))
         # lunchtimes.append((datetime.time(10,20), datetime.time(10,50), "B"))
         # lunchtimes.append((datetime.time(10,55), datetime.time(11,25), "C"))
@@ -1116,7 +1119,6 @@ def update_course_time(dayoverride: typing.Optional[int] = None):
         coursetimes.append((datetime.time(8,45), datetime.time(9,40), 5, False))
         coursetimes.append((datetime.time(9,40), datetime.time(11,25), 7, True))
         coursetimes.append((datetime.time(11,25), datetime.time(12,20), 9, False))
-        courseday = 7
         # lunchtimes.append((datetime.time(9,45), datetime.time(10,15), "A"))
         # lunchtimes.append((datetime.time(10,20), datetime.time(10,50), "B"))
         # lunchtimes.append((datetime.time(10,55), datetime.time(11,25), "C"))
@@ -1126,7 +1128,6 @@ def update_course_time(dayoverride: typing.Optional[int] = None):
     else:
         coursetimes = None
         lunchtimes = None
-        courseday = 5
     app.logger.info('Course times updated')
     app.logger.debug('Coursetimes is none' if coursetimes is None else 'Coursetimes is not none')
 
