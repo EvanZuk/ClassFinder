@@ -3,7 +3,7 @@ from flask_apscheduler import APScheduler
 from flask_limiter import Limiter, HEADERS
 import typing, platform, shutil, requests
 from werkzeug.middleware.proxy_fix import ProxyFix
-import json, functools, datetime, re, os, waitress, logging, random, smtplib
+import json, functools, datetime, re, os, waitress, logging, random, smtplib, sys
 from flask_wtf.csrf import CSRFProtect
 from flask_bcrypt import Bcrypt
 from threading import Lock
@@ -15,7 +15,7 @@ app.logger.info('Starting ClassFinder...')
 devmode = not platform.uname()[1] == 'classfinder'
 app.logger.setLevel(logging.INFO if not devmode else logging.DEBUG)
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for=2)
-app.secret_key = os.environ['APP_KEY'].encode('utf-8')
+app.secret_key = os.environ.get("APP_KEY", "HOUFSyf938oJjg893y)(S*_)").encode('utf-8')
 smtp_server = os.environ.get('SMTP_SERVER', 'mail.smtp2go.com')
 smtp_port = int(os.environ.get('SMTP_PORT', 2525))
 smtp_user = os.environ.get('SMTP_USER', 'oneauth')
@@ -30,23 +30,32 @@ limiter.header_mapping = {
     HEADERS.RETRY_AFTER: "X-RateLimit-Retry-After"
 }
 bcrypt = Bcrypt(app)
-csrf = CSRFProtect(app)
 scheduler = APScheduler()
 jsondir = os.environ.get('CLASSFINDER_DATA_DIR', '')
-try:
-    with open(f'{jsondir}users.json', 'r') as f: users = json.load(f)
-except FileNotFoundError:
-    users = {'trwy': {'password': bcrypt.generate_password_hash('passwordtrwy'.encode('utf-8')).decode('utf-8'), 'courses': ["p1"], "createdby": "server"}}
-    with open(f'{jsondir}users.json', 'w') as f: json.dump(users, f)
-try:
-    with open(f'{jsondir}courses.json', 'r') as f: courses = json.load(f)
-except FileNotFoundError:
-    courses = {"p1": {"name": "Test Course", "room": "Test Room", "period": 1, "hidden": False, "lunch": None, "canvasid": None}}
-    with open(f'{jsondir}courses.json', 'w') as f: json.dump(courses, f)
-try:
-    with open(f'{jsondir}requests.json', 'r') as f: requests = json.load(f)
-except FileNotFoundError:
-    with open(f'{jsondir}requests.json', 'w') as f: f.write('{"feature": {}, "bug": {}, "other": {}}')
+if not 'pytest' in sys.modules:
+    csrf = CSRFProtect(app)
+    try:
+        with open(f'{jsondir}users.json', 'r') as f: users = json.load(f)
+    except FileNotFoundError:
+        users = {'trwy': {'password': bcrypt.generate_password_hash('passwordtrwy'.encode('utf-8')).decode('utf-8'), 'courses': ["p1"], "createdby": "server"}}
+        with open(f'{jsondir}users.json', 'w') as f: json.dump(users, f)
+    try:
+        with open(f'{jsondir}courses.json', 'r') as f: courses = json.load(f)
+    except FileNotFoundError:
+        courses = {"p1": {"name": "Test Course", "room": "Test Room", "period": 1, "hidden": False, "lunch": None, "canvasid": None}}
+        with open(f'{jsondir}courses.json', 'w') as f: json.dump(courses, f)
+    try:
+        with open(f'{jsondir}requests.json', 'r') as f: requests = json.load(f)
+    except FileNotFoundError:
+        with open(f'{jsondir}requests.json', 'w') as f: f.write('{"feature": {}, "bug": {}, "other": {}}')
+        requests = {'feature': {}, 'bug': {}, 'other': {}}
+else:
+    class csrf:
+        @staticmethod
+        def exempt(func):
+            return func
+    users = {'pytest': {'password': bcrypt.generate_password_hash('passwordpytestAFu328DF28f'.encode('utf-8')).decode('utf-8'), 'courses': ["p1"], "createdby": "server"}}
+    courses = {"p1": {"name": "Test Course", "room": "Test Room", "period": 1, "hidden": True, "lunch": "B", "canvasid": 1234}}
     requests = {'feature': {}, 'bug': {}, 'other': {}}
 backup_locks = {'courses': Lock(),'users': Lock(), 'requests': Lock()}
 coursetimes = []
@@ -60,6 +69,10 @@ resetpasswordemailids = {}
 adminmessages = [f"Server started at {datetime.datetime.now().strftime('%m %d, %Y %H:%M:%S')}"]
 
 def backup(selection: typing.Literal['courses', 'users', 'requests' 'all'] = 'all', bypass: bool = False):
+    if 'pytest' in sys.modules:
+        app.logger.debug('Backup bypassed')
+        print('Backup bypassed by pytest')
+        return True
     if selection in backup_locks:
         lock = backup_locks[selection]
         if not lock.acquire(blocking=not bypass):
@@ -259,7 +272,7 @@ def messageadmin(username):
 
 @app.route('/api/v1/link/', methods=['POST', 'GET'])
 @csrf.exempt
-@limiter.limit("2/minute", key_func=lambda: request.remote_addr, exempt_when=lambda: request.method == 'POST')
+@limiter.limit("2/minute", key_func=lambda: request.remote_addr, exempt_when=lambda: request.method == 'POST' or 'pytest' in sys.modules)
 def link():
     if request.method == 'POST':
         code = request.json.get('code', None)
@@ -372,7 +385,9 @@ def signup():
         server.quit()
     else:
         app.logger.info(f'Email verification link: https://class.trey7658.com/signup/{emailid}')
+        return jsonify({'status': 'success', 'message': 'Email sent', 'emailid': emailid})
     return jsonify({'status': 'success', 'message': 'Email sent'})
+
 @app.route('/canvas/<path>/')
 @verify_user
 def canvaswithPath(username, path):
@@ -528,7 +543,7 @@ def deleterequest(username):
     return jsonify({'status': 'success', 'message': 'Request deleted'})
 
 @app.route('/api/v1/login/', methods=['POST'])
-@limiter.limit("2/minute", key_func=lambda: request.remote_addr)
+@limiter.limit("2/minute", key_func=lambda: request.remote_addr, exempt_when=lambda: 'pytest' in sys.modules)
 @csrf.exempt
 def apilogin():
     username = request.json['username']
