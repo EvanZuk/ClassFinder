@@ -99,10 +99,12 @@ def backup(selection: typing.Literal['courses', 'users', 'requests', 'all'] = 'a
             shutil.copyfile(f'{jsondir}{selection}.json', f'{jsondir}{selection}.bak.json')
         except PermissionError:
             app.logger.error(f'Permission error while copying backup {selection}')
+        except FileNotFoundError:
+            app.logger.error(f'File not found while copying backup {selection}')
         try:
             if selection == 'courses':
                 globals()['courses'] = {(course['room'] if course['room'] != "N/A" else "") + 'p' + str(course['period']): course for course in sorted(globals()['courses'].values(), key=lambda x: x['period'])}
-                globals()['courses'] = sorted(globals()['courses'].values(), key=lambda x: x['period'])
+                globals()['courses'] = dict(sorted(globals()['courses'].items(), key=lambda item: item[1]['period']))
             with open(f'{jsondir}{selection}.json', 'w', encoding="UTF-8") as file:
                 json.dump(globals()[selection], file, indent=4)
         except PermissionError:
@@ -474,7 +476,6 @@ def robots():
     return "User-agent: *\nDisallow: /"
 
 @app.route('/AddCourseBulk.gif')
-@verify_user
 def addcoursebulk():
     return app.send_static_file('AddCourseBulk.gif')
 
@@ -734,7 +735,7 @@ def account(username):
     for classn in [courses[course] for course in users[username]['courses']]:
         classn['users'] = get_users_with_class(classn['room']+'p'+str(classn['period']))
         newclasses.append(classn)
-    return render_template('account.html', username=username, devmode=devmode, classcount=len(users[username]['courses']), showcanvasid=len(newcourses) == len(users[username]['courses']), messages=usermessages[username] if username in usermessages else [], classes=newclasses, canvas_url=canvas_url)
+    return render_template('account.html', username=username, devmode=devmode, classcount=len(users[username]['courses']), showcanvasid=len(newcourses) == len(users[username]['courses']), messages=usermessages[username] if username in usermessages else [], classes=newclasses, canvas_url=canvas_url, p='p')
 
 @app.route('/logout/', methods=['POST', 'GET'])
 def logout():
