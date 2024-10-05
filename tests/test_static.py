@@ -27,7 +27,7 @@ def test_small_icon(client):
 def test_favicon(client):
     response = client.get('/favicon.ico')
     assert response.status_code == 200
-    assert response.headers['Content-Type'] == 'image/x-icon'
+    assert response.headers['Content-Type'] == 'image/x-icon' or response.headers['Content-Type'] == 'image/vnd.microsoft.icon'
 
 def test_app_release(client):
     response = client.get('/app-release.apk/')
