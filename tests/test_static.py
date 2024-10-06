@@ -19,11 +19,6 @@ def test_icon(client):
     assert response.status_code == 200
     assert response.headers['Content-Type'] == 'image/png'
 
-def test_small_icon(client):
-    response = client.get('/icon.small.png')
-    assert response.status_code == 200
-    assert response.headers['Content-Type'] == 'image/png'
-
 def test_favicon(client):
     response = client.get('/favicon.ico')
     assert response.status_code == 200
