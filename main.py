@@ -63,7 +63,7 @@ if 'pytest' not in sys.modules:
     try:
         with open(f'{jsondir}courses.json', 'r', encoding='UTF-8') as f: courses = json.load(f)
     except FileNotFoundError:
-        courses = {"p1": {"name": "Test Course", "room": "Test Room", "period": 1, "hidden": False, "lunch": None, "canvasid": None}}
+        courses = {"p1": {"name": "Test Course", "room": "N/A", "period": 1, "hidden": False, "lunch": None, "canvasid": None}}
         with open(f'{jsondir}courses.json', 'w', encoding='UTF-8') as f: json.dump(courses, f)
     try:
         with open(f'{jsondir}requests.json', 'r', encoding='UTF-8') as f: requests = json.load(f)
@@ -76,7 +76,7 @@ else:
         def exempt(func):
             return func
     users = {'pytest': {'password': bcrypt.generate_password_hash(('passwordpytest' + app.secret_key.decode()).encode('utf-8')).decode('utf-8'), 'courses': ["p1"], "createdby": "server"}}
-    courses = {"p1": {"name": "Test Course", "room": "Test Room", "period": 1, "hidden": True, "lunch": "B", "canvasid": 1234}}
+    courses = {"p1": {"name": "Test Course", "room": "N/A", "period": 1, "hidden": True, "lunch": "B", "canvasid": 1234}}
     requests = {'feature': {}, 'bug': {}, 'other': {}}
 backup_locks = {'courses': Lock(),'users': Lock(), 'requests': Lock()}
 coursetimes = []
@@ -87,7 +87,7 @@ usermessages = {}
 emailids = {}
 adminmessages = [f"Server started at {datetime.datetime.now().strftime('%m %d, %Y %H:%M:%S')}"]
 
-async def send_ntfy(message: str, topic: str = ntfy_topic):
+async def send_ntfy(message: str, topic: str = ntfy_topic, title: str = None, markdown: bool = False):
     """Send a message to the ntfy server
     message: The message to send
     topic: The topic to send the message to"""
@@ -95,16 +95,18 @@ async def send_ntfy(message: str, topic: str = ntfy_topic):
         app.logger.debug('NTFY bypassed')
         print('NTFY bypassed by pytest')
         return
-    if devmode:
-        app.logger.debug('NTFY bypassed in devmode')
-        return
-    try:
-        async with aiohttp.ClientSession() as session:
-            async with session.post(f'{ntfy_url}/{topic}', data=message) as response:
-                if response.status != 200:
-                    app.logger.error('Failed to send message to ntfy server')
-    except requests.exceptions.ConnectionError:
-        app.logger.error('Could not connect to ntfy server')
+    # if devmode:
+    #     app.logger.debug('NTFY bypassed in devmode')
+    #     return
+    async with aiohttp.ClientSession() as session:
+        headers = {}
+        if title is not None:
+            headers['Title'] = title
+        if markdown:
+            headers['Markdown'] = 'yes'
+        async with session.post(f'{ntfy_url}/{topic}', data=message, headers=headers) as response:
+            if response.status != 200:
+                app.logger.error(f'Failed to send ntfy message: {response.status}')
 
 def backup(selection: typing.Literal['courses', 'users', 'requests', 'all'] = 'all', bypass: bool = False):
     """Backup the data to the json files
@@ -234,6 +236,7 @@ def sendmessage(message: str, username: str = 'admin'):
     if username == 'admin':
         if not message in adminmessages:
             adminmessages.append(message)
+        asyncio.run(send_ntfy(title='New admin message', message=message))
     elif username in usermessages:
         if not message in usermessages[username]:
             usermessages[username].append(message)
@@ -417,7 +420,7 @@ def signupwithid(emailid):
         response = jsonify({'status': 'success', 'message': 'Account created'})
         response.set_cookie('token', token, httponly=True, max_age=604800)
         response.set_cookie('username', username, httponly=True, max_age=604800)
-        asyncio.run(send_ntfy(f'New user created: {username} ({emailids[emailid]})'))
+        asyncio.run(send_ntfy(title='New account created', message=f'Username: {username}\nEmail: {emailids[emailid]}'))
         backup('users')
         del emailids[emailid]
         return response
@@ -961,7 +964,7 @@ def admincreateaccount(username):
         response.set_cookie('username', username, httponly=True, max_age=604800)
         response.set_cookie('admtoken', request.cookies['token'], httponly=True, max_age=604800)
         response.set_cookie('admusername', request.cookies['username'], httponly=True, max_age=604800)
-    asyncio.run(send_ntfy(f'New user created by {requsername}: {username} ({str(email)})'))
+    asyncio.run(send_ntfy(title='New account created by admin', message=f'Created By: {requsername}\nUsername: {username}\nEmail: {email}'))
     return response
 
 @app.route('/admin/deletecourse/', methods=['POST', 'GET'])
