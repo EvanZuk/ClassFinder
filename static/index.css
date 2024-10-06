@@ -57,7 +57,7 @@ body {
     text-align: center;
     transition: background-color 0.3s;
 }
-.class[onclick]:hover {
+.class[onclick]:hover, .user[onclick]:hover {
     background-color: var(--tertiary-color);
 }
 #loginForm {
