@@ -19,11 +19,21 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
-          cache: 'pip'
-      - name: Install project dependencies
-        run: pip install -r requirements.txt
+      - name: Cache Python packages
+        uses: actions/cache@v3
+        with:
+          path: ~/.cache/pip
+          key: ${{ runner.os }}-pip-${{ hashFiles('/requirements.txt') }}
+          restore-keys: |
+            ${{ runner.os }}-pip-
+      - name: Set up virtual environment
+        run: python -m venv venv
+      - name: Activate virtual environment
+        run: source venv/bin/activate
       - name: Install pytest dependencies
         run: pip install pytest pytest-md pytest-emoji
+      - name: Install project dependencies
+        run: pip install -r requirements.txt
       - uses: pavelzw/pytest-action@v2
         with:
           emoji: false
