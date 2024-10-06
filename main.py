@@ -300,10 +300,6 @@ def index_css():
 def icon():
     return app.send_static_file('icon.png')
 
-@app.route('/icon.small.png')
-def iconsmall():
-    return app.send_static_file('icon.small.png')
-
 @app.route('/favicon.ico')
 def favicon():
     return app.send_static_file('favicon.ico')
