@@ -302,7 +302,7 @@ def icon():
 
 @app.route('/favicon.ico')
 def favicon():
-    return app.send_static_file('favicon.ico')
+    return app.send_static_file('favicondev.ico' if devmode else 'favicon.ico')
 
 @app.route('/app-release.apk/')
 def apk():
