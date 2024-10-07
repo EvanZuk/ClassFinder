@@ -75,6 +75,9 @@ else:
         @staticmethod
         def exempt(func):
             return func
+    @app.context_processor
+    def inject_csrf_token():
+        return dict(csrf_token=lambda: 'pytest-disabled')
     users = {'pytest': {'password': bcrypt.generate_password_hash(('passwordpytest' + app.secret_key.decode()).encode('utf-8')).decode('utf-8'), 'courses': ["p1"], "createdby": "server"}}
     courses = {"p1": {"name": "Test Course", "room": "N/A", "period": 1, "hidden": True, "lunch": "B", "canvasid": 1234}}
     requests = {'feature': {}, 'bug': {}, 'other': {}}
