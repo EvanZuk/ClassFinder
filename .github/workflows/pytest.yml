@@ -40,7 +40,3 @@ jobs:
       - name: Install project dependencies
         run: pip install -r requirements.txt
       - uses: pavelzw/pytest-action@v2
-        with:
-          emoji: false
-          verbose: false
-          job-summary: true
