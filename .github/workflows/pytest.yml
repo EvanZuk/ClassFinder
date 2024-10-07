@@ -23,11 +23,14 @@ jobs:
         uses: actions/cache@v3
         with:
           path: ~/.cache/pip
-          key: ${{ runner.os }}-pip-${{ hashFiles('/requirements.txt') }}
+          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
           restore-keys: |
             ${{ runner.os }}-pip-
       - name: Set up virtual environment
-        run: python -m venv venv
+        run: |
+          if [ ! -d "venv" ]; then
+            python -m venv venv
+          fi
       - name: Activate virtual environment
         run: source venv/bin/activate
       - name: Install pytest dependencies
