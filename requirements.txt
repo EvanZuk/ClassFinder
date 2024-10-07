@@ -7,3 +7,4 @@ wheel
 waitress
 requests
 flask-cors
+aiohttp
