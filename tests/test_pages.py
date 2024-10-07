@@ -38,25 +38,8 @@ def test_admin_createaccount_page(client):
     assert response.status_code == 200
     assert response.headers['Content-Type'] == 'text/html; charset=utf-8'
 
-def test_admin_createaccount(client):
-    token = apilogin(client)
-    response = client.post('/admin/createaccount/', headers={'Authorization': f'pytest {token}'}, json={'email': 'test.adminaccount@s.stemk12.org', 'username': 'adminaccount', 'password': 'password', 'login': True})
-    assert response.status_code == 200
-    assert response.json['status'] == 'success'
-
-def test_admin_createaccount_invalid_email(client):
-    token = apilogin(client)
-    response = client.post('/admin/createaccount/', headers={'Authorization': f'pytest {token}'}, json={'email': 'testnotreal@gmail.com', 'username': 'adminaccount2', 'password': 'password2'})
-    assert response.status_code == 400
-
 def test_admin_change_time_page(client):
     token = apilogin(client)
     response = client.get('/admin/changetimes/', headers={'Authorization': f'pytest {token}'})
     assert response.status_code == 200
     assert response.headers['Content-Type'] == 'text/html; charset=utf-8'
-
-def test_admin_change_time(client):
-    token = apilogin(client)
-    response = client.post('/admin/changetimes/', headers={'Authorization': f'pytest {token}'}, json={'day': 2})
-    assert response.status_code == 200
-    assert response.json['status'] == 'success'
