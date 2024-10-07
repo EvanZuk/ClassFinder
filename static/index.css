@@ -27,7 +27,6 @@ body {
     padding: 10px 20px;
     background-color: var(--navbar-color);
     font-weight: bold;
-    position: sticky;
     top: 0;
     z-index: 1000;
 }
@@ -115,4 +114,9 @@ p.classuser {
     border-radius: 5px;
     text-align: center;
     transition: background-color 0.3s;
+}
+@media (min-height: 200px) {
+    #navbar {
+        position: sticky;
+    }
 }
