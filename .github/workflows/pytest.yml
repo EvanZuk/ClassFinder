@@ -1,4 +1,4 @@
-name: Run pytest
+name: Pytest
 
 on: [push]
 
@@ -41,6 +41,4 @@ jobs:
         run: pip install -r requirements.txt
       - uses: pavelzw/pytest-action@v2
         with:
-          emoji: false
-          verbose: false
-          job-summary: true
+          click-to-expand: false

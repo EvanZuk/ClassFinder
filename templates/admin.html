@@ -45,6 +45,7 @@
             {% if not username == currentuser %}
                 <div class="user" id="{{username}}" onclick="login(event, '{{username}}')" style="cursor: pointer;">
                     <h2 style="display:inline; cursor: pointer;">{{username}}</h2>
+                    <p style="color: grey;display:inline;">{{ user.email }}</p>
                     <button style="background-color: red; color:white; display:absolute; margin-left: auto;margin-right: 0;" onclick="deleteUser(event, '{{username}}')">Remove</button>
                 </div>
                 {%endif%}
