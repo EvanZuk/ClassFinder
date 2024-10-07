@@ -17,7 +17,7 @@ services:
       - ./data:/data
     environment:
       - CLASSFINDER_DATA_DIR=/data/
-      - APP_KEY=BasicRandomKey
+      - APP_KEY=BasicRandomSecureKey
       - TZ=America/Denver
       - SMTP_PASSWORD=SMTP_PASSWORD
       - SMTP_USER=SMTP_USERNAME
