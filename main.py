@@ -88,6 +88,7 @@ admins = ['trwy'] if 'pytest' not in sys.modules else ['pytest']
 linkcodes = {}
 usermessages = {}
 emailids = {}
+last_day_of_semeseter = datetime.datetime(2024, 11, 22, 14, 55)
 adminmessages = [f"Server started at {datetime.datetime.now().strftime('%m %d, %Y %H:%M:%S')}"]
 
 async def send_ntfy(message: str, topic: str = ntfy_topic, title: str = None, markdown: bool = False):
@@ -265,17 +266,15 @@ def home(username):
 def get_next_class():
     if not coursetimes is None:
         current_period = get_current_period()
-    #     next_period = get_current_period()[2] + 1
-    #     next_class = datetime.datetime.combine(datetime.datetime.today(), coursetimes[next_period][0]).strftime('%m %d, %Y %H:%M:%S') if next_period < len(coursetimes) else '08 2, 3000 14:55:00'
         if current_period != (datetime.time(0, 0), datetime.time(0, 0), 0, None):
             app.logger.debug(f'Currentperiod: {current_period}')
             next_class = (datetime.datetime.combine(datetime.datetime.today(), current_period[1])) + datetime.timedelta(seconds=3)
         else:
             app.logger.debug("No more classes today")
-            next_class = datetime.datetime(3000, 8, 2, 14, 55)
+            next_class = last_day_of_semeseter
     else:
-        current_period = (datetime.datetime(3000, 8, 2, 7, 50), datetime.datetime(3000, 8, 2, 14, 55), 0)
-        next_class = datetime.datetime(3000, 8, 2, 14, 55)
+        current_period = (last_day_of_semeseter, last_day_of_semeseter, 0)
+        next_class = last_day_of_semeseter
     return current_period,next_class
 
 def get_user_next_class(username):
@@ -938,7 +937,7 @@ def adminsetcanvasid(username):
 def timer(username):
     current_period, next_class = get_user_next_class(username) if username is not None else get_next_class()
     print(next_class)
-    if (coursetimes is not None) and (current_period is not None) and (next_class is not None) and (next_class != datetime.datetime(3000, 8, 2, 14, 55)):
+    if (coursetimes is not None) and (current_period is not None) and (next_class is not None) and (next_class != last_day_of_semeseter):
         return render_template('timer.html', currentperiod=current_period[2], nextclass=next_class.strftime('%Y-%m-%d %H:%M:%S') if isinstance(next_class, datetime.datetime) else next_class)
     return redirect('/')
 
