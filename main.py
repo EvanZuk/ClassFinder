@@ -147,21 +147,21 @@ def backup(selection: typing.Literal['courses', 'users', 'requests', 'all'] = 'a
         return False
     return True
 
-def verify_user(func=None, *, required: bool = True, onfail=redirect('/login/'), allowedusers: typing.List[str] = None):
+def verify_user(func=None, *, required: bool = True, onfail=redirect('/login/'), allowedusers: typing.Callable = None):
     """Verify the user is logged in
     required: Whether the user must be logged in
     onfail: The response to return if the user is not logged in
     allowedusers: A list of users allowed to access the function"""
-
     def decorator(func):
         @functools.wraps(func)
         def decorated_function(*args, **kwargs):
             username = authenticate()
+            allowed_users_list = allowedusers() if callable(allowedusers) else allowedusers
             if required:
                 if username is None:
                     app.logger.debug('Not logged in')
                     return onfail
-                if allowedusers and username not in allowedusers:
+                if allowed_users_list and username not in allowed_users_list:
                     app.logger.debug('Not allowed: ' + username)
                     return onfail
             return func(username, *args, **kwargs)
@@ -338,7 +338,7 @@ def apk():
     return app.send_static_file('app-release.apk')
 
 @app.route('/message/', methods=['POST', 'GET'])
-@verify_user(allowedusers=admins)
+@verify_user(allowedusers=lambda: admins)
 def messageadmin(username):
     if request.method == 'GET':
         return render_template('message.html', users=list(users))
@@ -372,14 +372,14 @@ def apimessages(username):
 
 # pylint disable=unused-argument
 @app.route('/api/v1/adminmessages/', methods=['GET'])
-@verify_user(allowedusers=admins, onfail=({'status': 'failure', 'message': 'Not logged in'}, 401))
+@verify_user(allowedusers=lambda: admins, onfail=({'status': 'failure', 'message': 'Not logged in'}, 401))
 @csrf.exempt
 def apiadminmessages(username):
     return jsonify({'status': 'success', 'messages': adminmessages})
 
 # pylint disable=unused-argument
 @app.route('/api/v1/requests/', methods=['GET'])
-@verify_user(allowedusers=admins, onfail=({'status': 'failure', 'message': 'Not logged in'}, 401))
+@verify_user(allowedusers=lambda: admins, onfail=({'status': 'failure', 'message': 'Not logged in'}, 401))
 @csrf.exempt
 def apirequests(username):
     return jsonify({'status': 'success', 'requests': requests})
@@ -534,7 +534,7 @@ def removemessage(username):
 
 # pylint disable=unused-argument
 @app.route('/admin/removemessage/', methods=['DELETE'])
-@verify_user(allowedusers=admins)
+@verify_user(allowedusers=lambda: admins)
 def adminremovemessage(username):
     if request.json['message'] in adminmessages:
         adminmessages.remove(request.json['message'])
@@ -605,7 +605,7 @@ def requestform(username):
 
 # pylint disable=unused-argument
 @app.route('/admin/deleterequest/', methods=['DELETE'])
-@verify_user(allowedusers=admins)
+@verify_user(allowedusers=lambda: admins)
 def deleterequest(username):
     request_type = request.json['type']
     request_id = request.json['id']
@@ -774,13 +774,13 @@ def logout():
     return response
 
 @app.route('/admin/')
-@verify_user(allowedusers=admins)
+@verify_user(allowedusers=lambda: admins)
 def admin(username):
     current_period = get_current_period()
     return render_template('admin.html', username=username, dayoff=False, classes=courses, p='p', currentperiod=current_period[2], requests=requests, messages=adminmessages, users=users, currentuser=username)
 
 @app.route('/admin/deleteuser/', methods=['DELETE'])
-@verify_user(allowedusers=admins)
+@verify_user(allowedusers=lambda: admins)
 def deleteuser(username):
     if request.json['username'] in users:
         app.logger.info(f'Deleting user {request.json["username"]} by {username}')
@@ -790,7 +790,7 @@ def deleteuser(username):
     return jsonify({'status': 'failure', 'message': 'User does not exist'}), 400
 
 @app.route('/admin/backup', methods=['POST', 'GET'])
-@verify_user(allowedusers=admins)
+@verify_user(allowedusers=lambda: admins)
 def adminbackup(username):
     app.logger.info('backing up from http request by ' + username)
     return {'status': backup('all')}
@@ -943,7 +943,7 @@ def timer(username):
     return redirect('/')
 
 @app.route('/admin/createaccount/', methods=['POST', 'GET'])
-@verify_user(allowedusers=admins)
+@verify_user(allowedusers=lambda: admins)
 def admincreateaccount(username):
     requsername= username
     if request.method == 'GET':
@@ -971,7 +971,7 @@ def admincreateaccount(username):
     return response
 
 @app.route('/admin/deletecourse/', methods=['POST', 'GET'])
-@verify_user(allowedusers=admins)
+@verify_user(allowedusers=lambda: admins)
 def admindeletecourse(username):
     if request.method == 'GET':
         return render_template('admin.html', username=username)
@@ -988,7 +988,7 @@ def admindeletecourse(username):
     return jsonify({'status': 'success', 'message': 'Course deleted'})
 
 @app.route('/admin/login/', methods=['POST', 'GET'])
-@verify_user(allowedusers=admins)
+@verify_user(allowedusers=lambda: admins)
 def adminlogin(username):
     # allow switching to other user without password.
     if request.method == 'GET':
@@ -1007,7 +1007,7 @@ def adminlogin(username):
 
 # pylint: disable=unused-argument
 @app.route('/admin/addtoall/')
-@verify_user(allowedusers=admins)
+@verify_user(allowedusers=lambda: admins)
 def addtoall(username):
     key = request.args.get('key')
     if not key:
@@ -1020,7 +1020,7 @@ def addtoall(username):
 
 # pylint: disable=unused-argument
 @app.route('/admin/removefromall/')
-@verify_user(allowedusers=admins)
+@verify_user(allowedusers=lambda: admins)
 def removefromall(username):
     key = request.args.get('key')
     if not key:
@@ -1033,7 +1033,7 @@ def removefromall(username):
 
 # pylint: disable=unused-argument
 @app.route('/admin/courses/')
-@verify_user(allowedusers=admins)
+@verify_user(allowedusers=lambda: admins)
 def admincourses(username):
     return jsonify({'status': 'success', 'courses': courses})
 
@@ -1195,7 +1195,7 @@ def get_lunch():
     return None
 
 @app.route('/admin/changetimes/', methods=['POST', 'GET'])
-@verify_user(allowedusers=admins)
+@verify_user(allowedusers=lambda: admins)
 def adminchangetimes(username):
     if request.method == 'GET':
         return render_template('changetimes.html', username=username)
