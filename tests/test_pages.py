@@ -43,3 +43,9 @@ def test_admin_change_time_page(client):
     response = client.get('/admin/changetimes/', headers={'Authorization': f'pytest {token}'})
     assert response.status_code == 200
     assert response.headers['Content-Type'] == 'text/html; charset=utf-8'
+
+def test_timer(client):
+    token = apilogin(client)
+    response = client.get('/timer/', headers={'Authorization': f'pytest {token}'})
+    assert response.status_code == 200
+    assert response.headers['Content-Type'] == 'text/html; charset=utf-8'

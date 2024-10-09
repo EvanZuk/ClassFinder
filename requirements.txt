@@ -8,3 +8,4 @@ waitress
 requests
 flask-cors
 aiohttp
+freezegun

@@ -23,6 +23,7 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 from flask_wtf.csrf import CSRFProtect
 from flask_bcrypt import Bcrypt
 from markupsafe import escape
+from freezegun import freeze_time
 import waitress
 import aiohttp
 app = Flask(__name__, template_folder='templates', static_folder='static')
@@ -77,9 +78,10 @@ else:
             return func
     @app.context_processor
     def inject_csrf_token():
-        return dict(csrf_token=lambda: 'pytest-disabled')
-    users = {'pytest': {'password': bcrypt.generate_password_hash(('passwordpytest' + app.secret_key.decode()).encode('utf-8')).decode('utf-8'), 'courses': ["p1"], "createdby": "server"}}
-    courses = {"p1": {"name": "Test Course", "room": "N/A", "period": 1, "hidden": True, "lunch": "B", "canvasid": 1234}}
+        return dict(csrf_token=lambda: 'pytest-disabled') 
+    freeze_time("2024-10-08 10:55:00").start()
+    users = {'pytest': {'password': bcrypt.generate_password_hash(('passwordpytest' + app.secret_key.decode()).encode('utf-8')).decode('utf-8'), 'courses': ["p1", "E123p2", "E123p3", "E123p4", "E123p5", "E123p6", "E123p7", "E123p8", "E123p9"], "createdby": "server"}}
+    courses = {"p1": {"name": "Intermission", "room": "N/A", "period": 1, "hidden": True, "lunch": "B", "canvasid": None}, "E123p2": {"name": "Test Course period 2", "room": "E123", "period": 2, "hidden": False, "lunch": None, "canvasid": 5235}, "E123p3": {"name": "Test Course period 3", "room": "E123", "period": 3, "hidden": False, "lunch": None, "canvasid": 5236}, "E123p4": {"name": "Test Course period 4", "room": "E123", "period": 4, "hidden": False, "lunch": None, "canvasid": 5237}, "E123p5": {"name": "Test Course period 5", "room": "E123", "period": 5, "hidden": False, "lunch": None, "canvasid": 5238}, "E123p6": {"name": "Test Course period 6", "room": "E123", "period": 6, "hidden": False, "lunch": 'B', "canvasid": 5239}, "E123p7": {"name": "Test Course period 7", "room": "E123", "period": 7, "hidden": False, "lunch": "C", "canvasid": 5240}, "E123p8": {"name": "Test Course period 8", "room": "E123", "period": 8, "hidden": False, "lunch": "D", "canvasid": 5241}, "E123p9": {"name": "Test Course period 9", "room": "E123", "period": 9, "hidden": False, "lunch": None, "canvasid": 5242}}
     requests = {'feature': {}, 'bug': {}, 'other': {}}
 backup_locks = {'courses': Lock(),'users': Lock(), 'requests': Lock()}
 coursetimes = []
@@ -261,14 +263,14 @@ def home(username):
         app.logger.debug("allperiods is None")
     app.logger.debug(allperiods)
     current_period, next_class = get_user_next_class(username)
-    return render_template('index.html', username=username, classes=classes, dayoff=coursetimes is None, currentperiod=current_period[2], devmode=devmode, nextclass=next_class.strftime('%m %d, %Y %H:%M:%S'), p='p', canvas_url=canvas_url)
+    return render_template('index.html', username=username, classes=classes, dayoff=coursetimes is None, currentperiod=current_period['period'], devmode=devmode, nextclass=next_class.strftime('%m %d, %Y %H:%M:%S'), p='p', canvas_url=canvas_url)
 
 def get_next_class():
     if not coursetimes is None:
         current_period = get_current_period()
         if current_period != (datetime.time(0, 0), datetime.time(0, 0), 0, None):
             app.logger.debug(f'Currentperiod: {current_period}')
-            next_class = (datetime.datetime.combine(datetime.datetime.today(), current_period[1])) + datetime.timedelta(seconds=3)
+            next_class = (datetime.datetime.combine(datetime.datetime.today(), current_period["endtime"])) + datetime.timedelta(seconds=3)
         else:
             app.logger.debug("No more classes today")
             next_class = last_day_of_semeseter
@@ -280,7 +282,7 @@ def get_next_class():
 def get_user_next_class(username):
     current_period,next_class = get_next_class()
     for course in {course: courses[course] for course in users[username]['courses']}.values():
-        if (current_period[2] == course['period']) and (current_period[3]) and course['lunch'] is not None:
+        if (current_period["period"] == course['period']) and (current_period["lunchactive"]) and course['lunch'] is not None:
             lunch = lunchtimes[course['lunch']]
             time = datetime.datetime.now().time()
             if lunch:
@@ -293,14 +295,14 @@ def get_user_next_class(username):
                     next_class = datetime.datetime.combine(datetime.datetime.today(), lunch[1])
                 else:
                     app.logger.debug('else')
-                    next_class = datetime.datetime.combine(datetime.datetime.today(), current_period[1])
+                    next_class = datetime.datetime.combine(datetime.datetime.today(), current_period["endtime"])
     return current_period,next_class
 
 def get_user_current_class(username):
     current_period, _ = get_user_next_class(username)
     for course_id in users[username]['courses']:
         course = courses[course_id]
-        if course['period'] == current_period[2]:
+        if course['period'] == current_period["period"]:
             return course
     return None
 
@@ -648,7 +650,7 @@ def apicurrentcourses(username):
     return jsonify({
         'status': 'success',
         'courses': classes,
-        'currentperiod': current_period[2],
+        'currentperiod': current_period["period"],
         'nextclass': int(next_class.timestamp()) if isinstance(next_class, datetime.datetime) else next_class,
         'dayoff': coursetimes is None
     })
@@ -660,7 +662,7 @@ def apicurrentperiod(username):
     current_period, next_class = (get_next_class()) if username is None else get_user_next_class(username)
     response = jsonify({
         'status': 'success',
-        'currentperiod': current_period[2],
+        'currentperiod': current_period["period"],
         'nextclass': int(next_class.timestamp()) if isinstance(next_class, datetime.datetime) else next_class
     })
     return response
@@ -776,7 +778,7 @@ def logout():
 @verify_user(allowedusers=lambda: admins)
 def admin(username):
     current_period = get_current_period()
-    return render_template('admin.html', username=username, dayoff=False, classes=courses, p='p', currentperiod=current_period[2], requests=requests, messages=adminmessages, users=users, currentuser=username)
+    return render_template('admin.html', username=username, dayoff=False, classes=courses, p='p', currentperiod=current_period["period"], requests=requests, messages=adminmessages, users=users, currentuser=username)
 
 @app.route('/admin/deleteuser/', methods=['DELETE'])
 @verify_user(allowedusers=lambda: admins)
@@ -938,7 +940,7 @@ def timer(username):
     current_period, next_class = get_user_next_class(username) if username is not None else get_next_class()
     print(next_class)
     if (coursetimes is not None) and (current_period is not None) and (next_class is not None) and (next_class != last_day_of_semeseter):
-        return render_template('timer.html', currentperiod=current_period[2], nextclass=next_class.strftime('%Y-%m-%d %H:%M:%S') if isinstance(next_class, datetime.datetime) else next_class)
+        return render_template('timer.html', currentperiod=current_period["period"], nextclass=next_class.strftime('%Y-%m-%d %H:%M:%S') if isinstance(next_class, datetime.datetime) else next_class)
     return redirect('/')
 
 @app.route('/admin/createaccount/', methods=['POST', 'GET'])
@@ -1148,18 +1150,36 @@ def delete_login_codes():
     linkcodes = {}
 
 def get_current_period():
+    """
+    Returns the current period information including start time, end time, period number, 
+    whether lunch is active, and the current lunch period if applicable.
+
+    Returns:
+        dict: A dictionary containing the following keys:
+            - 'starttime' (datetime.time): The start time of the current period.
+            - 'endtime' (datetime.time): The end time of the current period.
+            - 'period' (int): The current period number.
+            - 'lunchactive' (bool): Indicates if the lunch period is active.
+            - 'lunch' (str, None): The current lunch period if applicable, otherwise None.
+    """
     # Returns the current period
     # The 5th value is the current lunch
     # The 4th value is if the periods lunch time applies today
     # The 3rd value is the current period
     if coursetimes is None:
-        return (datetime.time(0, 0), datetime.time(0, 0), 0, None)
+        return {'starttime': datetime.time(0, 0), 'endtime': datetime.time(0, 0), 'period': 0, 'lunchactive': False, 'lunch': None}
     now = datetime.datetime.now().time()
     lunch = get_lunch()
     for course in coursetimes:
         if course["starttime"] <= now <= course['endtime']:
-            return course + ((lunch[1],) if lunch is not None else (None,))
-    return (datetime.time(0, 0), datetime.time(0, 0), 0, None)
+            return {
+                'starttime': course['starttime'],
+                'endtime': course['endtime'],
+                'period': course['period'],
+                'lunchactive': course['lunchactive'],
+                'lunch': lunch[1] if lunch is not None else None
+            }
+    return {'starttime': datetime.time(0, 0), 'endtime': datetime.time(0, 0), 'period': 0, 'lunchactive': False, 'lunch': None}
 
 def get_lunch():
     # Returns the current lunch period

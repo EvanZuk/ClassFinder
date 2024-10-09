@@ -10,9 +10,15 @@ def client():
     with app.test_client() as client:
         yield client
 
-def test_courses(client):
+def test_currentperiod(client):
     token = apilogin(client)
     response = client.get('/api/v1/currentperiod/', headers={'Authorization': f'pytest {token}'})
+    assert response.status_code == 200
+    assert response.json['status'] == 'success'
+
+def test_currentcourses(client):
+    token = apilogin(client)
+    response = client.get('/api/v1/currentcourses/', headers={'Authorization': f'pytest {token}'})
     assert response.status_code == 200
     assert response.json['status'] == 'success'
 
