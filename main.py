@@ -35,7 +35,7 @@ smtp_server = os.environ.get('SMTP_SERVER', 'mail.smtp2go.com')
 smtp_port = int(os.environ.get('SMTP_PORT', 2525))
 smtp_user = os.environ.get('SMTP_USER', 'oneauth')
 smtp_password = os.environ.get('SMTP_PASSWORD', '')
-ntfy_url = os.environ.get('NTFY_URL', 'http://100.113.7.57:8957')
+ntfy_url = os.environ.get('NTFY_URL', 'http://100.113.7.57:8957/')
 ntfy_topic = os.environ.get('NTFY_TOPIC', 'classfinder')
 from_addr = os.environ.get('FROM_ADDR', 'classfinder@trey7658.com')
 canvas_url = os.environ.get('CANVAS_URL', 'https://stem.instructure.com/')
@@ -91,7 +91,7 @@ emailids = {}
 last_day_of_semeseter = datetime.datetime(2024, 11, 22, 14, 55)
 adminmessages = [f"Server started at {datetime.datetime.now().strftime('%m %d, %Y %H:%M:%S')}"]
 
-async def send_ntfy(message: str, topic: str = ntfy_topic, title: str = None, markdown: bool = False):
+def send_ntfy(message: str, topic: str = ntfy_topic, title: str = None, markdown: bool = False):
     """Send a message to the ntfy server
     message: The message to send
     topic: The topic to send the message to"""
@@ -99,18 +99,12 @@ async def send_ntfy(message: str, topic: str = ntfy_topic, title: str = None, ma
         app.logger.debug('NTFY bypassed')
         print('NTFY bypassed by pytest')
         return
-    # if devmode:
-    #     app.logger.debug('NTFY bypassed in devmode')
-    #     return
-    async with aiohttp.ClientSession() as session:
-        headers = {}
-        if title is not None:
-            headers['Title'] = title
-        if markdown:
-            headers['Markdown'] = 'yes'
-        async with session.post(f'{ntfy_url}/{topic}', data=message, headers=headers) as response:
-            if response.status != 200:
-                app.logger.error(f'Failed to send ntfy message: {response.status}')
+    headers = {}
+    if title is not None:
+        headers['Title'] = title
+    if markdown:
+        headers['Markdown'] = 'yes'
+    requests.post(ntfy_url + topic, headers=headers, data=message, timeout=0.5)
 
 def backup(selection: typing.Literal['courses', 'users', 'requests', 'all'] = 'all', bypass: bool = False):
     """Backup the data to the json files
@@ -240,7 +234,7 @@ def sendmessage(message: str, username: str = 'admin'):
     if username == 'admin':
         if not message in adminmessages:
             adminmessages.append(message)
-        asyncio.create_task(send_ntfy(title='New admin message', message=message))
+        send_ntfy(title='New admin message', message=message)
     elif username in usermessages:
         if not message in usermessages[username]:
             usermessages[username].append(message)
@@ -422,7 +416,7 @@ def signupwithid(emailid):
         response = jsonify({'status': 'success', 'message': 'Account created'})
         response.set_cookie('token', token, httponly=True, max_age=604800)
         response.set_cookie('username', username, httponly=True, max_age=604800)
-        asyncio.create_task(send_ntfy(title='New account created', message=f'Username: {username}\nEmail: {emailids[emailid]}'))
+        send_ntfy(title='New account created', message=f'Username: {username}\nEmail: {emailids[emailid]}')
         backup('users')
         del emailids[emailid]
         return response
@@ -966,7 +960,7 @@ def admincreateaccount(username):
         response.set_cookie('username', username, httponly=True, max_age=604800)
         response.set_cookie('admtoken', request.cookies['token'], httponly=True, max_age=604800)
         response.set_cookie('admusername', request.cookies['username'], httponly=True, max_age=604800)
-    asyncio.create_task(send_ntfy(title='New account created by admin', message=f'Created By: {requsername}\nUsername: {username}\nEmail: {email}'))
+    send_ntfy(title='New account created by admin', message=f'Created By: {requsername}\nUsername: {username}\nEmail: {email}')
     return response
 
 @app.route('/admin/deletecourse/', methods=['POST', 'GET'])
