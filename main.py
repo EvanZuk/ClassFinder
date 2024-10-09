@@ -35,7 +35,7 @@ smtp_server = os.environ.get('SMTP_SERVER', 'mail.smtp2go.com')
 smtp_port = int(os.environ.get('SMTP_PORT', 2525))
 smtp_user = os.environ.get('SMTP_USER', 'oneauth')
 smtp_password = os.environ.get('SMTP_PASSWORD', '')
-ntfy_url = os.environ.get('NTFY_URL', 'http://10.0.0.71:8957')
+ntfy_url = os.environ.get('NTFY_URL', 'http://100.113.7.57:8957')
 ntfy_topic = os.environ.get('NTFY_TOPIC', 'classfinder')
 from_addr = os.environ.get('FROM_ADDR', 'classfinder@trey7658.com')
 canvas_url = os.environ.get('CANVAS_URL', 'https://stem.instructure.com/')
@@ -240,7 +240,7 @@ def sendmessage(message: str, username: str = 'admin'):
     if username == 'admin':
         if not message in adminmessages:
             adminmessages.append(message)
-        asyncio.run(send_ntfy(title='New admin message', message=message))
+        asyncio.create_task(send_ntfy(title='New admin message', message=message))
     elif username in usermessages:
         if not message in usermessages[username]:
             usermessages[username].append(message)
@@ -422,7 +422,7 @@ def signupwithid(emailid):
         response = jsonify({'status': 'success', 'message': 'Account created'})
         response.set_cookie('token', token, httponly=True, max_age=604800)
         response.set_cookie('username', username, httponly=True, max_age=604800)
-        asyncio.run(send_ntfy(title='New account created', message=f'Username: {username}\nEmail: {emailids[emailid]}'))
+        asyncio.create_task(send_ntfy(title='New account created', message=f'Username: {username}\nEmail: {emailids[emailid]}'))
         backup('users')
         del emailids[emailid]
         return response
@@ -966,7 +966,7 @@ def admincreateaccount(username):
         response.set_cookie('username', username, httponly=True, max_age=604800)
         response.set_cookie('admtoken', request.cookies['token'], httponly=True, max_age=604800)
         response.set_cookie('admusername', request.cookies['username'], httponly=True, max_age=604800)
-    asyncio.run(send_ntfy(title='New account created by admin', message=f'Created By: {requsername}\nUsername: {username}\nEmail: {email}'))
+    asyncio.create_task(send_ntfy(title='New account created by admin', message=f'Created By: {requsername}\nUsername: {username}\nEmail: {email}'))
     return response
 
 @app.route('/admin/deletecourse/', methods=['POST', 'GET'])
