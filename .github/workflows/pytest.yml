@@ -14,6 +14,9 @@ jobs:
       - uses: szenius/set-timezone@v1.2
         with:
           timezoneLinux: "America/Denver"
+      - name: Set date and time
+        run: |
+          date --set="8 OCT 2024 7:40:00"
       - uses: actions/checkout@v3
       - name: Set up Python ${{ matrix.python-version }}
         uses: actions/setup-python@v4

@@ -28,6 +28,12 @@ def test_to_canvas(client):
     assert response.status_code == 302
     assert response.headers['Location'].startswith('https://')
 
+def test_to_canvas_modules(client):
+    token = apilogin(client)
+    response = client.get('/canvas/modules/', headers={'Authorization': f'pytest {token}'})
+    assert response.status_code == 302
+    assert response.headers['Location'].startswith('https://')
+
 def test_home(client):
     token = apilogin(client)
     response = client.get('/', headers={'Authorization': f'pytest {token}'})
