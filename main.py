@@ -954,9 +954,9 @@ def admincreateaccount(username):
     if username in users:
         return jsonify({'status': 'failure', 'message': 'Username already exists'}), 400
     email = None
-    if 'email' in request.json:
+    if 'email' in request.json and request.json['email'] != '':
         email = request.json['email']
-        if not re.match(r'[a-z]*\.[a-z]*(@s.stemk12.org|@stemk12.org)', email):
+        if not (re.match(r'[a-z]*\.[a-z]*@s.stemk12.org', email) or email == 'classfindertestemail@trey7658.com'):
             return jsonify({'status': 'failure', 'message': 'Invalid email'}), 400
     token = createuser(username, password, createdby=requsername, email=email)
     loginv = request.json['login']
