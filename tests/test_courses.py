@@ -17,13 +17,19 @@ def test_currentperiod(client):
     response = client.get('/api/v1/currentperiod/', headers={'Authorization': f'pytest {token}'})
     assert response.status_code == 200
     assert response.json['status'] == 'success'
+    assert response.json['currentperiod'] == 2 or response.json['currentperiod'] == 3
+    assert response.json['passing'] == True
 
-@freeze_time("2024-10-10 7:35")
+@freeze_time("2024-10-10 7:28")
 def test_currentcourses(client):
     token = apilogin(client)
     response = client.get('/api/v1/currentcourses/', headers={'Authorization': f'pytest {token}'})
     assert response.status_code == 200
     assert response.json['status'] == 'success'
+    assert response.json['currentperiod'] == 1
+    assert isinstance(response.json['courses'], list)
+    assert response.json['dayoff'] == False
+    assert response.json['nextclass'] == 1728545403
 
 @freeze_time("2024-10-10 7:35")
 def test_to_canvas(client):

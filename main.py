@@ -23,7 +23,6 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 from flask_wtf.csrf import CSRFProtect
 from flask_bcrypt import Bcrypt
 from markupsafe import escape
-from freezegun import freeze_time
 import waitress
 import aiohttp
 app = Flask(__name__, template_folder='templates', static_folder='static')
@@ -78,7 +77,7 @@ else:
             return func
     @app.context_processor
     def inject_csrf_token():
-        return dict(csrf_token=lambda: 'pytest-disabled')
+        return {"csrf_token": lambda: 'pytest-disabled'}
     users = {'pytest': {'password': bcrypt.generate_password_hash(('passwordpytest' + app.secret_key.decode()).encode('utf-8')).decode('utf-8'), 'courses': ["p1", "E123p2", "E123p3", "E123p4", "E123p5", "E123p6", "E123p7", "E123p8", "E123p9"], "createdby": "server"}}
     courses = {"p1": {"name": "Intermission", "room": "N/A", "period": 1, "hidden": True, "lunch": "B", "canvasid": 123}, "E123p2": {"name": "Test Course period 2", "room": "E123", "period": 2, "hidden": False, "lunch": None, "canvasid": 5235}, "E123p3": {"name": "Test Course period 3", "room": "E123", "period": 3, "hidden": False, "lunch": None, "canvasid": 5236}, "E123p4": {"name": "Test Course period 4", "room": "E123", "period": 4, "hidden": False, "lunch": None, "canvasid": 5237}, "E123p5": {"name": "Test Course period 5", "room": "E123", "period": 5, "hidden": False, "lunch": None, "canvasid": 5238}, "E123p6": {"name": "Test Course period 6", "room": "E123", "period": 6, "hidden": False, "lunch": 'B', "canvasid": 5239}, "E123p7": {"name": "Test Course period 7", "room": "E123", "period": 7, "hidden": False, "lunch": "C", "canvasid": 5240}, "E123p8": {"name": "Test Course period 8", "room": "E123", "period": 8, "hidden": False, "lunch": "D", "canvasid": 5241}, "E123p9": {"name": "Test Course period 9", "room": "E123", "period": 9, "hidden": False, "lunch": None, "canvasid": 5242}}
     requests = {'feature': {}, 'bug': {}, 'other': {}}
@@ -185,8 +184,7 @@ def authenticate():
         if request.cookies.get('username') in users:
             if users[request.cookies.get('username')]['password'] == request.cookies.get('token'):
                 return request.cookies.get('username')
-            else:
-                app.logger.debug('Invalid token')
+            app.logger.debug('Invalid token')
         else:
             app.logger.debug('Invalid username')
     else:
@@ -197,8 +195,7 @@ def authenticate():
             if username in users:
                 if users[username]['password'] == token:
                     return username
-                else:
-                    app.logger.debug('Invalid token: ' + token)
+                app.logger.debug('Invalid token: ' + token)
             else:
                 app.logger.debug('Invalid username: ' + username)
     return None
@@ -663,7 +660,8 @@ def apicurrentperiod(username):
     response = jsonify({
         'status': 'success',
         'currentperiod': current_period["period"],
-        'nextclass': int(next_class.timestamp()) if isinstance(next_class, datetime.datetime) else next_class
+        'nextclass': int(next_class.timestamp()) if isinstance(next_class, datetime.datetime) else next_class,
+        'passing': current_period["passing"]
     })
     return response
 
@@ -1110,7 +1108,6 @@ def update_course_time(dayoverride: typing.Optional[int] = None):
         lunchtimes["A"] = (datetime.time(11,45), datetime.time(12,15))
         lunchtimes["B"] = (datetime.time(12,25), datetime.time(12,55))
         lunchtimes["C"] = (datetime.time(13,5), datetime.time(13,35))
-
     elif day == 4:
         coursetimes.append({"passing": False, "starttime": datetime.time(7, 0), "endtime": datetime.time(7, 30), "period": 1, "lunchactive": False})
         coursetimes.append({"passing": True, "starttime": datetime.time(7, 30), "endtime": datetime.time(7, 50), "period": 2, "lunchactive": False})
@@ -1181,7 +1178,8 @@ def get_current_period():
         if course["starttime"] <= now <= course['endtime']:
             course.update({'lunchactive': lunch is not None, 'lunch': lunch[0] if lunch is not None else None})
             return course
-    return {'starttime': datetime.time(0, 0), 'endtime': datetime.time(0, 0), 'period': 0, 'lunchactive': False, 'lunch': None}
+    fakecourse = {'starttime': datetime.time(0, 0), 'endtime': datetime.time(0, 0), 'period': 0, 'lunchactive': False, 'lunch': None}
+    return fakecourse
 
 def get_lunch():
     # Returns the current lunch period
