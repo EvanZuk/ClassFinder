@@ -78,8 +78,7 @@ else:
             return func
     @app.context_processor
     def inject_csrf_token():
-        return dict(csrf_token=lambda: 'pytest-disabled') 
-    freeze_time("2024-10-08 10:55:00").start()
+        return dict(csrf_token=lambda: 'pytest-disabled')
     users = {'pytest': {'password': bcrypt.generate_password_hash(('passwordpytest' + app.secret_key.decode()).encode('utf-8')).decode('utf-8'), 'courses': ["p1", "E123p2", "E123p3", "E123p4", "E123p5", "E123p6", "E123p7", "E123p8", "E123p9"], "createdby": "server"}}
     courses = {"p1": {"name": "Intermission", "room": "N/A", "period": 1, "hidden": True, "lunch": "B", "canvasid": 123}, "E123p2": {"name": "Test Course period 2", "room": "E123", "period": 2, "hidden": False, "lunch": None, "canvasid": 5235}, "E123p3": {"name": "Test Course period 3", "room": "E123", "period": 3, "hidden": False, "lunch": None, "canvasid": 5236}, "E123p4": {"name": "Test Course period 4", "room": "E123", "period": 4, "hidden": False, "lunch": None, "canvasid": 5237}, "E123p5": {"name": "Test Course period 5", "room": "E123", "period": 5, "hidden": False, "lunch": None, "canvasid": 5238}, "E123p6": {"name": "Test Course period 6", "room": "E123", "period": 6, "hidden": False, "lunch": 'B', "canvasid": 5239}, "E123p7": {"name": "Test Course period 7", "room": "E123", "period": 7, "hidden": False, "lunch": "C", "canvasid": 5240}, "E123p8": {"name": "Test Course period 8", "room": "E123", "period": 8, "hidden": False, "lunch": "D", "canvasid": 5241}, "E123p9": {"name": "Test Course period 9", "room": "E123", "period": 9, "hidden": False, "lunch": None, "canvasid": 5242}}
     requests = {'feature': {}, 'bug': {}, 'other': {}}
@@ -651,6 +650,7 @@ def apicurrentcourses(username):
         'status': 'success',
         'courses': classes,
         'currentperiod': current_period["period"],
+        'passing': current_period["passing"],
         'nextclass': int(next_class.timestamp()) if isinstance(next_class, datetime.datetime) else next_class,
         'dayoff': coursetimes is None
     })
@@ -1179,13 +1179,8 @@ def get_current_period():
     lunch = get_lunch()
     for course in coursetimes:
         if course["starttime"] <= now <= course['endtime']:
-            return {
-                'starttime': course['starttime'],
-                'endtime': course['endtime'],
-                'period': course['period'],
-                'lunchactive': course['lunchactive'],
-                'lunch': lunch[1] if lunch is not None else None
-            }
+            course.update({'lunchactive': lunch is not None, 'lunch': lunch[0] if lunch is not None else None})
+            return course
     return {'starttime': datetime.time(0, 0), 'endtime': datetime.time(0, 0), 'period': 0, 'lunchactive': False, 'lunch': None}
 
 def get_lunch():
