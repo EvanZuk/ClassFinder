@@ -15,7 +15,7 @@ import random
 import sys
 import logging
 import smtplib
-import requests
+import requests as http
 from flask import Flask, request, jsonify, render_template, redirect
 from flask_apscheduler import APScheduler
 from flask_limiter import Limiter, HEADERS
@@ -50,6 +50,7 @@ bcrypt = Bcrypt(app)
 scheduler = APScheduler()
 jsondir = os.environ.get('CLASSFINDER_DATA_DIR', '')
 resetpasswordemailids = {}
+app.logger.info(f"Debug mode: {str(devmode)}")
 if 'pytest' not in sys.modules:
     # pylint: disable=multiple-statements
     csrf = CSRFProtect(app)
@@ -104,7 +105,7 @@ def send_ntfy(message: str, topic: str = ntfy_topic, title: str = None, markdown
         headers['Title'] = title
     if markdown:
         headers['Markdown'] = 'yes'
-    requests.post(ntfy_url + topic, headers=headers, data=message, timeout=0.5)
+    http.post(ntfy_url + topic, headers=headers, data=message, timeout=0.5)
 
 def backup(selection: typing.Literal['courses', 'users', 'requests', 'all'] = 'all', bypass: bool = False):
     """Backup the data to the json files
@@ -904,7 +905,7 @@ def adminsetcanvasid(username):
         if not request.args.get('canvastoken'):
             return render_template('setcanvasidreq.html')
         headers = {'Authorization': 'Bearer ' + request.args.get('canvastoken')}
-        ccourses = requests.get(f'{canvas_url}/api/v1/dashboard/dashboard_cards', headers=headers)
+        ccourses = http.get(f'{canvas_url}/api/v1/dashboard/dashboard_cards', headers=headers)
         app.logger.debug(ccourses.json())
         newcourses={}
         for courseid, course in courses.items():
@@ -923,7 +924,7 @@ def adminsetcanvasid(username):
             courses[courseid]['canvasid'] = (course if not course == 'None' else None)
     backup('courses')
     headers = {'Authorization': 'Bearer ' + request.args.get('canvastoken')}
-    requests.delete(f'{canvas_url}/login/oauth2/token', headers=headers)
+    http.delete(f'{canvas_url}/login/oauth2/token', headers=headers)
     return jsonify({'status': 'success', 'message': 'Canvas IDs set'})
 
 @app.route('/timer/')
