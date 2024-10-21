@@ -35,8 +35,6 @@ smtp_server = os.environ.get('SMTP_SERVER', 'mail.smtp2go.com')
 smtp_port = int(os.environ.get('SMTP_PORT', 2525))
 smtp_user = os.environ.get('SMTP_USER', 'oneauth')
 smtp_password = os.environ.get('SMTP_PASSWORD', '')
-ntfy_url = os.environ.get('NTFY_URL', 'http://100.113.7.57:8957/')
-ntfy_topic = os.environ.get('NTFY_TOPIC', 'classfinder')
 from_addr = os.environ.get('FROM_ADDR', 'classfinder@trey7658.com')
 canvas_url = os.environ.get('CANVAS_URL', 'https://stem.instructure.com/')
 limiter = Limiter(app=app, default_limits=["75/minute", "5/second"], headers_enabled=True, key_func=lambda: request.cookies.get('username') if 'username' in request.cookies else request.remote_addr, default_limits_exempt_when=lambda: request.cookies.get('username') in admins)
@@ -91,21 +89,6 @@ usermessages = {}
 emailids = {}
 last_day_of_semeseter = datetime.datetime(2024, 11, 22, 14, 55)
 adminmessages = [f"Server started at {datetime.datetime.now().strftime('%m %d, %Y %H:%M:%S')}"]
-
-def send_ntfy(message: str, topic: str = ntfy_topic, title: str = None, markdown: bool = False):
-    """Send a message to the ntfy server
-    message: The message to send
-    topic: The topic to send the message to"""
-    if 'pytest' in sys.modules:
-        app.logger.debug('NTFY bypassed')
-        print('NTFY bypassed by pytest')
-        return
-    headers = {}
-    if title is not None:
-        headers['Title'] = title
-    if markdown:
-        headers['Markdown'] = 'yes'
-    http.post(ntfy_url + topic, headers=headers, data=message, timeout=0.5)
 
 def backup(selection: typing.Literal['courses', 'users', 'requests', 'all'] = 'all', bypass: bool = False):
     """Backup the data to the json files
