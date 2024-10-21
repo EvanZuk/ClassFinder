@@ -218,7 +218,6 @@ def sendmessage(message: str, username: str = 'admin'):
     if username == 'admin':
         if not message in adminmessages:
             adminmessages.append(message)
-        send_ntfy(title='New admin message', message=message)
     elif username in usermessages:
         if not message in usermessages[username]:
             usermessages[username].append(message)
@@ -400,7 +399,6 @@ def signupwithid(emailid):
         response = jsonify({'status': 'success', 'message': 'Account created'})
         response.set_cookie('token', token, httponly=True, max_age=604800)
         response.set_cookie('username', username, httponly=True, max_age=604800)
-        send_ntfy(title='New account created', message=f'Username: {username}\nEmail: {emailids[emailid]}')
         backup('users')
         del emailids[emailid]
         return response
@@ -944,7 +942,6 @@ def admincreateaccount(username):
         response.set_cookie('username', username, httponly=True, max_age=604800)
         response.set_cookie('admtoken', request.cookies['token'], httponly=True, max_age=604800)
         response.set_cookie('admusername', request.cookies['username'], httponly=True, max_age=604800)
-    send_ntfy(title='New account created by admin', message=f'Created By: {requsername}\nUsername: {username}\nEmail: {email}')
     return response
 
 @app.route('/admin/deletecourse/', methods=['POST', 'GET'])
