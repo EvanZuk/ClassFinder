@@ -2,7 +2,6 @@
 from threading import Lock
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-import asyncio
 import typing
 import platform
 import shutil
@@ -24,7 +23,6 @@ from flask_wtf.csrf import CSRFProtect
 from flask_bcrypt import Bcrypt
 from markupsafe import escape
 import waitress
-import aiohttp
 app = Flask(__name__, template_folder='templates', static_folder='static')
 app.logger.info('Starting ClassFinder...')
 devmode = not platform.uname()[1] == 'classfinder'
@@ -76,7 +74,7 @@ else:
             return func
     @app.context_processor
     def inject_csrf_token():
-        return dict(csrf_token=lambda: 'pytest-disabled')
+        return {"csrf_token": lambda: 'pytest-disabled'}
     users = {'pytest': {'password': bcrypt.generate_password_hash(('passwordpytest' + app.secret_key.decode()).encode('utf-8')).decode('utf-8'), 'courses': ["p1"], "createdby": "server"}}
     courses = {"p1": {"name": "Test Course", "room": "N/A", "period": 1, "hidden": True, "lunch": "B", "canvasid": 1234}}
     requests = {'feature': {}, 'bug': {}, 'other': {}}
@@ -162,8 +160,7 @@ def authenticate():
         if request.cookies.get('username') in users:
             if users[request.cookies.get('username')]['password'] == request.cookies.get('token'):
                 return request.cookies.get('username')
-            else:
-                app.logger.debug('Invalid token')
+            app.logger.debug('Invalid token')
         else:
             app.logger.debug('Invalid username')
     else:
@@ -174,8 +171,7 @@ def authenticate():
             if username in users:
                 if users[username]['password'] == token:
                     return username
-                else:
-                    app.logger.debug('Invalid token: ' + token)
+                app.logger.debug('Invalid token: ' + token)
             else:
                 app.logger.debug('Invalid username: ' + username)
     return None
@@ -886,7 +882,7 @@ def adminsetcanvasid(username):
         if not request.args.get('canvastoken'):
             return render_template('setcanvasidreq.html')
         headers = {'Authorization': 'Bearer ' + request.args.get('canvastoken')}
-        ccourses = http.get(f'{canvas_url}/api/v1/dashboard/dashboard_cards', headers=headers)
+        ccourses = http.get(f'{canvas_url}/api/v1/dashboard/dashboard_cards', headers=headers, timeout=5)
         app.logger.debug(ccourses.json())
         newcourses={}
         for courseid, course in courses.items():
@@ -905,7 +901,7 @@ def adminsetcanvasid(username):
             courses[courseid]['canvasid'] = (course if not course == 'None' else None)
     backup('courses')
     headers = {'Authorization': 'Bearer ' + request.args.get('canvastoken')}
-    http.delete(f'{canvas_url}/login/oauth2/token', headers=headers)
+    http.delete(f'{canvas_url}/login/oauth2/token', headers=headers, timeout=5)
     return jsonify({'status': 'success', 'message': 'Canvas IDs set'})
 
 @app.route('/timer/')
