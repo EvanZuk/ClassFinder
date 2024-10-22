@@ -1,6 +1,6 @@
 name: Pytest
 
-on: [push]
+on: [pull_request]
 
 jobs:
   build:
@@ -19,22 +19,6 @@ jobs:
         uses: actions/setup-python@v4
         with:
           python-version: ${{ matrix.python-version }}
-      - name: Cache Python packages
-        uses: actions/cache@v3
-        with:
-          path: |
-            ~/.cache/pip
-            venv
-          key: ${{ runner.os }}-pip-${{ hashFiles('requirements.txt') }}
-          restore-keys: |
-            ${{ runner.os }}-pip-
-      - name: Set up virtual environment
-        run: |
-          if [ ! -d "venv" ]; then
-            python -m venv venv
-          fi
-      - name: Activate virtual environment
-        run: source venv/bin/activate
       - name: Install pytest dependencies
         run: pip install pytest pytest-md pytest-emoji
       - name: Install project dependencies
