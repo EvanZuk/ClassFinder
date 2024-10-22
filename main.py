@@ -2,7 +2,6 @@
 from threading import Lock
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
-import asyncio
 import typing
 import platform
 import shutil
@@ -15,7 +14,7 @@ import random
 import sys
 import logging
 import smtplib
-import requests
+import requests as http
 from flask import Flask, request, jsonify, render_template, redirect
 from flask_apscheduler import APScheduler
 from flask_limiter import Limiter, HEADERS
@@ -24,7 +23,6 @@ from flask_wtf.csrf import CSRFProtect
 from flask_bcrypt import Bcrypt
 from markupsafe import escape
 import waitress
-import aiohttp
 app = Flask(__name__, template_folder='templates', static_folder='static')
 app.logger.info('Starting ClassFinder...')
 devmode = not platform.uname()[1] == 'classfinder'
@@ -35,8 +33,6 @@ smtp_server = os.environ.get('SMTP_SERVER', 'mail.smtp2go.com')
 smtp_port = int(os.environ.get('SMTP_PORT', 2525))
 smtp_user = os.environ.get('SMTP_USER', 'oneauth')
 smtp_password = os.environ.get('SMTP_PASSWORD', '')
-ntfy_url = os.environ.get('NTFY_URL', 'http://10.0.0.71:8957')
-ntfy_topic = os.environ.get('NTFY_TOPIC', 'classfinder')
 from_addr = os.environ.get('FROM_ADDR', 'classfinder@trey7658.com')
 canvas_url = os.environ.get('CANVAS_URL', 'https://stem.instructure.com/')
 limiter = Limiter(app=app, default_limits=["75/minute", "5/second"], headers_enabled=True, key_func=lambda: request.cookies.get('username') if 'username' in request.cookies else request.remote_addr, default_limits_exempt_when=lambda: request.cookies.get('username') in admins)
@@ -50,6 +46,7 @@ bcrypt = Bcrypt(app)
 scheduler = APScheduler()
 jsondir = os.environ.get('CLASSFINDER_DATA_DIR', '')
 resetpasswordemailids = {}
+app.logger.info(f"Debug mode: {str(devmode)}")
 if 'pytest' not in sys.modules:
     # pylint: disable=multiple-statements
     csrf = CSRFProtect(app)
@@ -78,8 +75,8 @@ else:
     @app.context_processor
     def inject_csrf_token():
         return {"csrf_token": lambda: 'pytest-disabled'}
-    users = {'pytest': {'password': bcrypt.generate_password_hash(('passwordpytest' + app.secret_key.decode()).encode('utf-8')).decode('utf-8'), 'courses': ["p1", "E123p2", "E123p3", "E123p4", "E123p5", "E123p6", "E123p7", "E123p8", "E123p9"], "createdby": "server"}}
-    courses = {"p1": {"name": "Intermission", "room": "N/A", "period": 1, "hidden": True, "lunch": "B", "canvasid": 123}, "E123p2": {"name": "Test Course period 2", "room": "E123", "period": 2, "hidden": False, "lunch": None, "canvasid": 5235}, "E123p3": {"name": "Test Course period 3", "room": "E123", "period": 3, "hidden": False, "lunch": None, "canvasid": 5236}, "E123p4": {"name": "Test Course period 4", "room": "E123", "period": 4, "hidden": False, "lunch": None, "canvasid": 5237}, "E123p5": {"name": "Test Course period 5", "room": "E123", "period": 5, "hidden": False, "lunch": None, "canvasid": 5238}, "E123p6": {"name": "Test Course period 6", "room": "E123", "period": 6, "hidden": False, "lunch": 'B', "canvasid": 5239}, "E123p7": {"name": "Test Course period 7", "room": "E123", "period": 7, "hidden": False, "lunch": "C", "canvasid": 5240}, "E123p8": {"name": "Test Course period 8", "room": "E123", "period": 8, "hidden": False, "lunch": "D", "canvasid": 5241}, "E123p9": {"name": "Test Course period 9", "room": "E123", "period": 9, "hidden": False, "lunch": None, "canvasid": 5242}}
+    users = {'pytest': {'password': bcrypt.generate_password_hash(('passwordpytest' + app.secret_key.decode()).encode('utf-8')).decode('utf-8'), 'courses': ["p1"], "createdby": "server"}}
+    courses = {"p1": {"name": "Test Course", "room": "N/A", "period": 1, "hidden": True, "lunch": "B", "canvasid": 1234}}
     requests = {'feature': {}, 'bug': {}, 'other': {}}
 backup_locks = {'courses': Lock(),'users': Lock(), 'requests': Lock()}
 coursetimes = []
@@ -90,27 +87,6 @@ usermessages = {}
 emailids = {}
 last_day_of_semeseter = datetime.datetime(2024, 11, 22, 14, 55)
 adminmessages = [f"Server started at {datetime.datetime.now().strftime('%m %d, %Y %H:%M:%S')}"]
-
-async def send_ntfy(message: str, topic: str = ntfy_topic, title: str = None, markdown: bool = False):
-    """Send a message to the ntfy server
-    message: The message to send
-    topic: The topic to send the message to"""
-    if 'pytest' in sys.modules:
-        app.logger.debug('NTFY bypassed')
-        print('NTFY bypassed by pytest')
-        return
-    # if devmode:
-    #     app.logger.debug('NTFY bypassed in devmode')
-    #     return
-    async with aiohttp.ClientSession() as session:
-        headers = {}
-        if title is not None:
-            headers['Title'] = title
-        if markdown:
-            headers['Markdown'] = 'yes'
-        async with session.post(f'{ntfy_url}/{topic}', data=message, headers=headers) as response:
-            if response.status != 200:
-                app.logger.error(f'Failed to send ntfy message: {response.status}')
 
 def backup(selection: typing.Literal['courses', 'users', 'requests', 'all'] = 'all', bypass: bool = False):
     """Backup the data to the json files
@@ -238,7 +214,6 @@ def sendmessage(message: str, username: str = 'admin'):
     if username == 'admin':
         if not message in adminmessages:
             adminmessages.append(message)
-        asyncio.run(send_ntfy(title='New admin message', message=message))
     elif username in usermessages:
         if not message in usermessages[username]:
             usermessages[username].append(message)
@@ -420,7 +395,6 @@ def signupwithid(emailid):
         response = jsonify({'status': 'success', 'message': 'Account created'})
         response.set_cookie('token', token, httponly=True, max_age=604800)
         response.set_cookie('username', username, httponly=True, max_age=604800)
-        asyncio.run(send_ntfy(title='New account created', message=f'Username: {username}\nEmail: {emailids[emailid]}'))
         backup('users')
         del emailids[emailid]
         return response
@@ -910,7 +884,7 @@ def adminsetcanvasid(username):
         if not request.args.get('canvastoken'):
             return render_template('setcanvasidreq.html')
         headers = {'Authorization': 'Bearer ' + request.args.get('canvastoken')}
-        ccourses = requests.get(f'{canvas_url}/api/v1/dashboard/dashboard_cards', headers=headers)
+        ccourses = http.get(f'{canvas_url}/api/v1/dashboard/dashboard_cards', headers=headers, timeout=5)
         app.logger.debug(ccourses.json())
         newcourses={}
         for courseid, course in courses.items():
@@ -929,7 +903,7 @@ def adminsetcanvasid(username):
             courses[courseid]['canvasid'] = (course if not course == 'None' else None)
     backup('courses')
     headers = {'Authorization': 'Bearer ' + request.args.get('canvastoken')}
-    requests.delete(f'{canvas_url}/login/oauth2/token', headers=headers)
+    http.delete(f'{canvas_url}/login/oauth2/token', headers=headers, timeout=5)
     return jsonify({'status': 'success', 'message': 'Canvas IDs set'})
 
 @app.route('/timer/')
@@ -966,7 +940,6 @@ def admincreateaccount(username):
         response.set_cookie('username', username, httponly=True, max_age=604800)
         response.set_cookie('admtoken', request.cookies['token'], httponly=True, max_age=604800)
         response.set_cookie('admusername', request.cookies['username'], httponly=True, max_age=604800)
-    asyncio.run(send_ntfy(title='New account created by admin', message=f'Created By: {requsername}\nUsername: {username}\nEmail: {email}'))
     return response
 
 @app.route('/admin/deletecourse/', methods=['POST', 'GET'])
