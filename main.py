@@ -234,14 +234,14 @@ def home(username):
         app.logger.debug("allperiods is None")
     app.logger.debug(allperiods)
     current_period, next_class = get_user_next_class(username)
-    return render_template('index.html', username=username, classes=classes, dayoff=coursetimes is None, currentperiod=current_period[2], devmode=devmode, nextclass=next_class.strftime('%m %d, %Y %H:%M:%S'), p='p', canvas_url=canvas_url)
+    return render_template('index.html', username=username, classes=classes, dayoff=coursetimes is None, currentperiod=current_period['period'], devmode=devmode, nextclass=next_class.strftime('%m %d, %Y %H:%M:%S'), p='p', canvas_url=canvas_url)
 
 def get_next_class():
     if not coursetimes is None:
         current_period = get_current_period()
         if current_period != (datetime.time(0, 0), datetime.time(0, 0), 0, None):
             app.logger.debug(f'Currentperiod: {current_period}')
-            next_class = (datetime.datetime.combine(datetime.datetime.today(), current_period[1])) + datetime.timedelta(seconds=3)
+            next_class = (datetime.datetime.combine(datetime.datetime.today(), current_period["endtime"])) + datetime.timedelta(seconds=3)
         else:
             app.logger.debug("No more classes today")
             next_class = last_day_of_semeseter
@@ -253,7 +253,7 @@ def get_next_class():
 def get_user_next_class(username):
     current_period,next_class = get_next_class()
     for course in {course: courses[course] for course in users[username]['courses']}.values():
-        if (current_period[2] == course['period']) and (current_period[3]) and course['lunch'] is not None:
+        if (current_period["period"] == course['period']) and (current_period["lunchactive"]) and course['lunch'] is not None:
             lunch = lunchtimes[course['lunch']]
             time = datetime.datetime.now().time()
             if lunch:
@@ -266,14 +266,14 @@ def get_user_next_class(username):
                     next_class = datetime.datetime.combine(datetime.datetime.today(), lunch[1])
                 else:
                     app.logger.debug('else')
-                    next_class = datetime.datetime.combine(datetime.datetime.today(), current_period[1])
+                    next_class = datetime.datetime.combine(datetime.datetime.today(), current_period["endtime"])
     return current_period,next_class
 
 def get_user_current_class(username):
     current_period, _ = get_user_next_class(username)
     for course_id in users[username]['courses']:
         course = courses[course_id]
-        if course['period'] == current_period[2]:
+        if course['period'] == current_period["period"]:
             return course
     return None
 
@@ -620,7 +620,8 @@ def apicurrentcourses(username):
     return jsonify({
         'status': 'success',
         'courses': classes,
-        'currentperiod': current_period[2],
+        'currentperiod': current_period["period"],
+        'passing': current_period["passing"],
         'nextclass': int(next_class.timestamp()) if isinstance(next_class, datetime.datetime) else next_class,
         'dayoff': coursetimes is None
     })
@@ -632,8 +633,9 @@ def apicurrentperiod(username):
     current_period, next_class = (get_next_class()) if username is None else get_user_next_class(username)
     response = jsonify({
         'status': 'success',
-        'currentperiod': current_period[2],
-        'nextclass': int(next_class.timestamp()) if isinstance(next_class, datetime.datetime) else next_class
+        'currentperiod': current_period["period"],
+        'nextclass': int(next_class.timestamp()) if isinstance(next_class, datetime.datetime) else next_class,
+        'passing': current_period["passing"]
     })
     return response
 
@@ -748,7 +750,7 @@ def logout():
 @verify_user(allowedusers=lambda: admins)
 def admin(username):
     current_period = get_current_period()
-    return render_template('admin.html', username=username, dayoff=False, classes=courses, p='p', currentperiod=current_period[2], requests=requests, messages=adminmessages, users=users, currentuser=username)
+    return render_template('admin.html', username=username, dayoff=False, classes=courses, p='p', currentperiod=current_period["period"], requests=requests, messages=adminmessages, users=users, currentuser=username)
 
 @app.route('/admin/deleteuser/', methods=['DELETE'])
 @verify_user(allowedusers=lambda: admins)
@@ -910,7 +912,7 @@ def timer(username):
     current_period, next_class = get_user_next_class(username) if username is not None else get_next_class()
     print(next_class)
     if (coursetimes is not None) and (current_period is not None) and (next_class is not None) and (next_class != last_day_of_semeseter):
-        return render_template('timer.html', currentperiod=current_period[2], nextclass=next_class.strftime('%Y-%m-%d %H:%M:%S') if isinstance(next_class, datetime.datetime) else next_class)
+        return render_template('timer.html', currentperiod=current_period["period"], nextclass=next_class.strftime('%Y-%m-%d %H:%M:%S') if isinstance(next_class, datetime.datetime) else next_class)
     return redirect('/')
 
 @app.route('/admin/createaccount/', methods=['POST', 'GET'])
@@ -926,9 +928,9 @@ def admincreateaccount(username):
     if username in users:
         return jsonify({'status': 'failure', 'message': 'Username already exists'}), 400
     email = None
-    if 'email' in request.json:
+    if 'email' in request.json and request.json['email'] != '':
         email = request.json['email']
-        if not re.match(r'[a-z]*\.[a-z]*(@s.stemk12.org|@stemk12.org)', email):
+        if not (re.match(r'[a-z]*\.[a-z]*@s.stemk12.org', email) or email == 'classfindertestemail@trey7658.com'):
             return jsonify({'status': 'failure', 'message': 'Invalid email'}), 400
     token = createuser(username, password, createdby=requsername, email=email)
     loginv = request.json['login']
@@ -1038,93 +1040,78 @@ def update_course_time(dayoverride: typing.Optional[int] = None):
     coursetimes = []
     lunchtimes = {}
     if day == 0:
-        coursetimes.append((datetime.time(7, 0), datetime.time(7, 50), 1, False))
-        coursetimes.append((datetime.time(7,50), datetime.time(9, 30), 2, False))
-        coursetimes.append((datetime.time(9,30), datetime.time(11,10), 4, False))
-        coursetimes.append((datetime.time(11, 10), datetime.time(13,15), 6, True))
-        coursetimes.append((datetime.time(13,15), datetime.time(14,55), 8, False))
-        # lunchtimes.append((datetime.time(11,15), datetime.time(11,45)), "A")
-        # lunchtimes.append((datetime.time(12,0), datetime.time(12,30)), "B")
-        # lunchtimes.append((datetime.time(12,45), datetime.time(13,15)), "C")
+        coursetimes.append({"passing": False, "starttime": datetime.time(7, 0), "endtime": datetime.time(7, 30), "period": 1, "lunchactive": False})
+        coursetimes.append({"passing": True, "starttime": datetime.time(7, 30), "endtime": datetime.time(7, 50), "period": 2, "lunchactive": False})
+        coursetimes.append({"passing": False, "starttime": datetime.time(7, 50), "endtime": datetime.time(9, 30), "period": 2, "lunchactive": False})
+        coursetimes.append({"passing": False, "starttime": datetime.time(9, 30), "endtime": datetime.time(11, 10), "period": 4, "lunchactive": False})
+        coursetimes.append({"passing": False, "starttime": datetime.time(11, 10), "endtime": datetime.time(13, 15), "period": 6, "lunchactive": True})
+        coursetimes.append({"passing": False, "starttime": datetime.time(13, 15), "endtime": datetime.time(14, 55), "period": 8, "lunchactive": False})
         lunchtimes["A"] = (datetime.time(11,15), datetime.time(11,45))
         lunchtimes["B"] = (datetime.time(12,0), datetime.time(12,30))
         lunchtimes["C"] = (datetime.time(12,45), datetime.time(13,15))
     elif day == 1:
-        coursetimes.append((datetime.time(7, 0), datetime.time(7, 50), 1, False))
-        coursetimes.append((datetime.time(7,50), datetime.time(9, 30), 3, False))
-        coursetimes.append((datetime.time(9,30), datetime.time(11,10), 5, False))
-        coursetimes.append((datetime.time(11, 10), datetime.time(13,15), 7, True))
-        coursetimes.append((datetime.time(13,15), datetime.time(14,55), 9, False))
-        # lunchtimes.append((datetime.time(11,15), datetime.time(11,45), "A"))
-        # lunchtimes.append((datetime.time(12,0), datetime.time(12,30), "B"))
-        # lunchtimes.append((datetime.time(12,45), datetime.time(13,15), "C"))
+        coursetimes.append({"passing": False, "starttime": datetime.time(7, 0), "endtime": datetime.time(7, 30), "period": 1, "lunchactive": False})
+        coursetimes.append({"passing": True, "starttime": datetime.time(7, 30), "endtime": datetime.time(7, 50), "period": 3, "lunchactive": False})
+        coursetimes.append({"passing": False, "starttime": datetime.time(7, 50), "endtime": datetime.time(9, 30), "period": 3, "lunchactive": False})
+        coursetimes.append({"passing": False, "starttime": datetime.time(9, 30), "endtime": datetime.time(11, 10), "period": 5, "lunchactive": False})
+        coursetimes.append({"passing": False, "starttime": datetime.time(11, 10), "endtime": datetime.time(13, 15), "period": 7, "lunchactive": True})
+        coursetimes.append({"passing": False, "starttime": datetime.time(13, 15), "endtime": datetime.time(14, 55), "period": 9, "lunchactive": False})
         lunchtimes["A"] = (datetime.time(11,15), datetime.time(11,45))
         lunchtimes["B"] = (datetime.time(12,0), datetime.time(12,30))
         lunchtimes["C"] = (datetime.time(12,45), datetime.time(13,15))
     elif day == 2:
-        coursetimes.append((datetime.time(7, 0), datetime.time(7, 50), 1, False))
-        coursetimes.append((datetime.time(7,50), datetime.time(9, 5), 2, False))
-        coursetimes.append((datetime.time(9,5), datetime.time(10,25), 4, False))
-        coursetimes.append((datetime.time(10,25), datetime.time(11,40), 4.5, False))
-        coursetimes.append((datetime.time(11,40), datetime.time(13,35), 6, True))
-        coursetimes.append((datetime.time(13,35), datetime.time(14,55), 8, False))
-        # lunchtimes.append((datetime.time(11,45), datetime.time(12,15), "A"))
-        # lunchtimes.append((datetime.time(12,25), datetime.time(12,55), "B"))
-        # lunchtimes.append((datetime.time(13,5), datetime.time(13,35), "C"))
+        coursetimes.append({"passing": False, "starttime": datetime.time(7, 0), "endtime": datetime.time(7, 30), "period": 1, "lunchactive": False})
+        coursetimes.append({"passing": True, "starttime": datetime.time(7, 30), "endtime": datetime.time(7, 50), "period": 2, "lunchactive": False})
+        coursetimes.append({"passing": False, "starttime": datetime.time(7, 50), "endtime": datetime.time(9, 5), "period": 2, "lunchactive": False})
+        coursetimes.append({"passing": False, "starttime": datetime.time(9, 5), "endtime": datetime.time(10, 25), "period": 4, "lunchactive": False})
+        coursetimes.append({"passing": False, "starttime": datetime.time(10, 25), "endtime": datetime.time(11, 40), "period": 4.5, "lunchactive": False})
+        coursetimes.append({"passing": False, "starttime": datetime.time(11, 40), "endtime": datetime.time(13, 35), "period": 6, "lunchactive": True})
+        coursetimes.append({"passing": False, "starttime": datetime.time(13, 35), "endtime": datetime.time(14, 55), "period": 8, "lunchactive": False})
         lunchtimes["A"] = (datetime.time(11,45), datetime.time(12,15))
         lunchtimes["B"] = (datetime.time(12,25), datetime.time(12,55))
         lunchtimes["C"] = (datetime.time(13,5), datetime.time(13,35))
     elif day == 3:
-        coursetimes.append((datetime.time(7, 0), datetime.time(7, 50), 1, False))
-        coursetimes.append((datetime.time(7,50), datetime.time(9, 5), 3, False))
-        coursetimes.append((datetime.time(9,5), datetime.time(10,25), 5, False))
-        coursetimes.append((datetime.time(10,25), datetime.time(11,40), 4.5, False))
-        coursetimes.append((datetime.time(11,40), datetime.time(13,35), 7, True))
-        coursetimes.append((datetime.time(13,35), datetime.time(14,55), 9, False))
-        # lunchtimes.append((datetime.time(11,45), datetime.time(12,15), "A"))
-        # lunchtimes.append((datetime.time(12,25), datetime.time(12,55), "B"))
-        # lunchtimes.append((datetime.time(13,5), datetime.time(13,35), "C"))
+        coursetimes.append({"passing": False, "starttime": datetime.time(7, 0), "endtime": datetime.time(7, 30), "period": 1, "lunchactive": False})
+        coursetimes.append({"passing": True, "starttime": datetime.time(7, 30), "endtime": datetime.time(7, 50), "period": 3, "lunchactive": False})
+        coursetimes.append({"passing": False, "starttime": datetime.time(7, 50), "endtime": datetime.time(9, 5), "period": 3, "lunchactive": False})
+        coursetimes.append({"passing": False, "starttime": datetime.time(9, 5), "endtime": datetime.time(10, 25), "period": 5, "lunchactive": False})
+        coursetimes.append({"passing": False, "starttime": datetime.time(10, 25), "endtime": datetime.time(11, 40), "period": 4.5, "lunchactive": False})
+        coursetimes.append({"passing": False, "starttime": datetime.time(11, 40), "endtime": datetime.time(13, 35), "period": 7, "lunchactive": True})
+        coursetimes.append({"passing": False, "starttime": datetime.time(13, 35), "endtime": datetime.time(14, 55), "period": 9, "lunchactive": False})
         lunchtimes["A"] = (datetime.time(11,45), datetime.time(12,15))
         lunchtimes["B"] = (datetime.time(12,25), datetime.time(12,55))
         lunchtimes["C"] = (datetime.time(13,5), datetime.time(13,35))
-
     elif day == 4:
-        coursetimes.append((datetime.time(7, 0), datetime.time(7, 50), 1, False))
-        coursetimes.append((datetime.time(7,50), datetime.time(8,35), 2, False))
-        coursetimes.append((datetime.time(8,35), datetime.time(9,20), 3, False))
-        coursetimes.append((datetime.time(9,20), datetime.time(10,5), 4, False))
-        coursetimes.append((datetime.time(10,5), datetime.time(10,50), 5, False))
-        coursetimes.append((datetime.time(10,50), datetime.time(12,40), 6, True))
-        coursetimes.append((datetime.time(12,40), datetime.time(13,25), 7, False))
-        coursetimes.append((datetime.time(13,25), datetime.time(14,10), 8, False))
-        coursetimes.append((datetime.time(14,10), datetime.time(14,55), 9, False))
-        # lunchtimes.append((datetime.time(10,55), datetime.time(11,25), "A"))
-        # lunchtimes.append((datetime.time(11,32), datetime.time(12,2), "B"))
-        # lunchtimes.append((datetime.time(12,10), datetime.time(12,40), "C"))
+        coursetimes.append({"passing": False, "starttime": datetime.time(7, 0), "endtime": datetime.time(7, 30), "period": 1, "lunchactive": False})
+        coursetimes.append({"passing": True, "starttime": datetime.time(7, 30), "endtime": datetime.time(7, 50), "period": 2, "lunchactive": False})
+        coursetimes.append({"passing": False, "starttime": datetime.time(7, 50), "endtime": datetime.time(8, 35), "period": 2, "lunchactive": False})
+        coursetimes.append({"passing": False, "starttime": datetime.time(8, 35), "endtime": datetime.time(9, 20), "period": 3, "lunchactive": False})
+        coursetimes.append({"passing": False, "starttime": datetime.time(9, 20), "endtime": datetime.time(10, 5), "period": 4, "lunchactive": False})
+        coursetimes.append({"passing": False, "starttime": datetime.time(10, 5), "endtime": datetime.time(10, 50), "period": 5, "lunchactive": False})
+        coursetimes.append({"passing": False, "starttime": datetime.time(10, 50), "endtime": datetime.time(12, 40), "period": 6, "lunchactive": True})
+        coursetimes.append({"passing": False, "starttime": datetime.time(12, 40), "endtime": datetime.time(13, 25), "period": 7, "lunchactive": False})
+        coursetimes.append({"passing": False, "starttime": datetime.time(13, 25), "endtime": datetime.time(14, 10), "period": 8, "lunchactive": False})
+        coursetimes.append({"passing": False, "starttime": datetime.time(14, 10), "endtime": datetime.time(14, 55), "period": 9, "lunchactive": False})
         lunchtimes["A"] = (datetime.time(10,55), datetime.time(11,25))
         lunchtimes["B"] = (datetime.time(11,32), datetime.time(12,2))
         lunchtimes["C"] = (datetime.time(12,10), datetime.time(12,40))
     elif dayoverride == 6:
-        coursetimes.append((datetime.time(7, 0), datetime.time(7, 50), 1, False))
-        coursetimes.append((datetime.time(7,50), datetime.time(8,45), 2, False))
-        coursetimes.append((datetime.time(8,45), datetime.time(9,40), 4, False))
-        coursetimes.append((datetime.time(9,40), datetime.time(11,25), 6, True))
-        coursetimes.append((datetime.time(11,25), datetime.time(12,20), 8, False))
-        # lunchtimes.append((datetime.time(9,45), datetime.time(10,15), "A"))
-        # lunchtimes.append((datetime.time(10,20), datetime.time(10,50), "B"))
-        # lunchtimes.append((datetime.time(10,55), datetime.time(11,25), "C"))
+        coursetimes.append({"passing": False, "starttime": datetime.time(7, 0), "endtime": datetime.time(7, 30), "period": 1, "lunchactive": False})
+        coursetimes.append({"passing": True, "starttime": datetime.time(7, 30), "endtime": datetime.time(7, 50), "period": 2, "lunchactive": False})
+        coursetimes.append({"passing": False, "starttime": datetime.time(7, 50), "endtime": datetime.time(8, 45), "period": 2, "lunchactive": False})
+        coursetimes.append({"passing": False, "starttime": datetime.time(8, 45), "endtime": datetime.time(9, 40), "period": 4, "lunchactive": False})
+        coursetimes.append({"passing": False, "starttime": datetime.time(9, 40), "endtime": datetime.time(11, 25), "period": 6, "lunchactive": True})
+        coursetimes.append({"passing": False, "starttime": datetime.time(11, 25), "endtime": datetime.time(12, 20), "period": 8, "lunchactive": False})
         lunchtimes["A"] = (datetime.time(9,45), datetime.time(10,15))
         lunchtimes["B"] = (datetime.time(10,20), datetime.time(10,50))
         lunchtimes["C"] = (datetime.time(10,55), datetime.time(11,25))
     elif dayoverride == 7:
-        coursetimes.append((datetime.time(7, 0), datetime.time(7, 50), 1, False))
-        coursetimes.append((datetime.time(7,50), datetime.time(8,45), 3, False))
-        coursetimes.append((datetime.time(8,45), datetime.time(9,40), 5, False))
-        coursetimes.append((datetime.time(9,40), datetime.time(11,25), 7, True))
-        coursetimes.append((datetime.time(11,25), datetime.time(12,20), 9, False))
-        # lunchtimes.append((datetime.time(9,45), datetime.time(10,15), "A"))
-        # lunchtimes.append((datetime.time(10,20), datetime.time(10,50), "B"))
-        # lunchtimes.append((datetime.time(10,55), datetime.time(11,25), "C"))
+        coursetimes.append({"passing": False, "starttime": datetime.time(7, 0), "endtime": datetime.time(7, 30), "period": 1, "lunchactive": False})
+        coursetimes.append({"passing": True, "starttime": datetime.time(7, 30), "endtime": datetime.time(7, 50), "period": 3, "lunchactive": False})
+        coursetimes.append({"passing": False, "starttime": datetime.time(7, 50), "endtime": datetime.time(8, 45), "period": 3, "lunchactive": False})
+        coursetimes.append({"passing": False, "starttime": datetime.time(8, 45), "endtime": datetime.time(9, 40), "period": 5, "lunchactive": False})
+        coursetimes.append({"passing": False, "starttime": datetime.time(9, 40), "endtime": datetime.time(11, 25), "period": 7, "lunchactive": True})
+        coursetimes.append({"passing": False, "starttime": datetime.time(11, 25), "endtime": datetime.time(12, 20), "period": 9, "lunchactive": False})
         lunchtimes["A"] = (datetime.time(9,45), datetime.time(10,15))
         lunchtimes["B"] = (datetime.time(10,20), datetime.time(10,50))
         lunchtimes["C"] = (datetime.time(10,55), datetime.time(11,25))
@@ -1140,18 +1127,32 @@ def delete_login_codes():
     linkcodes = {}
 
 def get_current_period():
+    """
+    Returns the current period information including start time, end time, period number, 
+    whether lunch is active, and the current lunch period if applicable.
+
+    Returns:
+        dict: A dictionary containing the following keys:
+            - 'starttime' (datetime.time): The start time of the current period.
+            - 'endtime' (datetime.time): The end time of the current period.
+            - 'period' (int): The current period number.
+            - 'lunchactive' (bool): Indicates if the lunch period is active.
+            - 'lunch' (str, None): The current lunch period if applicable, otherwise None.
+    """
     # Returns the current period
     # The 5th value is the current lunch
     # The 4th value is if the periods lunch time applies today
     # The 3rd value is the current period
     if coursetimes is None:
-        return (datetime.time(0, 0), datetime.time(0, 0), 0, None)
+        return {'starttime': datetime.time(0, 0), 'endtime': datetime.time(0, 0), 'period': 0, 'lunchactive': False, 'lunch': None}
     now = datetime.datetime.now().time()
     lunch = get_lunch()
     for course in coursetimes:
-        if course[0] <= now <= course[1]:
-            return course + ((lunch[1],) if lunch is not None else (None,))
-    return (datetime.time(0, 0), datetime.time(0, 0), 0, None)
+        if course["starttime"] <= now <= course['endtime']:
+            course.update({'lunchactive': lunch is not None, 'lunch': lunch[0] if lunch is not None else None})
+            return course
+    fakecourse = {'starttime': datetime.time(0, 0), 'endtime': datetime.time(0, 0), 'period': 0, 'lunchactive': False, 'lunch': None}
+    return fakecourse
 
 def get_lunch():
     # Returns the current lunch period
@@ -1169,11 +1170,6 @@ def get_lunch():
 def adminchangetimes(username):
     if request.method == 'GET':
         return render_template('changetimes.html', username=username)
-    # coursetimes = []
-    # for time in request.json['times']:
-    #     if time[0] is None:
-    #         continue
-    #     coursetimes.append((datetime.time(time['start']['hour'], time['start']['minute']), datetime.time(time['end']['hour'], time['end']['minute']), time['period']))
     app.logger.info('Updating course times via http by %s...', username)
     update_course_time(int(request.json['day']))
     return jsonify({'status': 'success', 'message': 'Course times changed'})
@@ -1184,7 +1180,7 @@ def get_periods():
     Returns:
         list: A list of periods for the current day.
     """
-    return [course[2] for course in coursetimes] if not coursetimes is None else None
+    return [course['period'] for course in coursetimes] if not coursetimes is None else None
 
 def get_users_with_class(classid):
     """

@@ -3,6 +3,7 @@ import sys
 import os
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from main import app
+from freezegun import freeze_time
 from test_users import apilogin
 
 @pytest.fixture
@@ -26,6 +27,7 @@ def test_account(client):
     assert response.status_code == 200
     assert response.headers['Content-Type'] == 'text/html; charset=utf-8'
 
+@freeze_time("2024-10-10 7:35")
 def test_admin(client):
     token = apilogin(client)
     response = client.get('/admin/', headers={'Authorization': f'pytest {token}'})
@@ -41,5 +43,11 @@ def test_admin_createaccount_page(client):
 def test_admin_change_time_page(client):
     token = apilogin(client)
     response = client.get('/admin/changetimes/', headers={'Authorization': f'pytest {token}'})
+    assert response.status_code == 200
+    assert response.headers['Content-Type'] == 'text/html; charset=utf-8'
+
+def test_timer(client):
+    token = apilogin(client)
+    response = client.get('/timer/', headers={'Authorization': f'pytest {token}'})
     assert response.status_code == 200
     assert response.headers['Content-Type'] == 'text/html; charset=utf-8'

@@ -1,6 +1,7 @@
 import os
 import sys
 import pytest
+from freezegun import freeze_time
 sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from main import app
 from test_users import apilogin
@@ -10,18 +11,41 @@ def client():
     with app.test_client() as client:
         yield client
 
-def test_courses(client):
+@freeze_time("2024-10-10 7:35")
+def test_currentperiod(client):
     token = apilogin(client)
     response = client.get('/api/v1/currentperiod/', headers={'Authorization': f'pytest {token}'})
     assert response.status_code == 200
     assert response.json['status'] == 'success'
+    assert response.json['currentperiod'] == 2 or response.json['currentperiod'] == 3
+    assert response.json['passing'] == True
 
+@freeze_time("2024-10-10 7:28")
+def test_currentcourses(client):
+    token = apilogin(client)
+    response = client.get('/api/v1/currentcourses/', headers={'Authorization': f'pytest {token}'})
+    assert response.status_code == 200
+    assert response.json['status'] == 'success'
+    assert response.json['currentperiod'] == 1
+    assert isinstance(response.json['courses'], list)
+    assert response.json['dayoff'] == False
+    assert response.json['nextclass'] == 1728545403
+
+@freeze_time("2024-10-10 7:35")
 def test_to_canvas(client):
     token = apilogin(client)
     response = client.get('/canvas/', headers={'Authorization': f'pytest {token}'})
     assert response.status_code == 302
     assert response.headers['Location'].startswith('https://')
 
+@freeze_time("2024-10-10 7:35")
+def test_to_canvas_modules(client):
+    token = apilogin(client)
+    response = client.get('/canvas/modules/', headers={'Authorization': f'pytest {token}'})
+    assert response.status_code == 302
+    assert response.headers['Location'].startswith('https://')
+
+@freeze_time("2024-10-10 7:35")
 def test_home(client):
     token = apilogin(client)
     response = client.get('/', headers={'Authorization': f'pytest {token}'})
