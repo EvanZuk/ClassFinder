@@ -373,7 +373,7 @@ def canvas(username):
     return redirect(canvas_url)
 
 @app.route('/signup/<emailid>', methods=['POST', 'GET'])
-@limiter.limit("8/hour", key_func=lambda: request.remote_addr, exempt_when=lambda: request.method == 'GET' or 'pytest' in sys.modules)
+@limiter.limit("30/hour", key_func=lambda: request.remote_addr, exempt_when=lambda: request.method == 'GET' or 'pytest' in sys.modules)
 def signupwithid(emailid):
     if 'token' in request.cookies:
         return redirect('/')
@@ -401,7 +401,7 @@ def signupwithid(emailid):
     return jsonify({'status': 'failure', 'message': 'Invalid emailid'}), 400
 
 @app.route('/signup/', methods=['POST', 'GET'])
-@limiter.limit("2/hour", key_func=lambda: request.json['email'], exempt_when=lambda: request.method == 'GET' or 'pytest' in sys.modules)
+@limiter.limit("16/hour", key_func=lambda: request.json.get("email"), exempt_when=lambda: request.method == 'GET' or 'pytest' in sys.modules or (not re.match(r'[a-z]*\.[a-z]*(@s.stemk12.org|@stemk12.org)', request.json.get("email"))))
 def signup():
     if 'token' in request.cookies:
         return redirect('/')
