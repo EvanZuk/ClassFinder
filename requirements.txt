@@ -1,9 +1,5 @@
 flask
-flask-apscheduler
-flask-limiter
-flask-wtf
+flask-sqlalchemy
 flask-bcrypt
-wheel
-waitress
-requests
-flask-cors
+flask-limiter
+flask-apscheduler

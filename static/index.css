@@ -1,0 +1,78 @@
+:root {
+    --primary-color: #45ffb1;
+    --secondary-color: #5ad8a3;
+    --tertiary-color: #27634a;
+    --background-color: #12201b;
+    --navbar-color: #214137;
+    --text-color: #c2fff5;
+}
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+body {
+    font-family: 'Roboto', sans-serif;
+    background-color: var(--background-color);
+    color: var(--text-color);
+}
+header {
+    background-color: var(--navbar-color);
+    padding: 1rem;
+}
+nav ul {
+    list-style: none;
+    display: flex;
+    justify-content: center;
+}
+header ul li {
+    font-weight: bold;
+    margin-right: 1rem;
+}
+header ul li a {
+    text-decoration: none;
+    color: var(--text-color);
+    transition: color 0.3s;
+}
+header ul li a:hover {
+    color: var(--primary-color);
+}
+main {
+    padding: 1rem;
+}
+#landingpage, .form {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    text-align: center;
+}
+input[type='text'], input[type='email'], input[type='password'] {
+    padding: 0.5rem;
+    margin: 0.5rem;
+    border: 1px solid var(--secondary-color);
+    border-radius: 5px;
+    background-color: var(--tertiary-color);
+    color: var(--text-color);
+}
+button, input[type="submit"] {
+    margin: 10px;
+    padding: 7px;
+    border-radius: 5px;
+    border: none;
+    background-color: var(--tertiary-color);
+    color: var(--text-color);
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+button:hover, input[type="submit"]:hover {
+    background-color: var(--navbar-color);
+}
+input[type="checkbox"] {
+    margin: 10px;
+}
+a {
+    color: var(--primary-color);
+    text-decoration: none;
+}
