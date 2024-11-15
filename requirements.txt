@@ -3,3 +3,5 @@ flask-sqlalchemy
 flask-bcrypt
 flask-limiter
 flask-apscheduler
+waitress
+better-profanity

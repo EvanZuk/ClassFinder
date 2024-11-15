@@ -1,10 +1,11 @@
 :root {
     --primary-color: #45ffb1;
-    --secondary-color: #5ad8a3;
+    --secondary-color: #439e78;
     --tertiary-color: #27634a;
     --background-color: #12201b;
     --navbar-color: #214137;
     --text-color: #c2fff5;
+    --secondary-text-color: #b6e9e0;
 }
 * {
     margin: 0;
@@ -56,6 +57,14 @@ input[type='text'], input[type='email'], input[type='password'] {
     background-color: var(--tertiary-color);
     color: var(--text-color);
 }
+textarea {
+    padding: 0.5rem;
+    margin: 0.5rem;
+    border: 1px solid var(--secondary-color);
+    border-radius: 5px;
+    background-color: var(--tertiary-color);
+    color: var(--text-color);
+}
 button, input[type="submit"] {
     margin: 10px;
     padding: 7px;
@@ -75,4 +84,31 @@ input[type="checkbox"] {
 a {
     color: var(--primary-color);
     text-decoration: none;
+}
+ul {
+    list-style: none;
+}
+#classes, #users, div#classusers {
+    margin-top: 20px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+    gap: 20px;
+}
+.class, .user {
+    padding: 20px;
+    background-color: var(--secondary-color);
+    border-radius: 5px;
+    text-align: center;
+    transition: background-color 0.3s;
+    font-size: 1.5rem;
+    font-weight: bold;
+}
+.room {
+    font-size: 1rem;
+    color: var(--secondary-text-color);
+    font-weight: normal;
+}
+.class[onclick]:hover, .user[onclick]:hover {
+    background-color: var(--tertiary-color);
+    cursor: pointer;
 }

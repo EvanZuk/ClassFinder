@@ -3,16 +3,56 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ClassFinder</title>
+    <title>ClassFinder - {% if classes|length == 0 %}Welcome{%else%}Dashboard{% endif %}</title>
     <link rel="stylesheet" href="/index.css">
 </head>
 <body>
     {% include 'header.html' %}
     <main id="dashboard">
-        <h1>Dashboard</h1><br>
         {% if classes|length == 0 %}
-            <p>Add your classes <a href="/addcourses">here</a>.</p>
+            <h1>Welcome, {{username}}!</h1><br>
+            <h2>Welcome to ClassFinder! To begin, add your classes <a href="/addcourses">here</a>.</h2>
+        {% else %}
+            <h1>Dashboard</h1><br>
+            <ul id="classes">
+                {% for class in classes %}
+                    <li class="class">{{ class.name }}<p class="room">Room: {{class.room}}</p></li>
+                {% endfor %}
+            </ul>
         {% endif %}
     </main>
+    {% if not currentperiod == 0 %}<script>
+        var countDownDate = new Date("{{nextclass}}").getTime();
+
+        function updatetimer() {
+            var now = new Date().getTime();
+            var distance = countDownDate - now;
+            var days = Math.floor(distance / (1000 * 60 * 60 * 24));
+            var hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            var minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+            var seconds = Math.floor((distance % (1000 * 60)) / 1000);
+            if (hours === 0 && minutes === 0) {
+                document.getElementById("timertext").innerHTML = seconds;
+            } else if (hours === 0) {
+                document.getElementById("timertext").innerHTML = minutes + "m " + seconds + "s ";
+            } else {
+                document.getElementById("timertext").innerHTML = hours + "h " + minutes + "m " + seconds + "s";
+            }
+            if (hours === 0 && minutes === 0 && seconds === 0) {
+                clearInterval(x);
+                document.getElementById("timertext").innerHTML = "0";
+                setTimeout(function() {
+                    location.reload();
+                }, 10000);
+            } else if (hours <= 0 && minutes <= 0 && seconds <= 0) {
+                clearInterval(x);
+                setTimeout(function() {
+                    location.reload();
+                }, 1100);
+            }
+        }
+        updatetimer()
+        var x = setInterval(updatetimer, 500);
+    </script>{%endif%}
 </body>
 </html>
