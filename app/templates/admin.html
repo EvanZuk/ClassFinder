@@ -1,0 +1,89 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ClassFinder</title>
+    <link rel="stylesheet" href="/index.css">
+</head>
+<body>
+    {% include 'header.html' %}
+    <main>
+        <h1 style="display: inline;">Hello, {{user.username}}!</h1>
+        <button onclick="window.location.href = '/admin/create/account'">Create user</button>
+        <button onclick="window.location.href = '/admin/times/schedule'">Schedule times</button>
+        <div style="height: 20px;"></div>
+        <h2>Users</h2>
+        <ul id="users">
+            {% for user in users %}
+                <li class="user" id="{{user.username}}">{{user.username}}
+                    <ul class="actions">
+                        <li class="action" onclick="window.location.href = '/admin/login/{{user.username}}'">Login</li>
+                        {% if not user.role == "admin" %}<li class="action" onclick="deleteUser('{{user.username}}')">Delete</li>{%endif%}
+                    </ul>
+                </li>
+            {% endfor %}
+        </ul>
+        <div style="height: 20px;"></div>
+        {% if classes|length > 0%}
+        <h2>Classes</h2>
+        <ul id="classes">
+            {% for class in classes|sort(attribute='verified') %}
+                <li class="class {% if not class.verified %}unverified{%endif%}" id="{{class.id}}">{{class.name}}
+                    <ul class="actions">
+                        <li class="action" onclick="window.location.href = '/admin/class/{{class.id}}/edit'">Edit</li>
+                        <li class="action" onclick="deleteClass('{{class.id}}')">Delete</li>
+                        {% if not class.verified %}<li class="action" id="verify{{class.id}}" onclick="verifyClass('{{class.id}}')">Verify</li>{%endif%}
+                    </ul>
+                    <ul class="classusers">
+                        {%for user in class.users%}
+                            <li class="classuser">{{user.username}}</li>
+                        {%endfor%}
+                    </ul>
+                </li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+    </main>
+    <script>
+        classDelWarning = false;
+        function deleteUser(username) {
+            if (confirm("Are you sure you want to delete " + username + "?")) {
+                fetch('/admin/account/' + username, {
+                    method: 'DELETE'
+                }).then(response => {
+                    if (response.ok) {
+                        document.getElementById(username).remove();
+                    }
+                });
+            }
+        }
+        function deleteClass(id) {
+            if (classDelWarning || confirm("Are you sure you want to delete this class?")) {
+                classDelWarning = true;
+                fetch('/admin/class/' + id, {
+                    method: 'DELETE'
+                }).then(response => {
+                    if (response.ok) {
+                        document.getElementById(id).remove();
+                    }
+                });
+            }
+        }
+        function verifyClass(id) {
+            fetch('/admin/class/' + id + '/verify', {
+                method: 'POST'
+            }).then(response => {
+                if (response.ok) {
+                    document.getElementById('verify' + id).remove();
+                    document.getElementById(id).classList.remove('unverified');
+                    const classElement = document.getElementById(id);
+                    const parent = classElement.parentNode;
+                    parent.removeChild(classElement);
+                    parent.appendChild(classElement);
+                }
+            });
+        }
+    </script>
+</body>
+</html>

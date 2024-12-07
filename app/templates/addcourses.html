@@ -3,30 +3,32 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>ClassFinder - Add Courses</title>
+    <title>ClassFinder - Add Classes</title>
     <link rel="stylesheet" href="/index.css">
 </head>
 <body>
     {% include 'header.html' %}
-    <main id="addcourses" class="form">
-        <h1>Add Courses</h1>
-        <form onsubmit="sendCourses(event)">
-            <textarea id="courses" name="courses" rows="25" cols="40" style="resize: vertical;" required></textarea><br>
+    <main id="addclasses" class="form">
+        <h1>Add Classes</h1>
+        <p>Copy and paste your T and W schedule from infinite campus</p>
+        <form onsubmit="sendClasses(event)">
+            <textarea id="classes" name="classes" rows="25" cols="40" style="resize: vertical;" required></textarea><br>
             <button type="submit">Submit</button><button onclick="showHelp(event)">Help</button>
         </form>
         <p id="status"></p>
+        <h2>Remaining Periods</h2>
+        {% for class in neededperiods %}<h3 style="display: inline;">{{class}}</h3>{% endfor %}
     </main>
-    <p style="position: absolute; bottom:20px;left:20px;">You should copy your tuesday and wensday schedule from infinite campus.</p>
     <script>
-        function sendCourses(event) {
+        function sendClasses(event) {
             event.preventDefault();
-            const courses = document.getElementById('courses').value;
-            const lines = courses.split('\n');
+            const classes = document.getElementById('classes').value;
+            const lines = classes.split('\n');
             if (lines.length % 5 !== 0) {
                 alert('Make sure to copy the room value for each class');
                 return;
             }
-            fetch('/addcourses', {
+            fetch('/addclasses', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
@@ -63,7 +65,7 @@
             helpPopup.style.padding = '20px';
             helpPopup.style.boxShadow = '0 0 10px rgba(0, 0, 0, 0.5)';
             helpPopup.innerHTML = `
-                <img src="/help.gif" alt="Help Image" style="max-width: 100%; height: auto;"><br>
+                <img src="/addclasses/help.gif" alt="Help Image" style="max-width: 100%; height: auto;"><br>
                 <button onclick="closeHelp()">Close</button>
             `;
             document.body.appendChild(helpPopup);

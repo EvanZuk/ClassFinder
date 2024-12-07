@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ClassFinder</title>
+    <link rel="stylesheet" href="/index.css">
+</head>
+<body>
+    {% include 'header.html' %}
+    <main id="login" class="form">
+        <h1>Edit course: {{course.name}} (Period {{course.period}})</h1>
+        <form onsubmit="attemptEdit(event)"></form>
+            <label for="name">Name</label>
+            <input type="text" id="name" name="name" value="{{course.name}}" required><br>
+            <label for="canvasid">Canvas id</label>
+            <input type="number" id="canvasid" name="canvasid" value="{{course.canvasid}}" required><br>
+            <label for="room">Room</label>
+            <input type="text" id="room" name="room" value="{{course.room}}" required><br>
+            {% if course.period == "6" or course.period == "7" %}
+            <label for="lunch">Lunch</label>
+            <select id="lunch" name="lunch" required>
+                <option value="" {% if course.lunch is none %}selected{% endif %}>N/A</option>
+                <option value="A" {% if course.lunch == "A" %}selected{% endif %}>A</option>
+                <option value="B" {% if course.lunch == "B" %}selected{% endif %}>B</option>
+                <option value="C" {% if course.lunch == "C" %}selected{% endif %}>C</option>
+            </select><br>
+            {% endif %}
+            <button onclick="attemptEdit(event)">Submit</button><br>
+        </form>
+        <p id="status"></p>
+    </main>
+    <script>
+        function attemptEdit(event) {
+            event.preventDefault();
+
+            var newname = document.getElementById('name').value;
+            var newcanvasid = document.getElementById('canvasid').value;
+            var newroom = document.getElementById('room').value;
+            var newlunch = document.getElementById('lunch') ? document.getElementById('lunch').value : null;
+
+            fetch(window.location.toString(), {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    name: newname,
+                    canvasid: newcanvasid,
+                    room: newroom,
+                    lunch: newlunch
+                }),
+                credentials: 'include'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status == "success") {
+                    document.getElementById('status').innerText = data.message;
+                    window.location.href = '/admin';
+                } else {
+                    document.getElementById('status').innerText = 'Edit failed: ' + data.message;
+                }
+            })
+            .catch(error => {
+                document.getElementById('status').innerText = 'An error occurred: ' + error.message;
+            });
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ClassFinder</title>
+    <link rel="stylesheet" href="/index.css">
+</head>
+<body>
+    {% include 'header.html' %}
+    <main id="login" class="form">
+        <h1>Create account</h1>
+        <form onsubmit="attemptRegister(event)"></form>
+            <label for="email">Email</label>
+            <input type="email" id="email" name="email" required><br>
+            <label for="username">Username</label>
+            <input type="text" id="username" name="username" required><br>
+            <label for="Password">Password</label>
+            <input type="password" id="password" name="password" required><br>
+            <button onclick="attemptRegister(event)">Create</button><br>
+        </form>
+        <p id="status"></p>
+    </main>
+    <script>
+        function attemptRegister(event) {
+            event.preventDefault();
+
+            fetch(window.location.toString(), {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({ username: document.getElementById('username').value, password: document.getElementById('password').value, email: document.getElementById('email').value
+                }),
+                credentials: 'include'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status == "success") {
+                    document.getElementById('status').innerText = data.message;
+                    window.location.href = '/admin';
+                } else {
+                    document.getElementById('status').innerText = 'Registration failed: ' + data.message;
+                }
+            })
+            .catch(error => {
+                document.getElementById('status').innerText = 'An error occurred: ' + error.message;
+            });
+        }
+    </script>
+</body>
+</html>

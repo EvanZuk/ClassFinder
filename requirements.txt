@@ -5,3 +5,4 @@ flask-limiter
 flask-apscheduler
 waitress
 better-profanity
+requests

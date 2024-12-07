@@ -34,9 +34,4 @@ LICENSE
 README.md
 
 data/
-courses.json
-users.json
-courses.bak.json
-users.bak.json
-requests.json
-requests.bak.json
+tests/

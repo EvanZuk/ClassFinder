@@ -50,4 +50,4 @@ COPY . .
 EXPOSE 7842
 
 # Run the application.
-CMD python3 main.py
+CMD python3 run.py

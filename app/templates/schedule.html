@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ClassFinder</title>
+    <link rel="stylesheet" href="/index.css">
+</head>
+<body>
+    {% include 'header.html' %}
+    <main id="schedule" class="form">
+        <h1>Add schedule</h1>
+        <form onsubmit="setSchedule(event)"></form>
+            <label for="start">Start</label>
+            <input type="date" id="start" name="start" required><br>
+            <label for="end">End</label>
+            <input type="date" id="end" name="end" required><br>
+            <label for="day">Day</label>
+            <select id="day" name="day" required>
+                <option value="0">Monday</option>
+                <option value="1">Tuesday</option>
+                <option value="2">Wednesday</option>
+                <option value="3">Thursday</option>
+                <option value="4">Friday</option>
+                <option value="5">No school</option>
+                <option value="7">Early release blue</option>
+                <option value="8">Early release gold</option>
+            </select><br>
+            <button onclick="setSchedule(event)">Add</button><br>
+        </form>
+        <p id="status"></p>
+    </main>
+    <script>
+        function setSchedule(event) {
+            event.preventDefault();
+
+            fetch('/admin/times/schedule', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    start: document.getElementById('start').value,
+                    end: document.getElementById('end').value,
+                    day: document.getElementById('day').value
+                }),
+                credentials: 'include'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status == "success") {
+                    document.getElementById('status').innerText = data.message;
+                    window.location.href = '/admin';
+                } else {
+                    document.getElementById('status').innerText = 'Failed: ' + data.message;
+                }
+            })
+            .catch(error => {
+                document.getElementById('status').innerText = 'An error occurred: ' + error.message;
+            });
+        }
+    </script>
+</body>
+</html>

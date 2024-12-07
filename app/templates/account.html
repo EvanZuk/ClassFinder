@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ClassFinder</title>
+    <link rel="stylesheet" href="/index.css">
+</head>
+<body>
+    {% include 'header.html' %}
+    <main>
+        <h1 style="display: inline;">Hello, {{user.username}}!  </h1><p class="hidden-text">{{user.email}}</p>
+        {% if user.role == "admin" %}<button onclick="window.location.href = '/admin'">Admin</button>{%endif %}
+        {% if classestoadd|length > 0 %}<h2>You still need to add {{classestoadd|length}} classes.</h2> <button onclick="window.location.href = '/addclasses'">Add classes</button>{% endif %}
+        <button onclick="window.location.href = '/logout'">Log out</button>
+        {% if user.classes|length > 0%}
+        {% if needcanvaslink %}<h2>While not required, you get extra features when you link your canvas classes (1-3 minutes)</h2> <button onclick="window.location.href = '/classes/canvaslink'">Link</button>{% endif %}
+        <h2>Your classes:</h2>
+        <ul id="classes">
+            {% for class in user.classes %}
+                <li class="class" {% if class.canvasid %} onclick="window.location.href = '{{canvasurl}}/courses/{{class.canvasid}}'" {%endif%}>{{class.name}}
+                    {% if class.lunch is none and (class.period == "6" or class.period == "7")%}
+                    <ul class="actions">
+                        <li class="action" onclick="window.location.href = '/class/{{class.id}}/setlunch'">Set lunch</li>
+                    </ul>
+                    {% endif %}
+                    <ul class="classusers">
+                        {%for user in class.users%}
+                            <li class="classuser">
+                                {{user.username}}
+                            </li>
+                        {%endfor%}
+                </ul></li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+    </main>
+</body>
+</html>
