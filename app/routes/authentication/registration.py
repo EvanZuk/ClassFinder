@@ -1,5 +1,6 @@
 from app import app
-from flask import render_template, request, url_for, redirect
+import sys
+from flask import render_template, request, url_for, redirect, jsonify
 from app.utilities.email import send_email, create_email_id, check_email_id
 from app.utilities.users import create_user, check_email, get_user_count, create_token
 from app.utilities.validation import validate_email, validate_username
@@ -20,12 +21,15 @@ def register_post():
         return error_response("Already taken"), 400
     if not validate_email(email):
         return error_response("Invalid email"), 400
+    emailid = create_email_id(email)
     send_email(
         email=email,
         subject="Confirm your email",
         message="Confirm your email at "
-        + url_for("register_confirm", _external=True, emailid=create_email_id(email)),
+        + url_for("register_confirm", _external=True, emailid=emailid),
     )
+    if "pytest" in sys.modules:
+        return {"status": "success", "message": "Email sent", "emailid": emailid}, 200
     return success_response("Email sent"), 200
 
 
@@ -51,10 +55,11 @@ def register_confirm_post(emailid):
         role = "admin"
         app.logger.info(f"{username} has become the first user and is now an admin")
     if create_user(username, email, password, role=role):
-        response = success_response("User created.")
+        newtoken = create_token(username).token
+        response = success_response("User created.") if not "pytest" in sys.modules else jsonify({"status": "success", "message": "User created.", "token": newtoken})
         response.set_cookie(
             "token",
-            create_token(username).token,
+            newtoken,
             httponly=True,
             samesite="Strict",
             secure=True,

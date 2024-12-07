@@ -1,4 +1,5 @@
 import os
+import sys
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import smtplib
@@ -20,7 +21,7 @@ def send_email(email: str, subject: str, message: str):
     """
     Send an email
     """
-    if devmode:
+    if devmode or "pytest" in sys.modules:
         app.logger.info(
             f"An email was sent to {email} with subject {subject} and message {message}"
         )

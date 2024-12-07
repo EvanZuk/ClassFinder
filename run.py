@@ -1,6 +1,6 @@
+from waitress import serve
 from app import app
 from app.utilities.env import devmode
-from waitress import serve
 
 if devmode:
     print("Running in dev mode")
