@@ -4,26 +4,17 @@ from app.utilities.users import verify_user, check_password, create_token
 from app.addons.limiter import limiter
 from app.utilities.responses import error_response, success_response
 
-
-@app.route("/login")
+@app.route('/login')
 def login():
-    return render_template("login.html")
+    return render_template('login.html')
 
-
-@app.route("/login", methods=["POST"])
+@app.route('/login', methods=['POST'])
 @limiter.limit("50/minute")
 def login_post():
-    username = request.json.get("username")
-    password = request.json.get("password")
+    username = request.json.get('username')
+    password = request.json.get('password')
     if check_password(username, password):
         response = success_response("Login Successful")
-        response.set_cookie(
-            "token",
-            create_token(username).token,
-            httponly=True,
-            samesite="Strict",
-            secure=True,
-            max_age=604800,
-        )
+        response.set_cookie('token', create_token(username).token, httponly=True, samesite='Strict', secure=True, max_age=604800)
         return response, 200
     return error_response("Invalid Credentials"), 400
