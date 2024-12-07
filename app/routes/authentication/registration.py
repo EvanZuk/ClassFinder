@@ -18,7 +18,7 @@ def register_post():
         return error_response("Already taken"), 400
     if not validate_email(email):
         return error_response("Invalid email"), 400
-    send_email(email=email, subject='Confirm your email', message=f'Confirm your email at ' + url_for('register_confirm', _external=True, emailid=create_email_id(email)))
+    send_email(email=email, subject='Confirm your email', message='Confirm your email at ' + url_for('register_confirm', _external=True, emailid=create_email_id(email)))
     return success_response("Email sent"), 200
 
 @app.route('/register/<emailid>')

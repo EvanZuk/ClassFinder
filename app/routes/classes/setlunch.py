@@ -16,7 +16,7 @@ def setlunch(user, courseid):
 @verify_user
 def setlunch_post(user, courseid):
     course = get_course_by_id(courseid)
-    if not course in user.classes:
+    if course not in user.classes:
         return error_response("Course not found."), 404
     lunch = request.json.get('lunch')
     if lunch in ['A', 'B', 'C']:

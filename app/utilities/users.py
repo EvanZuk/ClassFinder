@@ -1,7 +1,7 @@
 from app.db import db, User, Token
 from app import app
 from flask_bcrypt import Bcrypt
-from flask import request, redirect, url_for
+from flask import request, redirect
 from typing import Literal
 import os
 import functools

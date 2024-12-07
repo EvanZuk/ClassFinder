@@ -1,7 +1,7 @@
 from datetime import datetime, time
 from app import app
 from app.db import Schedule, db
-from datetime import datetime, date, time, timedelta
+from datetime import date, timedelta
 classtimes: list = []
 day_of_week: int = 0 # Not the actual day of the week, but the preset 
 lunchtimes: dict = {}

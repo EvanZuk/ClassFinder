@@ -1,7 +1,6 @@
 from app import app
 from flask import redirect, url_for, request
 from app.utilities.users import verify_user, get_token, delete_token
-from app.utilities.responses import success_response
 
 @app.route('/logout')
 @verify_user()

@@ -1,5 +1,5 @@
 from app import app
-from flask import redirect, url_for
+from flask import redirect
 from app.utilities.canvas import canvas_url
 from app.utilities.classes import get_user_current_period
 from app.utilities.users import verify_user

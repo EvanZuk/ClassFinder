@@ -1,7 +1,7 @@
 from app import app
 from flask import render_template, request, redirect, url_for
 from app.utilities.users import verify_user, get_user, delete_user, create_token, create_user, get_user_by_email
-from app.utilities.validation import validate_username, validate_email
+from app.utilities.validation import validate_username
 from app.utilities.responses import error_response, success_response
 
 @app.route('/admin/account/<username>', methods=['DELETE'])

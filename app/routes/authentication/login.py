@@ -1,6 +1,6 @@
 from app import app
-from flask import render_template, redirect, request, jsonify
-from app.utilities.users import verify_user, check_password, create_token
+from flask import render_template, request
+from app.utilities.users import check_password, create_token
 from app.addons.limiter import limiter
 from app.utilities.responses import error_response, success_response
 

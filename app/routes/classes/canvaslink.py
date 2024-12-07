@@ -2,8 +2,8 @@ import requests
 from flask import render_template, request, redirect, url_for
 from app import app
 from app.utilities.users import verify_user
-from app.utilities.classes import get_course, set_canvas_id, get_course_by_id
-from app.utilities.responses import error_response, success_response
+from app.utilities.classes import set_canvas_id
+from app.utilities.responses import success_response
 from app.utilities.canvas import canvas_url
 from app.addons.limiter import limiter
 

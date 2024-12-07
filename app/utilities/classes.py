@@ -1,4 +1,4 @@
-from app.utilities.times import get_classtimes, lunchtimes, update_times
+from app.utilities.times import get_classtimes, lunchtimes
 from app.db import User, Class, db
 from datetime import datetime
 from app import app

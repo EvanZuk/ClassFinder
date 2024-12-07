@@ -1,9 +1,9 @@
 from app import app
 from app.utilities.times import set_schedule
 from app.utilities.users import verify_user
-from datetime import date, datetime
-from flask import render_template, request, redirect, url_for
-from app.utilities.responses import success_response, error_response
+from datetime import datetime
+from flask import render_template, request
+from app.utilities.responses import success_response
 
 @app.route('/admin/times/schedule')
 @verify_user(allowed_roles=['admin'])
