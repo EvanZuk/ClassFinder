@@ -6,43 +6,59 @@ from app.utilities.validation import validate_email, validate_username
 from app.addons.limiter import limiter
 from app.utilities.responses import error_response, success_response
 
-@app.route('/register')
+
+@app.route("/register")
 def register():
-    return render_template('register.html')
+    return render_template("register.html")
+
 
 @limiter.limit("3/minute")
-@app.route('/register', methods=['POST'])
+@app.route("/register", methods=["POST"])
 def register_post():
-    email = request.json.get('email')
+    email = request.json.get("email")
     if check_email(email):
         return error_response("Already taken"), 400
     if not validate_email(email):
         return error_response("Invalid email"), 400
-    send_email(email=email, subject='Confirm your email', message='Confirm your email at ' + url_for('register_confirm', _external=True, emailid=create_email_id(email)))
+    send_email(
+        email=email,
+        subject="Confirm your email",
+        message="Confirm your email at "
+        + url_for("register_confirm", _external=True, emailid=create_email_id(email)),
+    )
     return success_response("Email sent"), 200
 
-@app.route('/register/<emailid>')
+
+@app.route("/register/<emailid>")
 def register_confirm(emailid):
     email = check_email_id(emailid)
     if email is None:
-        return redirect(url_for('register'))
-    return render_template('register_final.html', email=email)
+        return redirect(url_for("register"))
+    return render_template("register_final.html", email=email)
 
-@app.route('/register/<emailid>', methods=['POST'])
+
+@app.route("/register/<emailid>", methods=["POST"])
 def register_confirm_post(emailid):
     email = check_email_id(emailid)
     if email is None:
         return error_response("Invalid email id"), 400
-    username = request.json.get('username')
+    username = request.json.get("username")
     if not validate_username(username):
         return error_response("Invalid username"), 400
-    password = request.json.get('password')
+    password = request.json.get("password")
     role = "user"
     if get_user_count() == 0:
         role = "admin"
         app.logger.info(f"{username} has become the first user and is now an admin")
     if create_user(username, email, password, role=role):
         response = success_response("User created.")
-        response.set_cookie('token', create_token(username).token, httponly=True, samesite='Strict', secure=True, max_age=604800)
+        response.set_cookie(
+            "token",
+            create_token(username).token,
+            httponly=True,
+            samesite="Strict",
+            secure=True,
+            max_age=604800,
+        )
         return response, 200
     return error_response("User creation failed."), 400
