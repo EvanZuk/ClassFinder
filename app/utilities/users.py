@@ -1,11 +1,11 @@
+import os
+import functools
+import base64
 from app.db import db, User, Token
 from app import app
 from flask_bcrypt import Bcrypt
 from flask import request, redirect
 from typing import Literal
-import os
-import functools
-import base64
 
 bcrypt = Bcrypt()
 

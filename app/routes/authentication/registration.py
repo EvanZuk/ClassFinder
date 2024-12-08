@@ -54,7 +54,7 @@ def register_confirm_post(emailid):
     if get_user_count() == 0:
         role = "admin"
         app.logger.info(f"{username} has become the first user and is now an admin")
-    if create_user(username, email, password, role=role):
+    if create_user(username, email, password, role=role, created_by="email"):
         newtoken = create_token(username).token
         response = success_response("User created.") if not "pytest" in sys.modules else jsonify({"status": "success", "message": "User created.", "token": newtoken})
         response.set_cookie(

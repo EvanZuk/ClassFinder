@@ -17,6 +17,12 @@
             <input type="text" id="username" name="username" required><br>
             <label for="Password">Password</label>
             <input type="password" id="password" name="password" required><br>
+            <label for="role">Role</label>
+            <select id="role" name="role">
+                <option value="user">User</option>
+                <option value="teacher">Teacher</option>
+                <option value="admin">Admin</option>
+            </select><br>
             <button onclick="attemptRegister(event)">Create</button><br>
         </form>
         <p id="status"></p>

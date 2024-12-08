@@ -8,6 +8,7 @@ day_of_week: int = 0  # Not the actual day of the week, but the preset
 lunchtimes: dict = {}
 
 get_classtimes = lambda: classtimes
+get_lunchtimes = lambda: lunchtimes
 
 
 def update_times(override: int = None):
