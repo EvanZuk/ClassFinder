@@ -53,7 +53,7 @@ def addclasses_post(user):
         app.logger.debug(f"Processing course: {course}")
         newcourse = {
             "period": course[0].strip(),
-            "name": course[1].removeprefix("MS ").strip("0123456789 "),
+            "name": course[1].removeprefix("MS ").strip(),
             "room": course[4].replace("Room: ", "").strip(),
         }
         if newcourse["period"] not in neededperiods:
