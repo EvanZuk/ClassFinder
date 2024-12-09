@@ -26,9 +26,7 @@ def import_routes(directory):
 
 import_routes(os.path.join(os.path.dirname(__file__), "routes"))
 from app.utilities.times import update_times
-
-app.logger.info("Updating times for init...")
-update_times()
+from app.db import db_cleanup
 
 from flask_apscheduler import APScheduler
 
@@ -36,10 +34,14 @@ scheduler = APScheduler()
 
 
 @scheduler.task("cron", hour=2, misfire_grace_time=3600)
-def do_update_times():
-    app.logger.info("Updating times...")
+def do_daily_tasks():
+    app.logger.info("Running daily tasks...")
     update_times()
+    db_cleanup()
 
+app.logger.info("Runing daily tasks for initialization")
+with app.app_context():
+    do_daily_tasks()
 
 scheduler.init_app(app)
 scheduler.start()

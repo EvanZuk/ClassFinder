@@ -54,5 +54,5 @@ def reset_password_confirm_post(emailid):
         return error_response("User not found"), 400
     change_password(user, password)
     response = success_response("Password changed")
-    response.set_cookie("token", create_token(user.username).token)
+    response.set_cookie("token", create_token(user.username, 'refresh').token)
     return response, 200

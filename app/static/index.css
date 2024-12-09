@@ -70,7 +70,9 @@ textarea {
     color: var(--text-color);
 }
 button, input[type="submit"] {
-    margin: 10px;
+    margin: 3px;
+    margin-top: 10px;
+    margin-bottom: 10px;
     padding: 7px;
     border-radius: 5px;
     border: none;
@@ -130,6 +132,9 @@ ul.classusers, ul.actions {
     transition: background-color 0.3s;
     font-size: 1.5rem;
     font-weight: bold;
+}
+.class.currentperiod {
+    color: #47ff6d;
 }
 .classuser, li.action {
     background-color: var(--inner-div-color);

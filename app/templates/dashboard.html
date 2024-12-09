@@ -18,8 +18,8 @@
                 <h2>No classes today.</h2>{% if classestoadd > 0 %}<br><h2>Some classes may not be shown, as you still need to add {{classestoadd}} classes. You can add them <a href="/addclasses">here</a>.</h2>{% endif %}
             {% else %}
                 <ul id="classes">
-                    {% for class in currentclasses %}
-                        <li class="class" {% if class.canvasid %} onclick="window.location.href = '{{canvasurl}}/courses/{{class.canvasid}}'" {%endif%}>{{class.name}}</li>
+                    {% for class in currentclasses|sort(attribute='period') %}
+                        <li style="padding: 15px" class="class {% if currentperiod.period == class.period %}currentperiod{%endif%}" {% if class.canvasid %} onclick="window.location.href = '{{canvasurl}}/courses/{{class.canvasid}}'" {%endif%}>{{class.name}}</li>
                     {% endfor %}
                 </ul>
             {% endif %}
@@ -28,7 +28,7 @@
     {% if currentperiod is not none %}<script>
         var countDownDate = new Date("{{ endtime }}").getTime();
 
-        function updatetimer() {
+        function updatetimer(first=false) {
             var now = new Date().getTime();
             var distance = countDownDate - now;
             var days = Math.floor(distance / (1000 * 60 * 60 * 24));
@@ -43,19 +43,29 @@
                 document.getElementById("timertext").innerHTML = hours + "h " + minutes + "m " + seconds + "s";
             }
             if (hours === 0 && minutes === 0 && seconds === 0) {
-                clearInterval(x);
-                document.getElementById("timertext").innerHTML = "0";
-                setTimeout(function() {
-                    location.reload();
-                }, 10000);
+                if (first) {
+                    alert("Please make sure your computer's time is correct.");
+                    clearInterval(x);
+                    document.getElementById("timertext").innerHTML = "Timer";
+                } else {
+                    clearInterval(x);
+                    document.getElementById("timertext").innerHTML = "0";
+                    setTimeout(function() {
+                        location.reload();
+                    }, 5000);
+                }
             } else if (hours <= 0 && minutes <= 0 && seconds <= 0) {
-                clearInterval(x);
-                setTimeout(function() {
+                if (first) {
+                    alert("Please make sure your computer's time is correct.");
+                    clearInterval(x);
+                    document.getElementById("timertext").innerHTML = "Timer";
+                } else {
+                    clearInterval(x);
                     location.reload();
-                }, 1100);
+                }
             }
         }
-        updatetimer()
+        updatetimer(first=true)
         var x = setInterval(updatetimer, 500);
     </script>{%endif%}
 </body>

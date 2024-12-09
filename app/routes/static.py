@@ -1,5 +1,5 @@
 from app import app
-from flask import send_from_directory
+from flask import send_from_directory, render_template
 from app.utilities.env import devmode
 
 
@@ -10,3 +10,7 @@ def index_css():
 @app.route("/favicon.ico")
 def favicon():
     return send_from_directory("static", "favicondev.ico" if devmode else "favicon.ico")
+
+@app.route("/privacy")
+def privacy():
+    return render_template("privacy.html")

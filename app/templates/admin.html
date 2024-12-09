@@ -9,17 +9,18 @@
 <body>
     {% include 'header.html' %}
     <main>
-        <h1 style="display: inline;">Hello, {{user.username}}!</h1>
+        <h1 style="display: inline;">Hello, {{user.username}}!</h1><br>
         <button onclick="window.location.href = '/admin/create/account'">Create user</button>
         <button onclick="window.location.href = '/admin/times/schedule'">Schedule times</button>
         <div style="height: 20px;"></div>
         <h2>Users</h2>
         <ul id="users">
-            {% for user in users %}
-                <li class="user" id="{{user.username}}">{{user.username}}
+            {% for nuser in users %}
+                <li class="user" id="{{nuser.username}}">{{nuser.username}}<p style="font-size: 75%;">{{nuser.role}}</p>
                     <ul class="actions">
-                        <li class="action" onclick="window.location.href = '/admin/login/{{user.username}}'">Login</li>
-                        {% if not user.role == "admin" %}<li class="action" onclick="deleteUser('{{user.username}}')">Delete</li>{%endif%}
+                        {% if not nuser == user %}<li class="action" onclick="window.location.href = '/admin/account/{{nuser.username}}/login'">Login</li>{%endif%}
+                        <li class="action" onclick="window.location.href = '/admin/account/{{nuser.username}}/edit'">Edit</li>
+                        {% if not nuser == user %}<li class="action" onclick="deleteUser('{{nuser.username}}')">Delete</li>{%endif%}
                     </ul>
                 </li>
             {% endfor %}
@@ -54,6 +55,10 @@
                 }).then(response => {
                     if (response.ok) {
                         document.getElementById(username).remove();
+                    } else {
+                        response.json().then(data => {
+                            alert('Failed to delete user: ' + data.message);
+                        });
                     }
                 });
             }
@@ -66,6 +71,10 @@
                 }).then(response => {
                     if (response.ok) {
                         document.getElementById(id).remove();
+                    } else {
+                        response.json().then(data => {
+                            alert('Failed to delete class: ' + data.message);
+                        });
                     }
                 });
             }

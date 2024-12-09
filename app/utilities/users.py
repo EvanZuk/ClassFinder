@@ -6,6 +6,7 @@ from app import app
 from flask_bcrypt import Bcrypt
 from flask import request, redirect
 from typing import Literal
+from datetime import datetime, timedelta
 
 bcrypt = Bcrypt()
 
@@ -48,12 +49,23 @@ def check_password(username: str, password: str):
     return False
 
 
-def create_token(username: str, type: Literal["api", "refresh", "system"] = "api"):
+def create_token(username: str, type: Literal["api", "refresh", "system", "app", "admin"], expiry: datetime = None):
     """
     Create a token for a user
     type can be either "api", "refresh", or "system"
     """
-    token = Token(token=os.urandom(30).hex(), user_id=username, type=type)
+    nexpiry = expiry
+    if nexpiry is None:
+        nexpiry = datetime.now()
+        if type == "api" or type == "app":
+            nexpiry += timedelta(days=60)
+        elif type == "refresh":
+            nexpiry += timedelta(days=7)
+        elif type == "system":
+            nexpiry += timedelta(days=30)
+        else:
+            nexpiry += timedelta(days=1)
+    token = Token(token=os.urandom(30).hex(), user_id=username, type=type, expire=expiry)
     db.session.add(token)
     db.session.commit()
     return token
@@ -121,6 +133,8 @@ def delete_user(user: User):
     """
     Delete a user
     """
+    for token in user.tokens:
+        delete_token(token)
     db.session.delete(user)
     db.session.commit()
     return None
@@ -144,13 +158,34 @@ def verify_user(
 
             if auth:
                 if auth.startswith("Bearer "):
+                    app.logger.debug("Trying bearer authentication for " + func.__name__)
                     token = auth.split(" ")[1]
                 elif auth.startswith("Basic "):
                     auth = base64.b64decode(auth.split(" ")[1]).decode("utf-8")
-                username, password = auth.split(":")
-                if check_password(username, password):
-                    user = User.query.filter_by(username=username).first()
-                    if user and user.role in allowed_roles:
+                    username, password = auth.split(":")
+                    app.logger.debug("Trying basic authentication for " + func.__name__ + " with " + username)
+                    if check_password(username, password):
+                        user = User.query.filter_by(username=username).first()
+                        if user and user.role in allowed_roles:
+                            app.logger.debug(
+                                "Accepted user "
+                                + user.username
+                                + " with role "
+                                + user.role
+                                + " for "
+                                + func.__name__
+                                + " with basic authentication"
+                            )
+                            return func(user, *args, **kwargs)
+            if token:
+                app.logger.debug("Trying token/refresh authentication for " + func.__name__)
+                user = check_token(token)
+                if user and user.role in allowed_roles:
+                    token = get_token(token)
+                    if token.expire < datetime.now():
+                        app.logger.debug("Token for " + user.username + " has expired. Deleting token.")
+                        delete_token(token)
+                    else:
                         app.logger.debug(
                             "Accepted user "
                             + user.username
@@ -158,28 +193,13 @@ def verify_user(
                             + user.role
                             + " for "
                             + func.__name__
-                            + " with basic authentication"
+                            + " with token/refresh authentication"
                         )
                         return func(user, *args, **kwargs)
-                return onfail
-            if token:
-                user = check_token(token)
-                if user and user.role in allowed_roles:
-                    app.logger.debug(
-                        "Accepted user "
-                        + user.username
-                        + " with role "
-                        + user.role
-                        + " for "
-                        + func.__name__
-                        + " with token/refresh authentication"
-                    )
-                    return func(user, *args, **kwargs)
             app.logger.debug("Rejected user for " + func.__name__)
             if not required:
                 return func(None, *args, **kwargs)
             failresponse = onfail
-            app.logger.debug(request.cookies)
             if request.cookies.get("token"):
                 app.logger.debug("Clearing token")
                 failresponse.set_cookie(

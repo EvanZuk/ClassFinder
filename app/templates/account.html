@@ -9,15 +9,15 @@
 <body>
     {% include 'header.html' %}
     <main>
-        <h1 style="display: inline;">Hello, {{user.username}}!  </h1><p class="hidden-text">{{user.email}}</p>
+        <h1 style="display: inline;">Hello, {{user.username}}!  </h1><p class="hidden-text">{{user.email}}</p><br>
         {% if user.role == "admin" %}<button onclick="window.location.href = '/admin'">Admin</button>{%endif %}
         {% if classestoadd|length > 0 %}<h2>You still need to add {{classestoadd|length}} classes.</h2> <button onclick="window.location.href = '/addclasses'">Add classes</button>{% endif %}
+        {% if needcanvaslink %}<button onclick="window.location.href = '/classes/canvaslink'">Link canvas classes</button>{% endif %}
         <button onclick="window.location.href = '/logout'">Log out</button>
         {% if user.classes|length > 0%}
-        {% if needcanvaslink %}<h2>While not required, you get extra features when you link your canvas classes (1-3 minutes)</h2> <button onclick="window.location.href = '/classes/canvaslink'">Link</button>{% endif %}
         <h2>Your classes:</h2>
         <ul id="classes">
-            {% for class in user.classes %}
+            {% for class in user.classes|sort(attribute='period') %}
                 <li class="class" {% if class.canvasid %} onclick="window.location.href = '{{canvasurl}}/courses/{{class.canvasid}}'" {%endif%}>{{class.name}}
                     {% if class.lunch is none and (class.period == "6" or class.period == "7")%}
                     <ul class="actions">

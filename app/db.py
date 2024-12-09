@@ -1,7 +1,7 @@
 import os
 from app import app
 from flask_sqlalchemy import SQLAlchemy
-from datetime import datetime
+from datetime import datetime, timedelta
 
 db_path = os.environ.get("DB_PATH", "sqlite:///db.sqlite3")
 app.config["SQLALCHEMY_DATABASE_URI"] = db_path
@@ -48,13 +48,19 @@ class Token(db.Model):
     token = db.Column(db.String, primary_key=True, unique=True, nullable=False)
     user_id = db.Column(db.String(20), db.ForeignKey("user.username"), nullable=False)
     type = db.Column(db.String(20), nullable=False)
-    expire = db.Column(db.DateTime, nullable=True)
+    expire = db.Column(db.DateTime, nullable=True, default=lambda: datetime.now() + timedelta(days=8))
 
 
 class Schedule(db.Model):
     day = db.Column(db.Date, primary_key=True, nullable=False, unique=True)
     type = db.Column(db.Integer, nullable=False)
 
+def db_cleanup():
+    """
+    Clean up the database by removing expired tokens and tokens that have not been used for a week
+    """
+    db.session.query(Token).filter(Token.expire < datetime.now()).delete()
+    db.session.commit()
 
 with app.app_context():
     db.create_all()

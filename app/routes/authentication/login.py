@@ -11,7 +11,7 @@ def login():
 
 
 @app.route("/login", methods=["POST"])
-@limiter.limit("50/minute")
+@limiter.limit("40/minute")
 def login_post():
     username = request.json.get("username")
     password = request.json.get("password")
@@ -19,7 +19,7 @@ def login_post():
         response = success_response("Login Successful")
         response.set_cookie(
             "token",
-            create_token(username).token,
+            create_token(username, 'refresh').token,
             httponly=True,
             samesite="Strict",
             secure=True,

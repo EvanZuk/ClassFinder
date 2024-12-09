@@ -2,7 +2,7 @@
     <nav>
         <ul>
             <li><a href="/dashboard">Dashboard</a></li>
-            <li><a href="/timer" id="timertext">Timer</a></li>
+            {% if currentperiod is not none %}<li><a href="/timer" id="timertext">Timer</a></li>{% endif %}
             <li><a href="/account">Account</a></li>
         </ul>
     </nav>

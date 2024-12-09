@@ -7,7 +7,9 @@ from app.utilities.users import (
     create_token,
     create_user,
     get_user_by_email,
+    change_password,
 )
+from app.db import db
 from app.utilities.validation import validate_username
 from app.utilities.responses import error_response, success_response
 
@@ -24,7 +26,7 @@ def delete_account(user, username):
     return error_response("User not found."), 404
 
 
-@app.route("/admin/login/<username>", methods=["POST", "GET"])
+@app.route("/admin/account/<username>/login", methods=["POST", "GET"])
 @verify_user(allowed_roles=["admin"])
 def login_as(user, username):
     loguser = get_user(username)
@@ -85,3 +87,30 @@ def create_account_post(user):
         return error_response("Invalid role."), 400
     create_user(username, email, password, role=role, created_by=user.username)
     return success_response("User created."), 200
+
+@app.route("/admin/account/<username>/edit")
+@verify_user(allowed_roles=["admin"])
+def edit_account(user, username):
+    edituser = get_user(username)
+    if edituser:
+        return render_template("editaccount.html", user=edituser)
+    return error_response("User not found."), 404
+
+@app.route("/admin/account/<username>/edit", methods=["POST"])
+@verify_user(allowed_roles=["admin"])
+def edit_account_post(user, username):
+    edituser = get_user(username)
+    if edituser:
+        email = request.json.get("email")
+        role = request.json.get("role")
+        password = request.json.get("password")
+        if password is not None and password != "":
+            app.logger.info(f"{user.username} has changed {edituser.username}'s password.")
+            change_password(edituser, password)
+        if email:
+            edituser.email = email
+        if role:
+            edituser.role = role
+        db.session.commit()
+        return success_response("User updated."), 200
+    return error_response("User not found."), 404

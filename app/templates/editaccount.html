@@ -9,26 +9,24 @@
 <body>
     {% include 'header.html' %}
     <main id="login" class="form">
-        <h1>Create account</h1>
-        <form onsubmit="attemptRegister(event)"></form>
-            <label for="email">Email</label>
-            <input type="email" id="email" name="email" required><br>
-            <label for="username">Username</label>
-            <input type="text" id="username" name="username" required><br>
-            <label for="Password">Password</label>
-            <input type="password" id="password" name="password" required><br>
+        <h1>Editing user: {{user.username}}</h1>
+        <form onsubmit="attemptEdit(event)"></form>
             <label for="role">Role</label>
             <select id="role" name="role">
                 <option value="user">User</option>
                 <option value="teacher">Teacher</option>
                 <option value="admin">Admin</option>
             </select><br>
-            <button onclick="attemptRegister(event)">Create</button><br>
+            <label for="email">Email</label>
+            <input type="email" id="email" name="email" value="{{user.email}}" required><br>
+            <label for="password">Password</label>
+            <input type="password" id="password" name="password"><br>
+            <button onclick="attemptEdit(event)">Submit</button><br>
         </form>
         <p id="status"></p>
     </main>
     <script>
-        function attemptRegister(event) {
+        function attemptEdit(event) {
             event.preventDefault();
 
             fetch(window.location.toString(), {
@@ -36,7 +34,11 @@
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({ username: document.getElementById('username').value, password: document.getElementById('password').value, email: document.getElementById('email').value, role: document.getElementById('role').value
+                body: JSON.stringify({ 
+                    username: document.getElementById('name').value,
+                    role: document.getElementById('role').value,
+                    email: document.getElementById('email').value,
+                    password: document.getElementById('password').value
                 }),
                 credentials: 'include'
             })
@@ -46,7 +48,7 @@
                     document.getElementById('status').innerText = data.message;
                     window.location.href = '/admin';
                 } else {
-                    document.getElementById('status').innerText = 'Registration failed: ' + data.message;
+                    document.getElementById('status').innerText = 'Edit failed: ' + data.message;
                 }
             })
             .catch(error => {

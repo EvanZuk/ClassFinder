@@ -45,13 +45,16 @@
                     location.reload();
                 }, 3000);
             } else if (hours <= 0 && minutes <= 0 && seconds <= 0) {
+                if (first) {
+                    alert("Please make sure your computer's time is correct.");
+                }
                 clearInterval(x);
                 setTimeout(function() {
                     location.reload();
                 }, 500);
             }
         }
-        updatetimer()
+        updatetimer(first=true)
         var countDownDateObj = new Date(countDownDate);
         var hours = countDownDateObj.getHours();
         var minutes = countDownDateObj.getMinutes();
