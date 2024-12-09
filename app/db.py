@@ -8,15 +8,15 @@ app.config["SQLALCHEMY_DATABASE_URI"] = db_path
 db = SQLAlchemy(app)
 
 
-if not os.path.exists(db_path):
-    os.makedirs(db_path)
+# if not os.path.exists(db_path):
+#     os.makedirs(db_path)
 user_class_association = db.Table(
     "user_class",
     db.Model.metadata,
     db.Column(
         "user_id", db.String(20), db.ForeignKey("user.username"), primary_key=True
     ),
-    db.Column("class_id", db.Integer, db.ForeignKey("class.id"), primary_key=True),
+    db.Column("class_id", db.String(20), db.ForeignKey("class.id"), primary_key=True),
 )
 
 

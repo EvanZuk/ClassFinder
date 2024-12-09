@@ -26,7 +26,7 @@ def register_post():
         email=email,
         subject="Confirm your email",
         message="Confirm your email at "
-        + url_for("register_confirm", _external=True, emailid=emailid),
+        + url_for("register_confirm", _external=True, emailid=emailid, _scheme="https"),
     )
     if "pytest" in sys.modules:
         return {"status": "success", "message": "Email sent", "emailid": emailid}, 200
