@@ -49,6 +49,7 @@
                     alert("Please make sure your computer's time is correct.");
                 }
                 clearInterval(x);
+                document.getElementById("timel").innerHTML = "0s";
                 setTimeout(function() {
                     location.reload();
                 }, 500);

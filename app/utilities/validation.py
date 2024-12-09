@@ -19,4 +19,4 @@ def validate_room(room: str):
     """
     Check if a room is valid
     """
-    return re.fullmatch(r"(E?[0-9]{3})|MS Cafe", room)
+    return re.fullmatch(r"(E?[0-9]{3}B?)|MS Cafe", room)
