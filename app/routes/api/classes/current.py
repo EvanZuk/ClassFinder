@@ -8,6 +8,7 @@ from datetime import datetime
 @verify_user
 def current_classes(user):
     currentperiod = get_user_current_period(user)
+    app.logger.debug(f"Current period: {currentperiod}")
     return success_response(None, {
         "classes": [
             {
@@ -19,7 +20,7 @@ def current_classes(user):
                 "canvasid": c.canvasid
             } for c in get_today_courses(user)
         ],
-        "period": currentperiod['period'],
+        "period": currentperiod['period'] if currentperiod is not None else None,
         "endtime": int(datetime.combine(datetime.today(), currentperiod['end']).timestamp()) if (currentperiod is not None) else None,
     })
 
