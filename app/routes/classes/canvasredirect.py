@@ -9,15 +9,15 @@ from app.utilities.users import verify_user
 @verify_user
 def canvas(user):
     period = get_user_current_period(user)
-    if period is None or period["course"] is None or period.canvasid is None:
+    if period is None or period["course"] is None or period["course"].canvasid is None:
         return redirect(canvas_url)
-    return redirect(f"{canvas_url}/courses/{period.canvasid}")
+    return redirect(f"{canvas_url}/courses/{period['course'].canvasid}")
 
 
 @app.route("/canvas/<path>")
 @verify_user
 def canvas_with_path(user, path):
     period = get_user_current_period(user)
-    if period is None or period["course"] is None or period.canvasid is None:
+    if period is None or period["course"] is None or period["course"].canvasid is None:
         return redirect(canvas_url)
-    return redirect(f"{canvas_url}/courses/{period.canvasid}/{path}")
+    return redirect(f"{canvas_url}/courses/{period['course'].canvasid}/{path}")
