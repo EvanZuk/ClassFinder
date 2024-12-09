@@ -19,7 +19,7 @@ def current_classes(user):
                 "canvasid": c.canvasid
             } for c in get_today_courses(user)
         ],
-        "currentperiod": currentperiod,
+        "period": currentperiod['period'],
         "endtime": int(datetime.combine(datetime.today(), currentperiod['end']).timestamp()) if (currentperiod is not None) else None,
     })
 
