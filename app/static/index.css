@@ -138,6 +138,7 @@ ul.classusers, ul.actions {
 }
 .classuser, li.action {
     background-color: var(--inner-div-color);
+    font-size: 88%;
     padding: 10px;
     margin: 5px;
 }
