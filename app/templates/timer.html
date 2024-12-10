@@ -6,20 +6,27 @@
     <title>ClassFinder - Timer</title>
     <link rel="stylesheet" href="/index.css">
 </head>
-<body>
+<body style="background-size: cover;">
     <!-- TODO: This is still the old code, might need to be updated -->
     <div style="background-color: black; color: white; justify-content: center; align-items: center;"></div>
         <div style="display: flex; flex-direction: column; justify-content: center; align-items: center; height: 100vh;">
-            <div style="width: 100%; text-align: center; font-size: 1.2em;" id="time">
-                
-            </div>
-            <div style="width: 100%; text-align: center; font-size: 6em;" id="timel">
-                
+            <div style="padding: 20px; border-radius: 20px; backdrop-filter: blur(25px);" id="shadowbox">
+                <div style="width: 100%; text-align: center; font-size: 1.2em;" id="time">
+                    
+                </div>
+                <div style="width: 100%; text-align: center; font-size: 6em;" id="timel">
+                    
+                </div>
             </div>
         </div>
     </div>
     <script>
-        var countDownDate = new Date("{{nextclass}}").getTime();
+        var nextclass = "{{nextclass}}";
+        if (nextclass == "nothing") {
+            document.getElementById("shadowbox").remove();
+        } else {
+            var countDownDate = new Date(nextclass).getTime();
+        }
 
         function updatetimer(first=false) {
             var now = new Date().getTime();
@@ -55,16 +62,18 @@
                 }, 500);
             }
         }
-        updatetimer(first=true)
-        var countDownDateObj = new Date(countDownDate);
-        var hours = countDownDateObj.getHours();
-        var minutes = countDownDateObj.getMinutes();
-        var ampm = hours >= 12 ? 'PM' : 'AM';
-        hours = hours % 12 || 12; // the hour '0' should be '12'
-        minutes = minutes < 10 ? '0' + minutes : minutes;
-        var strTime = hours + ':' + minutes + ' ' + ampm;
-        document.getElementById("time").innerHTML = strTime;
-        var x = setInterval(updatetimer, 500);
+        if (nextclass != "nothing") {
+            updatetimer(first=true)
+            var countDownDateObj = new Date(countDownDate);
+            var hours = countDownDateObj.getHours();
+            var minutes = countDownDateObj.getMinutes();
+            var ampm = hours >= 12 ? 'PM' : 'AM';
+            hours = hours % 12 || 12; // the hour '0' should be '12'
+            minutes = minutes < 10 ? '0' + minutes : minutes;
+            var strTime = hours + ':' + minutes + ' ' + ampm;
+            document.getElementById("time").innerHTML = strTime;
+            var x = setInterval(updatetimer, 500);
+        }
         document.body.addEventListener('keydown', function(event) {
             if (event.code === 'Space') {
             if (!document.fullscreenElement) {
@@ -120,6 +129,11 @@
         var bgColor = urlParams.get('bg');
         if (bgColor) {
             document.body.style.backgroundColor = "#"+bgColor;
+        }
+        var bgImage = urlParams.get('bgimage');
+        if (bgImage) {
+            document.body.style.backgroundImage = "url('"+bgImage+"')";
+            document.getElementById("shadowbox").style.boxShadow = "7px 7px 5px black";
         }
         var textColor = urlParams.get('color');
         if (textColor) {
