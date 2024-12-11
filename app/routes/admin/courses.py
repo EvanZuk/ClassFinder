@@ -32,7 +32,6 @@ def edit_course_post(user, courseid):
     course = get_course_by_id(courseid)
     if course:
         response = request.json
-        # TODO: Create a function in the classes utility file to update a course
         course.name = response["name"]
         course.room = response["room"]
         course.canvasid = (
@@ -50,7 +49,6 @@ def edit_course_post(user, courseid):
 def verify_course(user, courseid):
     course = get_course_by_id(courseid)
     if course:
-        # TODO: Create a function in the classes utility file to verify a course
         course.verified = True
         db.session.commit()
         app.logger.info(f"Course verified: {courseid}")

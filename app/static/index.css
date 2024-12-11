@@ -113,7 +113,6 @@ a {
 ul {
     list-style: none;
 }
-/* TODO: The classusers columns is constantly only 1 column wide. */
 #classes, #users, ul.classusers, ul.actions {
     /* margin-top: 20px; */
     display: grid;

@@ -28,7 +28,6 @@ def update_times(override: int = None):
             day_of_week = datetime.today().weekday()
     classtimes = []
     lunchtimes = {}
-    # TODO: Add all other days
     if day_of_week == 0:  # Monday
         classtimes = [
             {
