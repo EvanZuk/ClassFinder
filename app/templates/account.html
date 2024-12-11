@@ -26,9 +26,11 @@
                     {% endif %}
                     <ul class="classusers">
                         {%for user in class.users%}
+                        {% if not user.role == "testing" %}
                             <li class="classuser">
                                 {{user.username}}
                             </li>
+                        {% endif %}
                         {%endfor%}
                 </ul></li>
             {% endfor %}
