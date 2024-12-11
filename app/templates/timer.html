@@ -135,6 +135,12 @@
             document.body.style.backgroundImage = "url('"+bgImage+"')";
             document.getElementById("shadowbox").style.boxShadow = "0px 0px 20px black";
         }
+        var bgBlur = urlParams.get('bgblur');
+        if (bgBlur) {
+            if (nextclass != "nothing") {
+                document.body.style.backdropFilter = "blur("+bgBlur+"px)";
+            }
+        }
         var textColor = urlParams.get('color');
         if (textColor) {
             document.body.style.color = "#"+textColor;
