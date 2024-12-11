@@ -1,6 +1,5 @@
 from app import app
 from app.utilities.users import verify_user
-from datetime import datetime
 
 @app.route('/api/v2/user/data')
 @verify_user
