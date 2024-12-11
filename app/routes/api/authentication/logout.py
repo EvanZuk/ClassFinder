@@ -13,3 +13,10 @@ def logout_post():
         return error_response("Invalid Token"), 400
     delete_token(token)
     return success_response("Logout Successful"), 200
+
+@app.route("/api/v2/logout/all", methods=["GET", "POST"])
+@verify_user
+def logout_all(user):
+    for token in user.tokens:
+        delete_token(token)
+    return success_response("Logout of all devices Successful"), 200

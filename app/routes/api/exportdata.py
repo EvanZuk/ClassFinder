@@ -23,3 +23,17 @@ def export_data(user):
         "created_at": int(user.created_at.timestamp()),
         "created_by": user.created_by
     }
+
+@app.route('/api/v2/user/tokens')
+@verify_user
+def export_tokens(user):
+    return {
+        "tokens": [
+            {
+                "token": t.token.replace(t.token[:10], "*" * 10),
+                "type": t.type,
+                "expire": int(t.expire.timestamp())
+            }
+            for t in user.tokens
+        ]
+    }
