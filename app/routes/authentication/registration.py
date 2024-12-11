@@ -13,8 +13,8 @@ def register():
     return render_template("register.html")
 
 
-@limiter.limit("3/minute")
 @app.route("/register", methods=["POST"])
+@limiter.limit("3/minute")
 def register_post():
     email = request.json.get("email")
     if check_email(email):

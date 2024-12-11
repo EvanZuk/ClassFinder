@@ -6,8 +6,9 @@
     --navbar-color: #214137;
     --text-color: #c2fff5;
     --secondary-text-color: #b6e9e0;
-    --inner-div-color: #1b6ad0;
-    --inner-div-hover-color: #113a6f;
+    --action-color: #1b6ad0;
+    --action-hover-color: #113a6f;
+    --user-color: #1b6ad0;
 }
 * {
     margin: 0;
@@ -136,13 +137,18 @@ ul.classusers, ul.actions {
     color: #47ff6d;
 }
 .classuser, li.action {
-    background-color: var(--inner-div-color);
     font-size: 88%;
     padding: 10px;
     margin: 5px;
 }
-.classuser[onclick]:hover, li.action[onclick]:hover {
-    background-color: var(--inner-div-hover-color);
+.classuser {
+    background-color: var(--user-color);
+}
+li.action {
+    background-color: var(--action-color);
+}
+li.action[onclick]:hover {
+    background-color: var(--action-hover-color);
     cursor: pointer;
 }
 .room {
