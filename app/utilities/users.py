@@ -143,7 +143,7 @@ def delete_user(user: User):
 def verify_user(
     func=None,
     required: bool = True,
-    allowed_roles: list = ["user", "teacher", "admin"],
+    allowed_roles: list = ["user", "teacher", "admin", "testing"],
     onfail=redirect("/login"),
 ):
     """
