@@ -83,8 +83,6 @@ def create_account_post(user):
         return error_response("Username already exists."), 400
     if get_user_by_email(email):
         return error_response("Email already exists."), 400
-    if role not in ["user", "admin", "teacher"]:
-        return error_response("Invalid role."), 400
     create_user(username, email, password, role=role, created_by=user.username)
     return success_response("User created."), 200
 
