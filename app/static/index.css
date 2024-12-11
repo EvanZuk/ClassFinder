@@ -9,6 +9,7 @@
     --action-color: #1b6ad0;
     --action-hover-color: #113a6f;
     --user-color: #1b6ad0;
+    --user-primary-color: #6641b7;
 }
 * {
     margin: 0;
@@ -143,6 +144,9 @@ ul.classusers, ul.actions {
 }
 .classuser {
     background-color: var(--user-color);
+}
+.classcreator {
+    background-color: var(--user-primary-color);
 }
 li.action {
     background-color: var(--action-color);
