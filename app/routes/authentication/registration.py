@@ -14,7 +14,7 @@ def register():
 
 
 @app.route("/register", methods=["POST"])
-@limiter.limit("3/minute", lambda: request.json.get("email"))
+@limiter.limit("3/minute", key_func=lambda: request.json.get("email"))
 def register_post():
     email = request.json.get("email")
     if check_email(email):
