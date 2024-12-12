@@ -9,38 +9,30 @@
 <body>
     {% include 'header.html' %}
     <main class="form">
-        <h1>Reset password</h1>
-        <form onsubmit="attemptReset(event)"></form>
-            <label for="username">Username</label>
-            <input type="text" id="username" name="username" readonly value="{{user.username}}"><br>
-            <label for="Password">Password</label>
-            <input type="password" id="password" name="password" required><br>
-            <button onclick="attemptReset(event)">Reset password</button><br>
+        <h1>Delete account</h1>
+        <form onsubmit="attemptDelete(event)">
+            <button onclick="attemptDelete(event)">Delete</button><br>
         </form>
         <p id="status"></p>
     </main>
-    <p style="position: absolute; bottom:20px;left:20px;">Cookies are used to store login data, by logging in, you consent to this.</p>
     <script>
-        function attemptReset(event) {
+        function attemptDelete(event) {
             event.preventDefault();
-
-            fetch(window.location.toString(), {
+            fetch('/account/delete', {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify({password: document.getElementById('password').value
-                }),
                 credentials: 'include'
             })
             .then(response => response.json())
             .then(data => {
                 if (data.status == "success") {
-                    document.getElementById('status').innerText = data.message;
-                    window.location.href = '/dashboard';
+                    document.getElementById('status').innerText = 'Delete successful!';
+                    window.location.href = '/';
                     // Redirect or perform other actions on successful login
                 } else {
-                    document.getElementById('status').innerText = 'Registration failed: ' + data.message;
+                    document.getElementById('status').innerText = 'Delete failed: ' + data.message;
                 }
             })
             .catch(error => {

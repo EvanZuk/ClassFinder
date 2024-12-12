@@ -1,6 +1,7 @@
 from app import app
 from flask import render_template
-from app.utilities.users import verify_user
+from app.utilities.users import verify_user, delete_user
+from app.utilities.responses import success_response, error_response
 from app.utilities.classes import (
     get_today_courses,
     neededperiods,
@@ -30,3 +31,13 @@ def account(user):
         canvasurl=canvas_url,
         needcanvaslink=needcanvaslink,
     )
+
+@app.route("/account/delete", methods=["GET"])
+def account_delete_get():
+    return render_template("account_delete.html")
+
+@app.route("/account/delete", methods=["POST"])
+@verify_user
+def account_delete(user):
+    delete_user(user)
+    return success_response("User deleted successfully")
