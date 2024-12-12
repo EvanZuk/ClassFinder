@@ -161,7 +161,6 @@ cython_debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
 
-*.json
-data/
-compose.yaml
-old
+# Configuration
+.vscode/
+docker-compose.override.yml

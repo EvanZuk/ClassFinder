@@ -22,6 +22,8 @@ def current_classes(user):
         ],
         "period": currentperiod['period'] if currentperiod is not None else None,
         "endtime": int(datetime.combine(datetime.today(), currentperiod['end']).timestamp()) if (currentperiod is not None) else None,
+        "passing": currentperiod['passing'] if currentperiod is not None else None,
+        "lunch": currentperiod['lunch'] if currentperiod is not None else None
     })
 
 @app.route("/api/v2/classes/all")
