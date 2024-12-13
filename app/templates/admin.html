@@ -5,6 +5,11 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>ClassFinder</title>
     <link rel="stylesheet" href="/index.css">
+    <style>
+        li>ul.classusers {
+            display: none;
+        }
+    </style>
 </head>
 <body>
     {% include 'header.html' %}
@@ -28,6 +33,7 @@
         <div style="height: 20px;"></div>
         {% if classes|length > 0%}
         <h2>Classes</h2>
+        <button onclick="document.querySelectorAll('.classusers').forEach(el => el.style.display = 'grid'); this.remove();">Show users</button>
         <ul id="classes">
             {% for class in classes|sort(attribute='verified') %}
                 <li class="class {% if not class.verified %}unverified{%endif%}" id="{{class.id}}">{{class.name}}
