@@ -50,4 +50,4 @@ COPY . .
 EXPOSE 7842
 
 # Run the application.
-CMD python3 run.py
+CMD waitress-serve --host=0.0.0.0 --port=7842 app:app

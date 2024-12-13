@@ -610,7 +610,6 @@ def update_times(override: int = None):
             "C": {"start": time(10, 55), "end": time(11, 25)},
         }
     app.logger.debug(f"Updated times for day {day_of_week}")
-    app.logger.debug(f"Class times: {classtimes}")
 
 
 def set_schedule(start: date, end: date, simulated_day: int):

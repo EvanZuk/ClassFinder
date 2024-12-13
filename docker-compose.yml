@@ -8,3 +8,4 @@ services:
       - ./data:/data
     restart: always
     hostname: classfinder
+    stop_signal: SIGINT
