@@ -1,8 +1,10 @@
 from flask import Flask
+from werkzeug.middleware.proxy_fix import ProxyFix
 import os
 import importlib
 
 app = Flask(__name__, template_folder="templates", static_folder="static")
+app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_port=1, x_prefix=1)
 app.secret_key = os.environ.get("APP_KEY", "devkey")
 
 from app.utilities.env import devmode

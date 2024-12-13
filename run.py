@@ -1,6 +1,15 @@
 from waitress import serve
 from app import app
 from app.utilities.env import devmode
+import signal
+import sys
+
+def signal_handler(sig, frame):
+    print("Exiting...")
+    sys.exit(0)
+
+signal.signal(signal.SIGINT, signal_handler)
+signal.signal(signal.SIGTERM, signal_handler)
 
 if devmode:
     print("Running in dev mode")
