@@ -3,14 +3,18 @@ from werkzeug.middleware.proxy_fix import ProxyFix
 import os
 import importlib
 import logging
+from flask_apscheduler import APScheduler
+from app.utilities.env import devmode
+
 
 app = Flask(__name__, template_folder="templates", static_folder="static")
 app.wsgi_app = ProxyFix(app.wsgi_app, x_for=2, x_proto=2, x_host=2, x_port=2, x_prefix=2)
 
 app.secret_key = os.environ.get("APP_KEY", "devkey")
-logging.getLogger("werkzeug").disabled = True
 
-from app.utilities.env import devmode
+# FIXME: The logger should be disabled, as I dont want debug logs from imports, however making it disabled prevents error logs from being shown
+
+logging.getLogger("werkzeug").disabled = True
 
 app.logger.setLevel("DEBUG" if devmode else "INFO")
 
@@ -50,18 +54,17 @@ def import_routes(directory):
 
 
 import_routes(os.path.join(os.path.dirname(__file__), "routes"))
-from app.utilities.times import update_times
-from app.db import db_cleanup
-
-from flask_apscheduler import APScheduler
 
 scheduler = APScheduler()
 
+from app.utilities.times import update_times
+from app.db import db_cleanup
 
 @scheduler.task("cron", hour=2, misfire_grace_time=3600)
 def do_daily_tasks():
     app.logger.info("Running daily tasks...")
     update_times()
+    app.logger.info("Cleaning up database...")
     db_cleanup()
 
 app.logger.info("Runing daily tasks for initialization")

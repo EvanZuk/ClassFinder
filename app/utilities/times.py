@@ -24,7 +24,7 @@ def update_times(override: int = None):
             app.logger.info(f"Found schedule for {day}: {schedule.type}")
             day_of_week = schedule.type
         else:
-            app.logger.info(f"Updating times for day {day_of_week}")
+            app.logger.debug(f"Updating times for day {day_of_week}")
             day_of_week = datetime.today().weekday()
     classtimes = []
     lunchtimes = {}

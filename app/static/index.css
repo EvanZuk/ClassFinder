@@ -48,7 +48,7 @@ header ul li a:hover {
 main {
     padding: 1rem;
 }
-#landingpage, .form {
+#landingpage, main:has(form) {
     display: flex;
     flex-direction: column;
     justify-content: center;
@@ -115,7 +115,7 @@ a {
 ul {
     list-style: none;
 }
-#classes, #users, ul.classusers, ul.actions {
+#classes, #users, ul.classusers, ul.actions, #schedules {
     /* margin-top: 20px; */
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
@@ -125,7 +125,7 @@ ul.classusers, ul.actions {
     grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
     gap: 2px;
 }
-.class, .user, .classuser, li.action {
+.class, .user, .classuser, .schedule, li.action {
     padding: 7px;
     background-color: var(--secondary-color);
     border-radius: 5px;

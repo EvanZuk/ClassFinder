@@ -57,9 +57,19 @@ class Schedule(db.Model):
 
 def db_cleanup():
     """
-    Clean up the database by removing expired tokens and tokens that have not been used for a week
+    Clean up the database by removing everything expired
     """
-    db.session.query(Token).filter(Token.expire < datetime.now()).delete()
+    expired_tokens = db.session.query(Token).filter(Token.expire < datetime.now())
+    expired_schedules = db.session.query(Schedule).filter(Schedule.day < datetime.now().date())
+
+    expired_tokens_count = expired_tokens.delete(synchronize_session=False)
+    expired_schedules_count = expired_schedules.delete(synchronize_session=False)
+
+    app.logger.debug(f"Deleted {expired_tokens_count} expired tokens.")
+    if expired_schedules_count == 0:
+        app.logger.debug(f"Deleted {expired_schedules_count} expired schedules.")
+    else:
+        app.logger.info(f"Deleted {expired_schedules_count} expired schedules.")
     db.session.commit()
 
 with app.app_context():

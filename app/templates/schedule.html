@@ -8,7 +8,7 @@
 </head>
 <body>
     {% include 'header.html' %}
-    <main id="schedule" class="form">
+    <main id="schedule">
         <h1>Add schedule</h1>
         <form onsubmit="setSchedule(event)"></form>
             <label for="start">Start</label>
@@ -27,8 +27,20 @@
                 <option value="8">Early release gold</option>
             </select><br>
             <button onclick="setSchedule(event)">Add</button><br>
-        </form>
-        <p id="status"></p>
+        </form><br>
+        <p id="status"></p><br>
+        <div style="width:100%; display:block;">
+            <h2 style="margin:10px">Times</h2>
+            <ul id="schedules">
+                {% for schedule in schedules|sort(attribute="day") %}
+                    <li class="schedule" id="{{schedule.day}}">{{ schedule.type }} on {{ schedule.day }}
+                        <ul class="actions">
+                            <li onclick="deleteSchedule('{{schedule.day}}')" class="action">Delete</li>
+                        </ul>
+                    </li>
+                {% endfor %}
+            </ul>
+        </div>
     </main>
     <script>
         function setSchedule(event) {
@@ -51,6 +63,27 @@
                 if (data.status == "success") {
                     document.getElementById('status').innerText = data.message;
                     window.location.href = '/admin';
+                } else {
+                    document.getElementById('status').innerText = 'Failed: ' + data.message;
+                }
+            })
+            .catch(error => {
+                document.getElementById('status').innerText = 'An error occurred: ' + error.message;
+            });
+        }
+        function deleteSchedule(day) {
+            fetch('/admin/times/schedule/' + day, {
+                method: 'DELETE',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'include'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status == "success") {
+                    document.getElementById('status').innerText = data.message;
+                    window.getElementById(day).remove();
                 } else {
                     document.getElementById('status').innerText = 'Failed: ' + data.message;
                 }
