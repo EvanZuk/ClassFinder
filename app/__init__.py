@@ -12,32 +12,78 @@ app.wsgi_app = ProxyFix(app.wsgi_app, x_for=2, x_proto=2, x_host=2, x_port=2, x_
 
 app.secret_key = os.environ.get("APP_KEY", "devkey")
 
-# FIXME: The logger should be disabled, as I dont want debug logs from imports, however making it disabled prevents error logs from being shown
-
-logging.getLogger("werkzeug").disabled = True
-
 app.logger.setLevel("DEBUG" if devmode else "INFO")
 
-if devmode:
-    class CustomFormatter(logging.Formatter):
-        def format(self, record):
-            relative_path = os.path.relpath(record.pathname, os.path.dirname(__file__)).removesuffix(".py")
-            reset_color = "\033[0m"
-            level_color = {
-                "DEBUG": "\033[97m",  # white
-                "INFO": "\033[94m",   # blue
-                "WARNING": "\033[93m", # yellow
-                "ERROR": "\033[91m",  # red
-                "CRITICAL": "\033[91m" # red
-            }.get(record.levelname, reset_color)  # default to no color
-            bold = "\033[1m"
-            return f"{bold}{level_color}{record.levelname}{reset_color}{level_color} in {bold}{relative_path}{reset_color}{level_color}: {record.getMessage()}{reset_color}"
+class CustomFormatter(logging.Formatter):
+    def format(self, record):
+        relative_path = os.path.relpath(record.pathname, os.path.dirname(__file__)).removesuffix(".py")
+        reset_color = "\033[0m"
+        level_color = {
+            "DEBUG": "\033[97m",  # white
+            "INFO": "\033[94m",   # blue
+            "WARNING": "\033[93m", # yellow
+            "ERROR": "\033[91m",  # red
+            "CRITICAL": "\033[91m" # red
+        }.get(record.levelname, reset_color)  # default to no color
+        bold = "\033[1m"
+        if os.path.basename(record.pathname) == "__init__.py":
+            return f"{bold}{level_color}{record.levelname}{reset_color}{level_color}: {record.getMessage().replace('\033[0m', '\033[0m'+level_color)}{reset_color}"
+        else:
+            return f"{bold}{level_color}{record.levelname}{reset_color}{level_color} in {bold}{relative_path}{reset_color}{level_color} at {bold}{record.lineno}{reset_color}{level_color}: {record.getMessage()}{reset_color}"
 
-    formatter = CustomFormatter()
-    handler = logging.StreamHandler()
-    handler.setFormatter(formatter)
-    app.logger.handlers.clear()
-    app.logger.addHandler(handler)
+formatter = CustomFormatter()
+handler = logging.StreamHandler()
+handler.setFormatter(formatter)
+app.logger.handlers.clear()
+app.logger.addHandler(handler)
+
+# Configure waitress logger to use the same handler
+waitress_logger = logging.getLogger('waitress')
+waitress_logger.handlers.clear()
+waitress_logger.addHandler(handler)
+
+@app.before_request
+def log_request():
+    reset_color = "\033[0m"
+    method_colors = {
+        "GET": "\033[92m",  # green
+        "POST": "\033[96m", # cyan
+        "PUT": "\033[95m",  # purple
+        "DELETE": "\033[91m", # red
+        "PATCH": "\033[94m", # blue
+    }
+    method_color = method_colors.get(request.method, "\033[97m")  # white
+    app.logger.debug(f"Processing {method_color}{request.method}{reset_color} {request.path}")
+
+@app.after_request
+def log_response(response):
+    reset_color = "\033[0m"
+    status_colors = {
+        200: "\033[92m",  # green
+        201: "\033[96m",  # cyan
+        204: "\033[96m",  # cyan
+        304: "\033[96m",  # cyan
+        300: "\033[96m",  # cyan
+        301: "\033[96m",  # cyan
+        302: "\033[96m",  # cyan
+        400: "\033[93m",  # yellow
+        401: "\033[91m",  # red
+        403: "\033[91m",  # red
+        404: "\033[91m",  # red
+        429: "\033[93m",  # yellow
+        500: "\033[91m",  # red
+    }
+    method_colors = {
+        "GET": "\033[92m",  # green
+        "POST": "\033[96m", # cyan
+        "PUT": "\033[95m",  # purple
+        "DELETE": "\033[91m", # red
+        "PATCH": "\033[94m", # blue
+    }
+    status_color = status_colors.get(response.status_code, "\033[97m")  # white
+    method_color = method_colors.get(request.method, "\033[97m") # white
+    app.logger.debug(f"Response for {method_color}{request.method}{reset_color} {request.path} is {status_color}{response.status_code}{reset_color}")
+    return response
 
 def import_routes(directory):
     for root, _, files in os.walk(directory):
@@ -73,5 +119,29 @@ with app.app_context():
 
 scheduler.init_app(app)
 scheduler.start()
+
+# Disable the werkzeug logger to prevent double logging
+werkzeug_logger = logging.getLogger('werkzeug')
+werkzeug_logger.setLevel(logging.ERROR)
+
+for logger in [logging.getLogger('waitress')]:
+    logger.disabled = True
+
+# FIXME: For some reason the app handler is not being removed, and will sometimes print twice
+for handler in app.logger.handlers[:]:
+    app.logger.removeHandler(handler)
+app.logger.addHandler(handler)
+
+class CustomWerkzeugFormatter(logging.Formatter):
+    def format(self, record):
+        if "Exception" in record.getMessage() or "Traceback" in record.getMessage():
+            return super().format(record)
+        return "" # FIXME: This is a hack to prevent werkzeug from logging, but it still shows a newline for some reason
+
+werkzeug_logger.handlers.clear()
+werkzeug_handler = logging.StreamHandler()
+werkzeug_handler.setFormatter(CustomWerkzeugFormatter())
+werkzeug_logger.addHandler(werkzeug_handler)
+logging.basicConfig(handlers=[werkzeug_handler], level=app.logger.level)
 
 app.logger.info("App initialized")
