@@ -19,12 +19,11 @@
         <h2>Your classes:</h2>
         <ul id="classes">
             {% for class in user.classes|sort(attribute='period') %}
-                <li class="class" {% if class.canvasid %} onclick="window.location.href = '{{canvasurl}}/courses/{{class.canvasid}}'" {%endif%}>{{class.name}}
-                    {% if class.lunch is none and (class.period == "6" or class.period == "7")%}
+                <li class="class" id="{{class.id}}" {% if class.canvasid %} onclick="window.location.href = '{{canvasurl}}/courses/{{class.canvasid}}'" {%endif%}>{{class.name}}
                     <ul class="actions">
-                        <li class="action" onclick="window.location.href = '/class/{{class.id}}/setlunch'">Set lunch</li>
+                        {% if class.lunch is none and (class.period == "6" or class.period == "7")%}<li class="action" onclick="window.location.href = '/class/{{class.id}}/setlunch'">Set lunch</li>{% endif %}
+                        {% if allow_leave and class.period != "Access" %}<li class="action" onclick="event.stopPropagation(); leaveClass('{{class.id}}')">Leave</li>{% endif %}
                     </ul>
-                    {% endif %}
                     <ul class="classusers">
                         {%for user in class.users%}
                             {% if not user.role == "testing" %}
@@ -38,5 +37,29 @@
         </ul>
         {% endif %}
     </main>
+    <script>
+        function leaveClass(classid) {
+            if (confirm("Are you sure you want to leave this class?")) {
+                fetch(`/classes/${classid}/leave`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ class_id: classid })
+                })
+                .then(response => {
+                    if (response.ok) {
+                        window.location.reload();
+                    } else {
+                        alert('Failed to leave the class.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred while trying to leave the class.');
+                });
+            }
+        }
+    </script>
 </body>
 </html>

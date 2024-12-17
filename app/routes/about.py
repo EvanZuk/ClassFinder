@@ -1,6 +1,6 @@
 from app import app
 from flask import render_template, redirect
-from app.utilities.env import devmode
+from app.utilities.config import devmode
 from app.utilities.users import get_user_count, verify_user
 
 

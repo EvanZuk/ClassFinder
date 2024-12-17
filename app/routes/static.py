@@ -1,6 +1,6 @@
 from app import app
 from flask import send_from_directory, render_template
-from app.utilities.env import devmode
+from app.utilities.config import devmode
 
 
 @app.route("/index.css")

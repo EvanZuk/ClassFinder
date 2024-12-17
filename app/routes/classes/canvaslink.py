@@ -4,7 +4,7 @@ from app import app
 from app.utilities.users import verify_user
 from app.utilities.classes import set_canvas_id
 from app.utilities.responses import success_response
-from app.utilities.canvas import canvas_url
+from app.utilities.config import canvas_url
 from app.addons.limiter import limiter
 
 

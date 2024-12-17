@@ -7,7 +7,7 @@ from app.utilities.classes import (
     neededperiods,
     get_periods_of_user_classes,
 )
-from app.utilities.canvas import canvas_url
+from app.utilities.config import canvas_url, allow_leave
 
 
 @app.route("/account")
@@ -30,6 +30,7 @@ def account(user):
         neededperiods=neededperiods,
         canvasurl=canvas_url,
         needcanvaslink=needcanvaslink,
+        allow_leave=allow_leave,
     )
 
 @app.route("/account/delete", methods=["GET"])
@@ -41,3 +42,4 @@ def account_delete_get():
 def account_delete(user):
     delete_user(user)
     return success_response("User deleted successfully")
+

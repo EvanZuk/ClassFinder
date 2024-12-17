@@ -4,7 +4,8 @@ import os
 import importlib
 import logging
 from flask_apscheduler import APScheduler
-from app.utilities.env import devmode
+from app.utilities.config import devmode
+from datetime import datetime
 
 
 app = Flask(__name__, template_folder="templates", static_folder="static")
@@ -95,8 +96,10 @@ def import_routes(directory):
                     .replace(os.sep, ".")
                     .replace(".py", "")
                 )
-                app.logger.debug(f"Importing {module_name}")
+                btime = datetime.now()
                 importlib.import_module(module_name)
+                atime = datetime.now()
+                app.logger.debug(f"Imported {module_name} in {(atime - btime).total_seconds()}s")
 
 
 import_routes(os.path.join(os.path.dirname(__file__), "routes"))
@@ -115,7 +118,10 @@ def do_daily_tasks():
 
 app.logger.info("Runing daily tasks for initialization")
 with app.app_context():
+    btime = datetime.now()
     do_daily_tasks()
+    atime = datetime.now()
+    app.logger.info(f"Daily tasks completed in {(atime - btime).total_seconds()}s")
 
 scheduler.init_app(app)
 scheduler.start()

@@ -3,7 +3,7 @@ import sys
 from email.mime.text import MIMEText
 from email.mime.multipart import MIMEMultipart
 import smtplib
-from app.utilities.env import devmode
+from app.utilities.config import devmode
 from app import app
 
 emailids = {}
