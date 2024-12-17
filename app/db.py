@@ -1,11 +1,13 @@
 import os
 from app import app
 from flask_sqlalchemy import SQLAlchemy
+from flask_migrate import Migrate
 from datetime import datetime, timedelta
 
 db_path = os.environ.get("DB_PATH", "sqlite:///db.sqlite3")
 app.config["SQLALCHEMY_DATABASE_URI"] = db_path
 db = SQLAlchemy(app)
+migrate = Migrate(app, db)
 
 
 # if not os.path.exists(db_path):
@@ -42,6 +44,8 @@ class Class(db.Model):
     lunch = db.Column(db.String(1), nullable=True, default=None)
     created_by = db.Column(db.String(20), nullable=False)
     verified = db.Column(db.Boolean, nullable=False, default=False)
+    # start = db.Column(db.Time, nullable=False)
+    # end = db.Column(db.Time, nullable=False)
 
 
 class Token(db.Model):
@@ -49,6 +53,7 @@ class Token(db.Model):
     user_id = db.Column(db.String(20), db.ForeignKey("user.username"), nullable=False)
     type = db.Column(db.String(20), nullable=False)
     expire = db.Column(db.DateTime, nullable=True, default=lambda: datetime.now() + timedelta(days=8))
+    # purpose = db.Column(db.String(100), nullable=False, default="Authentication")
 
 
 class Schedule(db.Model):

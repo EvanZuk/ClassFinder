@@ -1,7 +1,6 @@
-from datetime import datetime, time
 from app import app
-from app.db import Schedule, db
-from datetime import date, timedelta
+from app.db import Schedule, db, Class
+from datetime import date, timedelta, time, datetime
 
 classtimes: list = []
 day_of_week: int = 0  # Not the actual day of the week, but the preset
@@ -621,6 +620,17 @@ def update_times(override: int = None):
             "C": {"start": time(10, 55), "end": time(11, 25)},
         }
     app.logger.debug(f"Updated times for day {day_of_week}")
+    # for course in Class.query.all():
+    #     app.logger.debug(f"Starting checking class time for {course.name} ({course.period})")
+    #     for ctime in classtimes:
+    #         app.logger.debug(f"Checking class time for {course.name} ({ctime['period']})")
+    #         if ctime["period"] == course.period:
+    #             app.logger.debug(f"Updating class times for {course.name} ({ctime['period']})")
+    #             course.start = ctime["start"]
+    #             course.end = ctime["end"]
+    #             break
+    db.session.commit()
+    app.logger.debug("Updated class times")
 
 
 def set_schedule(start: date, end: date, simulated_day: int):

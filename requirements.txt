@@ -6,3 +6,4 @@ flask-apscheduler
 waitress
 better-profanity
 requests
+Flask-Migrate
