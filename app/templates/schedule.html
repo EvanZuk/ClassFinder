@@ -29,7 +29,7 @@
             <h2 style="margin:10px">Times</h2>
             <ul id="schedules">
                 {% for schedule in schedules|sort(attribute="day") %}
-                    <li class="schedule" id="{{schedule.day}}">{{ readable_days[schedule.type] }} on {{ schedule.day }}
+                    <li class="schedule" id="{{schedule.day}}">{{ readable_days[schedule.type] }} on {{ schedule.day.strftime('%m/%d/%Y') }}
                         <ul class="actions">
                             <li onclick="deleteSchedule('{{schedule.day}}')" class="action">Delete</li>
                         </ul>

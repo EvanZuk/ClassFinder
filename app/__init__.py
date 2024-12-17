@@ -127,7 +127,7 @@ werkzeug_logger.setLevel(logging.ERROR)
 for logger in [logging.getLogger('waitress')]:
     logger.disabled = True
 
-# FIXME: For some reason the app handler is not being removed, and will sometimes print twice
+# FIXME: For some reason the app handler is not being removed, and will sometimes print twice, the later formatter seems to fix this, but it's still a hack
 for handler in app.logger.handlers[:]:
     app.logger.removeHandler(handler)
 app.logger.addHandler(handler)
