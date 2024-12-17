@@ -6,6 +6,17 @@ from datetime import date, timedelta
 classtimes: list = []
 day_of_week: int = 0  # Not the actual day of the week, but the preset
 lunchtimes: dict = {}
+readable_days = {
+    0: "Monday",
+    1: "Tuesday",
+    2: "Wednesday",
+    3: "Thursday",
+    4: "Friday",
+    5: "No school",
+    6: "No school",
+    7: "Early Release Blue",
+    8: "Early Release Gold",
+}
 
 get_classtimes = lambda: classtimes
 get_lunchtimes = lambda: lunchtimes

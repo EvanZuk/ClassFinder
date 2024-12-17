@@ -1,6 +1,6 @@
 from app import app
 from app.db import Schedule, db
-from app.utilities.times import set_schedule
+from app.utilities.times import set_schedule, readable_days
 from app.utilities.users import verify_user
 from datetime import datetime
 from flask import render_template, request
@@ -10,7 +10,7 @@ from app.utilities.responses import success_response, error_response
 @app.route("/admin/times/schedule")
 @verify_user(allowed_roles=["admin"])
 def schedule(user):
-    return render_template("schedule.html", schedules=Schedule.query.all())
+    return render_template("schedule.html", schedules=Schedule.query.all(), readable_days=readable_days)
 
 
 @app.route("/admin/times/schedule", methods=["POST"])
