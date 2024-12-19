@@ -133,7 +133,6 @@ werkzeug_logger.setLevel(logging.ERROR)
 for logger in [logging.getLogger('waitress')]:
     logger.disabled = True
 
-# FIXME: For some reason the app handler is not being removed, and will sometimes print twice, the later formatter seems to fix this, but it's still a hack
 for handler in app.logger.handlers[:]:
     app.logger.removeHandler(handler)
 app.logger.addHandler(handler)
@@ -142,11 +141,12 @@ class CustomWerkzeugFormatter(logging.Formatter):
     def format(self, record):
         if "Exception" in record.getMessage() or "Traceback" in record.getMessage():
             return super().format(record)
-        return "" # FIXME: This is a hack to prevent werkzeug from logging, but it still shows a newline for some reason
+        return ""
 
 werkzeug_logger.handlers.clear()
 werkzeug_handler = logging.StreamHandler()
 werkzeug_handler.setFormatter(CustomWerkzeugFormatter())
+werkzeug_handler.addFilter(lambda record: "Exception" in record.getMessage() or "Traceback" in record.getMessage())
 werkzeug_logger.addHandler(werkzeug_handler)
 logging.basicConfig(handlers=[werkzeug_handler], level=app.logger.level)
 
