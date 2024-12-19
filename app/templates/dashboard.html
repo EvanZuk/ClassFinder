@@ -20,8 +20,9 @@
                 <ul id="classes">
                     {% for class in currentclasses|sort(attribute='start') %}
                         <li style="padding: 15px" class="class {% if currentperiod.period == class.period %}currentperiod{%endif%}" {% if class.canvasid %} onclick="window.location.href = '{{canvasurl}}/courses/{{class.canvasid}}'" {%endif%}>
-                            {{class.name}}<br>
-                            <span style="font-size: 0.8em;">{{class.start}} - {{class.end}}</span>
+                            {{class.name}}
+                            <br>
+                            <span style="font-size: 0.8em;">{{class.room}}</span>
                         </li>
                     {% endfor %}
                 </ul>

@@ -122,7 +122,7 @@ def get_today_courses(user: User):
     return newcourses
 
 
-def add_class(name: str, period: int, room: str, created_by: str):
+def add_class(name: str, period: int, room: str, created_by: str, commit: bool = True):
     newclass = Class(
         id=f"{room}p{period}",
         name=name,
@@ -131,7 +131,8 @@ def add_class(name: str, period: int, room: str, created_by: str):
         created_by=created_by,
     )
     db.session.add(newclass)
-    db.session.commit()
+    if commit:
+        db.session.commit()
     return newclass
 
 

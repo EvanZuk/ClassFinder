@@ -41,7 +41,7 @@ def login_as(user, username):
             "token",
             token.token,
             httponly=True,
-            samesite="Strict",
+            samesite="Lax",
             secure=True,
             max_age=600,
         )
@@ -49,7 +49,7 @@ def login_as(user, username):
             "admin_token",
             request.cookies.get("token"),
             httponly=True,
-            samesite="Strict",
+            samesite="Lax",
             secure=True,
             max_age=604800,
         )

@@ -21,7 +21,7 @@ def login_post():
             "token",
             create_token(username, 'refresh').token,
             httponly=True,
-            samesite="Strict",
+            samesite="Lax",
             secure=True,
             max_age=604800,
         )

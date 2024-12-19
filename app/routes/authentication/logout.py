@@ -10,6 +10,6 @@ def logout(user):
     delete_token(token)
     response = redirect(url_for("account"))
     response.set_cookie(
-        "token", "", httponly=True, samesite="Strict", secure=True, max_age=0
+        "token", "", httponly=True, samesite="Lax", secure=True, max_age=0
     )
     return response

@@ -61,7 +61,7 @@ def register_confirm_post(emailid):
             "token",
             newtoken,
             httponly=True,
-            samesite="Strict",
+            samesite="Lax",
             secure=True,
             max_age=604800,
         )

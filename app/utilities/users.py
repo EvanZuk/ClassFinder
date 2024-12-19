@@ -206,7 +206,7 @@ def verify_user(
                     "token",
                     "",
                     httponly=True,
-                    samesite="Strict",
+                    samesite="Lax",
                     secure=True,
                     max_age=0,
                 )
@@ -216,7 +216,7 @@ def verify_user(
                     "token",
                     request.cookies.get("admin_token"),
                     httponly=True,
-                    samesite="Strict",
+                    samesite="Lax",
                     secure=True,
                     max_age=604800,
                 )
@@ -224,7 +224,7 @@ def verify_user(
                     "admin_token",
                     "",
                     httponly=True,
-                    samesite="Strict",
+                    samesite="Lax",
                     secure=True,
                     max_age=0,
                 )
