@@ -13,7 +13,7 @@ app.wsgi_app = ProxyFix(app.wsgi_app, x_for=2, x_proto=2, x_host=2, x_port=2, x_
 
 app.secret_key = os.environ.get("APP_KEY", "devkey")
 
-app.logger.setLevel("DEBUG" if devmode else "INFO")
+app.logger.setLevel(os.environ.get("LOG_LEVEL", "DEBUG" if devmode else "INFO"))
 
 class CustomFormatter(logging.Formatter):
     def format(self, record):
