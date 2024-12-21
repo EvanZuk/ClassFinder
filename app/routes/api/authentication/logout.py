@@ -15,7 +15,7 @@ def logout_post():
     return success_response("Logout Successful"), 200
 
 @app.route("/api/v2/logout/all", methods=["GET", "POST"])
-@verify_user
+@verify_user(onfail=(error_response("You must be logged in to do that."), 401))
 def logout_all(user):
     for token in user.tokens:
         delete_token(token)
