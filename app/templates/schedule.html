@@ -13,6 +13,8 @@
         <form onsubmit="setSchedule(event)"></form>
             <label for="start">Start</label>
             <input type="date" id="start" name="start" required><br>
+            <label for="copy">One day</label>
+            <button onclick="document.getElementById('end').value = document.getElementById('start').value">Copy</button><br>
             <label for="end">End</label>
             <input type="date" id="end" name="end" required><br>
             <label for="day">Day</label>
