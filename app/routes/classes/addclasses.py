@@ -37,7 +37,7 @@ def addclasses(user):
 
 @app.route("/addclasses", methods=["POST"])
 @verify_user(
-    onfail=({"status": "error", "message": "You must be logged in to do that."}, 401)
+    onfail=lambda:({"status": "error", "message": "You must be logged in to do that."}, 401)
 )
 def addclasses_post(user):
     if len(get_periods_of_user_classes(user)) == len(neededperiods):

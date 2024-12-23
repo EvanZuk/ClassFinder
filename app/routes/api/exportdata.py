@@ -3,7 +3,7 @@ from app.utilities.users import verify_user
 from app.utilities.responses import error_response
 
 @app.route('/api/v2/user/data')
-@verify_user(onfail=(error_response("You must be logged in to do that."), 401))
+@verify_user(onfail=lambda:(error_response("You must be logged in to do that."), 401))
 def export_data(user):
     return {
         "username": user.username,
@@ -26,7 +26,7 @@ def export_data(user):
     }
 
 @app.route('/api/v2/user/tokens')
-@verify_user(onfail=(error_response("You must be logged in to do that."), 401))
+@verify_user(onfail=lambda:(error_response("You must be logged in to do that."), 401))
 def export_tokens(user):
     return {
         "tokens": [

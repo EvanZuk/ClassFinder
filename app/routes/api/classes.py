@@ -5,7 +5,7 @@ from app.utilities.responses import success_response, error_response
 from datetime import datetime
 
 @app.route("/api/v2/classes/current")
-@verify_user(onfail=(error_response("You must be logged in to do that."), 401))
+@verify_user(onfail=lambda:(error_response("You must be logged in to do that."), 401))
 def current_classes(user):
     currentperiod = get_user_current_period(user)
     app.logger.debug(f"Current period: {currentperiod}")
@@ -27,7 +27,7 @@ def current_classes(user):
     })
 
 @app.route("/api/v2/classes/all")
-@verify_user(onfail=(error_response("You must be logged in to do that."), 401))
+@verify_user(onfail=lambda:(error_response("You must be logged in to do that."), 401))
 def all_classes(user):
     return success_response(None, {
         "classes": [

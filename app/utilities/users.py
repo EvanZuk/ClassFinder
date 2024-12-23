@@ -144,7 +144,7 @@ def verify_user(
     func=None,
     required: bool = True,
     allowed_roles: list = ["user", "teacher", "admin", "testing"],
-    onfail=redirect("/login"),
+    onfail=lambda: redirect("/login"),
 ):
     """
     Decorator to verify a user
@@ -199,7 +199,7 @@ def verify_user(
             app.logger.debug("Rejected user for " + func.__name__)
             if not required:
                 return func(None, *args, **kwargs)
-            failresponse = onfail
+            failresponse = onfail()
             if request.cookies.get("token"):
                 app.logger.debug("Clearing token")
                 failresponse.set_cookie(
