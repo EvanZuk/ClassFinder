@@ -11,10 +11,10 @@
     <main id="schedule">
         <h1>Add schedule</h1>
         <form onsubmit="setSchedule(event)"></form>
+            <button onclick="document.getElementById('start').value = new Date().toISOString().split('T')[0]; document.getElementById('end').value = new Date().toISOString().split('T')[0];">Today</button><br>
             <label for="start">Start</label>
             <input type="date" id="start" name="start" required><br>
-            <label for="copy">One day</label>
-            <button onclick="document.getElementById('end').value = document.getElementById('start').value">Copy</button><br>
+            <button onclick="document.getElementById('end').value = document.getElementById('start').value;">One day schedule</button><br>
             <label for="end">End</label>
             <input type="date" id="end" name="end" required><br>
             <label for="day">Day</label>
