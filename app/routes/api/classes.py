@@ -10,16 +10,16 @@ def current_classes(user):
     currentperiod = get_user_current_period(user)
     app.logger.debug(f"Current period: {currentperiod}")
     return success_response(None, {
-        "classes": [
-            {
+        "classes": {
+            c.period: {
+                "id": c.id,
                 "name": c.name,
                 "room": c.room,
-                "period": c.period,
                 "lunch": c.lunch,
                 "verified": c.verified,
                 "canvasid": c.canvasid
             } for c in get_today_courses(user)
-        ],
+        },
         "period": currentperiod['period'] if currentperiod is not None else None,
         "endtime": int(datetime.combine(datetime.today(), currentperiod['end']).timestamp()) if (currentperiod is not None) else None,
         "passing": currentperiod['passing'] if currentperiod is not None and 'passing' in currentperiod else None,
@@ -30,8 +30,8 @@ def current_classes(user):
 @verify_user(onfail=lambda:(error_response("You must be logged in to do that."), 401))
 def all_classes(user):
     return success_response(None, {
-        "classes": [
-            {
+        "classes": {
+            c.id: {
                 "name": c.name,
                 "room": c.room,
                 "period": c.period,
@@ -39,5 +39,5 @@ def all_classes(user):
                 "verified": c.verified,
                 "canvasid": c.canvasid
             } for c in user.classes
-        ]
+        }
     })
