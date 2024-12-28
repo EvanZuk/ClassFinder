@@ -9,7 +9,12 @@ from datetime import datetime
 
 
 app = Flask(__name__, template_folder="templates", static_folder="static")
-app.wsgi_app = ProxyFix(app.wsgi_app, x_for=2, x_proto=2, x_host=2, x_port=2, x_prefix=2)
+#app.wsgi_app = ProxyFix(app.wsgi_app, x_for=2, x_proto=2, x_host=2, x_port=2, x_prefix=2)
+
+@app.before_request
+def fix_ip():
+    if request.headers.get("Cf-Connecting-Ip"):
+        request.remote_addr = request.headers.get("Cf-Connecting-Ip")
 
 app.secret_key = os.environ.get("APP_KEY", "devkey")
 

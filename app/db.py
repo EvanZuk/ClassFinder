@@ -32,6 +32,12 @@ class User(db.Model):
     role = db.Column(db.String(30), nullable=False)
     tokens = db.relationship("Token", backref="user", lazy=True)
 
+    def __str__(self):
+        return self.username
+    
+    def __repr__(self):
+        return f"<User {self.username} ({self.role})>"
+
 
 class Class(db.Model):
     id = db.Column(db.String(20), primary_key=True)
@@ -43,6 +49,11 @@ class Class(db.Model):
     created_by = db.Column(db.String(20), nullable=False)
     verified = db.Column(db.Boolean, nullable=False, default=False)
 
+    def __str__(self):
+        return self.name
+    
+    def __repr__(self):
+        return f"<Class {self.name} ({self.id})>"
 
 class Token(db.Model):
     token = db.Column(db.String, primary_key=True, unique=True, nullable=False)
@@ -50,10 +61,23 @@ class Token(db.Model):
     type = db.Column(db.String(20), nullable=False)
     expire = db.Column(db.DateTime, nullable=True, default=lambda: datetime.now() + timedelta(days=8))
 
+    def __str__(self):
+        return self.token + " for " + self.user_id
+    
+    def __repr__(self):
+        return f"<Token {self.token} ({self.user_id})>"
+
 
 class Schedule(db.Model):
     day = db.Column(db.Date, primary_key=True, nullable=False, unique=True)
     type = db.Column(db.Integer, nullable=False)
+
+    def __str__(self):
+        return self.day.strftime("%Y-%m-%d") + " is " + self.type
+
+    def __repr__(self):
+        return f"<Schedule {self.day} ({self.type})>"
+
 
 def db_cleanup():
     """
