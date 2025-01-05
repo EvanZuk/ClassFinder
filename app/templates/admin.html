@@ -104,6 +104,10 @@
                 }
             });
         }
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('showClasses') === 'true') {
+            document.getElementById('classes').style.display = 'grid';
+        }
     </script>
 </body>
 </html>
