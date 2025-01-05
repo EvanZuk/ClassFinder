@@ -38,8 +38,9 @@ def edit_course_post(user, courseid):
             response["canvasid"] if response["canvasid"].isdigit() else None
         )
         course.lunch = (
-            response["lunch"] if response["lunch"].strip() != "" else None
+            response["lunch"] if response["lunch"] != "" else None
         )
+        course.verified = True
         db.session.commit()
         return success_response("Course updated."), 200
     app.logger.debug(f"Course not found: {courseid}")
