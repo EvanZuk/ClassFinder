@@ -59,7 +59,7 @@ def log_request():
         "PATCH": "\033[94m", # blue
     }
     method_color = method_colors.get(request.method, "\033[97m")  # white
-    app.logger.debug(f"Processing {method_color}{request.method}{reset_color} {request.path}")
+    app.logger.debug(f"Processing {method_color}{request.method}{reset_color} {request.path} with {request.args.to_dict() if request.method == 'GET' else request.json}")
 
 @app.after_request
 def log_response(response):
@@ -156,3 +156,5 @@ werkzeug_logger.addHandler(werkzeug_handler)
 logging.basicConfig(handlers=[werkzeug_handler], level=app.logger.level)
 
 app.logger.info("App initialized")
+
+app.logger.info(f"Starting app on {os.environ.get('FLASK_RUN_HOST', '127.0.0.1')}:{os.environ.get('FLASK_RUN_PORT', '5000')} ...")

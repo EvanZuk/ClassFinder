@@ -76,8 +76,8 @@ async def process_course(course, user):
     app.logger.debug(f"Processing course: {course}")
     newcourse = {
         "period": course[0].strip(),
-        "name": course[1].removeprefix("MS ").strip(),
-        "room": course[4].replace("Room: ", "").strip(),
+        "name": course[1].strip().removeprefix("MS "),
+        "room": course[4].strip().replace("Room: ", ""),
     }
     if newcourse["period"] not in neededperiods:
         app.logger.debug(f"Invalid period: {newcourse['period']}")
