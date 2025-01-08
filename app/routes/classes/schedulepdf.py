@@ -15,4 +15,4 @@ def schedulepdfday(user, days):
         ndays = "0,1,2,3,4,7,8"
     else:
         ndays = days
-    return send_file(create_schedule_pdf(user, [int(day) for day in ndays.split(",")]), download_name=f"{user.username}_schedule.pdf")
+    return send_file(create_schedule_pdf(user, [int(day) for day in ndays.split(",")]), download_name=f"schedule.pdf")

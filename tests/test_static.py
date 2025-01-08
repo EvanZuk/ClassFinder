@@ -25,7 +25,7 @@ def test_favicon(client):
     )
 
 def test_index(client):
-    response = client.get("/")
+    response = client.get("/", follow_redirects=False)
     assert response.status_code == 200
     assert b"<!DOCTYPE html>" in response.data
 
@@ -33,3 +33,15 @@ def test_404(client):
     response = client.get("/thispagedoesnotexist")
     assert response.status_code == 404
     assert b"404" in response.data
+
+def test_429(client):
+    response = client.get("/classes/schedulepdf/all")
+    for _ in range(15):
+        response = client.get("/classes/schedulepdf/all")
+    assert response.status_code == 429
+    assert b"429" in response.data
+
+def test_unauthorized(client):
+    response = client.get("/dashboard", follow_redirects=False)
+    assert response.status_code == 302
+    assert b"Redirecting" in response.data
