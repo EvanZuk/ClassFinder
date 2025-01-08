@@ -8,5 +8,6 @@ from app.utilities.users import get_user_count, verify_user
 @verify_user(required=False)
 def index(user):
     if user:
+        app.logger.debug(f"{user.username} is already logged in, redirecting to dashboard")
         return redirect("/dashboard")
     return render_template("index.html", devmode=devmode, user_count=get_user_count())

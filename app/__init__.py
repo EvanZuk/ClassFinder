@@ -110,14 +110,10 @@ def import_routes(directory):
 import_routes(os.path.join(os.path.dirname(__file__), "routes"))
 
 scheduler = APScheduler()
-
-from app.utilities.times import update_times
 from app.db import db_cleanup
 
 @scheduler.task("cron", hour=2, misfire_grace_time=3600)
 def do_daily_tasks():
-    app.logger.info("Running daily tasks...")
-    update_times()
     app.logger.info("Cleaning up database...")
     db_cleanup()
 

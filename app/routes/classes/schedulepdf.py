@@ -5,9 +5,14 @@ from flask import request, send_file
 
 @app.route("/classes/schedulepdf", methods=["GET"])
 def schedulepdf():
-    return send_file(create_time_pdf(), as_attachment=True, download_name="schedule.pdf")
+    return send_file(create_time_pdf(), download_name="schedule.pdf")
 
 @app.route("/classes/personalschedulepdf", methods=["GET"])
 @verify_user
 def personalschedulepdf(user):
-    return send_file(create_personal_time_pdf(user), as_attachment=True, download_name="schedule.pdf")
+    return send_file(create_personal_time_pdf(user), download_name="schedule.pdf")
+
+@app.route("/classes/personalschedulepdf/<day>", methods=["GET"])
+@verify_user
+def personalschedulepdf_day(user, day):
+    return send_file(create_personal_time_pdf(user, int(day)), download_name="schedule.pdf")

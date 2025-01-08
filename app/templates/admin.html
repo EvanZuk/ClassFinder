@@ -92,7 +92,11 @@
         }
         function verifyClass(id) {
             fetch('/admin/class/' + id + '/verify', {
-                method: 'POST'
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({verified: true})
             }).then(response => {
                 if (response.ok) {
                     document.getElementById('verify' + id).remove();
