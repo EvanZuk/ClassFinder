@@ -1,9 +1,10 @@
 flask
-flask-apscheduler
-flask-limiter
-flask-wtf
+flask-sqlalchemy
 flask-bcrypt
-wheel
+flask-limiter
+flask-apscheduler
 waitress
+better-profanity
 requests
-flask-cors
+Flask-Migrate
+reportlab

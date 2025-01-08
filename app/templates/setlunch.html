@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ClassFinder</title>
+    <link rel="stylesheet" href="/index.css">
+</head>
+<body>
+    {% include 'header.html' %}
+    <main>
+        <h1>Set lunch for {{course.name}}</h1>
+        <form onsubmit="attemptSubmit(event)">
+            <label for="lunch">Lunch</label>
+            <select id="lunch" name="lunch" required>
+                <option value="A">A</option>
+                <option value="B">B</option>
+                <option value="C">C</option>
+            </select><br>
+            <button type="submit">Set lunch</button><br>
+        </form>
+        <p id="status"></p>
+    </main>
+    <script>
+        function attemptSubmit(event) {
+            event.preventDefault();
+            const lunch = document.getElementById('lunch').value;
+
+            fetch(window.location.toString(), {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    lunch: lunch
+                }),
+                credentials: 'include'
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status == "success") {
+                    document.getElementById('status').innerText = data.message;
+                    window.location.href = '/account';
+                    // Redirect or perform other actions on successful login
+                } else {
+                    document.getElementById('status').innerText = 'Failed: ' + data.message;
+                }
+            })
+            .catch(error => {
+                document.getElementById('status').innerText = 'An error occurred: ' + error.message;
+            });
+        }
+    </script>
+</body>
+</html>

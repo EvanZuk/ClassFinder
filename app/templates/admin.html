@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ClassFinder</title>
+    <link rel="stylesheet" href="/index.css">
+    <style>
+        li>ul.classusers {
+            display: none;
+        }
+        #users, #classes, #showusers {
+            display:none;
+        }
+    </style>
+</head>
+<body>
+    {% include 'header.html' %}
+    <main>
+        <h1 style="display: inline;">Hello, {{user.username}}!</h1><br>
+        <button onclick="window.location.href = '/admin/create/account'">Create user</button>
+        <button onclick="window.location.href = '/admin/times/schedule'">Schedule times</button>
+        <div style="height: 20px;"></div>
+        <h2 onclick="document.getElementById('users').style.display = 'grid'; this.style.cursor = 'auto'" style="cursor: pointer;">Users</h2>
+        <ul id="users">
+            {% for nuser in users %}
+                <li class="user" id="{{nuser.username}}">{{nuser.username}}<p style="font-size: 75%;">{{nuser.role}}</p>
+                    <ul class="actions">
+                        {% if not nuser == user %}<li class="action" onclick="window.location.href = '/admin/account/{{nuser.username}}/login'">Login</li>{%endif%}
+                        <li class="action" onclick="window.location.href = '/admin/account/{{nuser.username}}/edit'">Edit</li>
+                        {% if not nuser == user %}<li class="action" onclick="deleteUser('{{nuser.username}}')">Delete</li>{%endif%}
+                    </ul>
+                </li>
+            {% endfor %}
+        </ul>
+        <div style="height: 20px;"></div>
+        {% if classes|length > 0%}
+        <h2 onclick="document.getElementById('classes').style.display = 'grid'; document.getElementById('showusers').style.display = 'block'; this.style.cursor = 'auto'" style="cursor: pointer;">Classes</h2>
+        <button onclick="document.querySelectorAll('.classusers').forEach(el => el.style.display = 'grid'); this.remove();" id="showusers">Show users</button>
+        <ul id="classes">
+            {% for class in classes|sort(attribute='verified') %}
+                <li class="class {% if not class.verified %}unverified{%endif%}" id="{{class.id}}">{{class.name}}
+                    <ul class="actions">
+                        <li class="action" onclick="window.location.href = '/admin/class/{{class.id}}/edit'">Edit</li>
+                        <li class="action" onclick="deleteClass('{{class.id}}')">Delete</li>
+                        {% if not class.verified %}<li class="action" id="verify{{class.id}}" onclick="verifyClass('{{class.id}}')">Verify</li>{%endif%}
+                    </ul>
+                    <ul class="classusers">
+                        {%for user in class.users%}
+                            {% if not user.role == "testing" %}
+                            <li class="classuser{% if class.created_by == user.username %} classcreator{%endif%}">{{user.username}}</li>
+                            {%endif%}
+                        {%endfor%}
+                    </ul>
+                </li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+    </main>
+    <script>
+        classDelWarning = false;
+        function deleteUser(username) {
+            if (confirm("Are you sure you want to delete " + username + "?")) {
+                fetch('/admin/account/' + username, {
+                    method: 'DELETE'
+                }).then(response => {
+                    if (response.ok) {
+                        document.getElementById(username).remove();
+                    } else {
+                        response.json().then(data => {
+                            alert('Failed to delete user: ' + data.message);
+                        });
+                    }
+                });
+            }
+        }
+        function deleteClass(id) {
+            if (classDelWarning || confirm("Are you sure you want to delete this class?")) {
+                classDelWarning = true;
+                fetch('/admin/class/' + id, {
+                    method: 'DELETE'
+                }).then(response => {
+                    if (response.ok) {
+                        document.getElementById(id).remove();
+                    } else {
+                        response.json().then(data => {
+                            alert('Failed to delete class: ' + data.message);
+                        });
+                    }
+                });
+            }
+        }
+        function verifyClass(id) {
+            fetch('/admin/class/' + id + '/verify', {
+                method: 'POST'
+            }).then(response => {
+                if (response.ok) {
+                    document.getElementById('verify' + id).remove();
+                    document.getElementById(id).classList.remove('unverified');
+                    const classElement = document.getElementById(id);
+                    const parent = classElement.parentNode;
+                    parent.removeChild(classElement);
+                    parent.appendChild(classElement);
+                }
+            });
+        }
+        const urlParams = new URLSearchParams(window.location.search);
+        if (urlParams.get('showClasses') === 'true') {
+            document.getElementById('classes').style.display = 'grid';
+        }
+    </script>
+</body>
+</html>

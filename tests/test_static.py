@@ -1,29 +1,35 @@
+import pytest
 import sys
 import os
-import pytest
-sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from main import app
+
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
+from app import app
 
 @pytest.fixture
 def client():
+    app.config["TESTING"] = True
     with app.test_client() as client:
         yield client
 
-def test_css(client):
-    response = client.get('/indexa.css')
+def test_index_css(client):
+    response = client.get("/index.css")
     assert response.status_code == 200
-    assert response.headers['Content-Type'] == 'text/css; charset=utf-8'
-
-def test_icon(client):
-    response = client.get('/icon.png')
-    assert response.status_code == 200
-    assert response.headers['Content-Type'] == 'image/png'
+    assert response.content_type == "text/css; charset=utf-8"
 
 def test_favicon(client):
-    response = client.get('/favicon.ico')
+    response = client.get("/favicon.ico")
     assert response.status_code == 200
-    assert response.headers['Content-Type'] == 'image/x-icon' or response.headers['Content-Type'] == 'image/vnd.microsoft.icon'
+    assert (
+        response.content_type == "image/x-icon"
+        or response.content_type == "image/vnd.microsoft.icon"
+    )
 
-def test_app_release(client):
-    response = client.get('/app-release.apk/')
+def test_index(client):
+    response = client.get("/")
     assert response.status_code == 200
+    assert b"<!DOCTYPE html>" in response.data
+
+def test_404(client):
+    response = client.get("/thispagedoesnotexist")
+    assert response.status_code == 404
+    assert b"404" in response.data

@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ClassFinder</title>
+    <link rel="stylesheet" href="/index.css">
+</head>
+<body>
+    {% include 'header.html' %}
+    <main>
+        <h1>Sign up</h1>
+        <form onsubmit="attemptRegister(event, null)"></form>
+            <label for="email">Email</label>
+            <input type="email" id="email" name="email" required><br>
+            <button onclick="attemptRegister(event, this)">Register</button><br>
+        </form>
+        <p id="status"></p>
+        <p>Already have an account? <a href="/login">Log in</a></p>
+    </main>
+    <p style="position: absolute; bottom:20px;left:20px;">A one time email will be sent to your inbox.</p>
+    <script>
+        function attemptRegister(event, thisButton) {
+            event.preventDefault();
+            const email = document.getElementById('email').value;
+            if (thisButton) {
+                thisButton.disabled = true;
+            }
+            fetch('/register', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                body: JSON.stringify({
+                    email: email
+                }),
+                credentials: 'include'
+            })
+            .then(response => {
+                if (response.status === 429) {
+                    throw new Error('Too many requests. Please try again later.');
+                }
+                return response.json();
+            })
+            .then(data => {
+                if (data.status == "success") {
+                    document.getElementById('status').innerText = data.message;
+                    thisButton.remove();
+                    // Redirect or perform other actions on successful login
+                } else {
+                    document.getElementById('status').innerText = 'Registration failed: ' + data.message;
+                    setTimeout(() => {
+                        if (thisButton) {
+                            thisButton.disabled = false;
+                        }
+                    }, 2500);
+                }
+            })
+            .catch(error => {
+                document.getElementById('status').innerText = 'An error occurred: ' + error.message;
+                setTimeout(() => {
+                    if (thisButton) {
+                        thisButton.disabled = false;
+                    }
+                }, 2000);
+            });
+        }
+    </script>
+</body>
+</html>

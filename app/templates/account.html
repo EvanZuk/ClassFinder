@@ -1,0 +1,65 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ClassFinder</title>
+    <link rel="stylesheet" href="/index.css">
+</head>
+<body>
+    {% include 'header.html' %}
+    <main>
+        <h1 style="display: inline;">Hello, {{user.username}}!  </h1><p class="hidden-text">{{user.email}}</p><br>
+        {% if user.role == "admin" %}<button onclick="window.location.href = '/admin'">Admin</button>{%endif %}
+        {% if classestoadd|length > 0 %}<h2>You still need to add {{classestoadd|length}} classes.</h2> <button onclick="window.location.href = '/addclasses'">Add classes</button>{% endif %}
+        {% if needcanvaslink %}<button onclick="window.location.href = '/classes/canvaslink'">Link canvas classes</button>{% endif %}
+        <button onclick="window.location.href = '/logout'">Log out</button>
+        <button onclick="window.location.href = '/account/delete'">Delete account</button>
+        {% if user.classes|length > 0%}
+        <h2>Your classes:</h2>
+        <ul id="classes">
+            {% for class in user.classes|sort(attribute='period') %}
+                <li class="class" id="{{class.id}}" {% if class.canvasid %} onclick="window.location.href = '{{canvasurl}}/courses/{{class.canvasid}}'" {%endif%}>{{class.name}}
+                    <ul class="actions">
+                        {% if class.lunch is none and (class.period == "6" or class.period == "7")%}<li class="action" onclick="window.location.href = '/class/{{class.id}}/setlunch'">Set lunch</li>{% endif %}
+                        {% if allow_leave and class.period != "Access" %}<li class="action" onclick="event.stopPropagation(); leaveClass('{{class.id}}')">Leave</li>{% endif %}
+                    </ul>
+                    <ul class="classusers">
+                        {%for user in class.users%}
+                            {% if not user.role == "testing" %}
+                                <li class="classuser">
+                                    {{user.username}}
+                                </li>
+                            {% endif %}
+                        {%endfor%}
+                </ul></li>
+            {% endfor %}
+        </ul>
+        {% endif %}
+    </main>
+    <script>
+        function leaveClass(classid) {
+            if (confirm("Are you sure you want to leave this class?")) {
+                fetch(`/classes/${classid}/leave`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ class_id: classid })
+                })
+                .then(response => {
+                    if (response.ok) {
+                        window.location.reload();
+                    } else {
+                        alert('Failed to leave the class.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('An error occurred while trying to leave the class.');
+                });
+            }
+        }
+    </script>
+</body>
+</html>

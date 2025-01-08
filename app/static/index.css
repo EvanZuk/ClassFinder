@@ -1,0 +1,177 @@
+:root {
+    --primary-color: #45ffb1;
+    --secondary-color: #439e78;
+    --tertiary-color: #27634a;
+    --background-color: #12201b;
+    --navbar-color: #214137;
+    --text-color: #c2fff5;
+    --secondary-text-color: #b6e9e0;
+    --action-color: #1b6ad0;
+    --action-hover-color: #113a6f;
+    --user-color: #1b6ad0;
+    --user-primary-color: #1b6ad0;
+}
+* {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+}
+body {
+    font-family: 'Roboto', sans-serif;
+    background-color: var(--background-color);
+    color: var(--text-color);
+}
+header {
+    background-color: var(--navbar-color);
+    padding: 1rem;
+    position: sticky;
+    top: 0;
+    z-index: 1000;
+}
+nav ul {
+    list-style: none;
+    display: flex;
+    justify-content: center;
+}
+header ul li {
+    font-weight: bold;
+    margin-right: 1rem;
+}
+header ul li a {
+    text-decoration: none;
+    color: var(--text-color);
+    transition: color 0.3s;
+}
+header ul li a:hover {
+    color: var(--primary-color);
+}
+main {
+    padding: 1rem;
+}
+#landingpage, main:has(form) {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    text-align: center;
+}
+input[type='text'], input[type='email'], input[type='password'], input[type='number'] {
+    padding: 0.5rem;
+    margin: 0.5rem;
+    border: 1px solid var(--secondary-color);
+    border-radius: 5px;
+    background-color: var(--tertiary-color);
+    color: var(--text-color);
+}
+textarea {
+    padding: 0.5rem;
+    margin: 0.5rem;
+    border: 1px solid var(--secondary-color);
+    border-radius: 5px;
+    background-color: var(--tertiary-color);
+    color: var(--text-color);
+}
+button, input[type="submit"] {
+    margin: 3px;
+    margin-top: 10px;
+    margin-bottom: 10px;
+    padding: 7px;
+    border-radius: 5px;
+    border: none;
+    background-color: var(--tertiary-color);
+    color: var(--text-color);
+    cursor: pointer;
+    transition: background-color 0.3s;
+}
+input[type="date"] {
+    padding: 0.5rem;
+    margin: 0.5rem;
+    border: 1px solid var(--secondary-color);
+    border-radius: 5px;
+    background-color: var(--tertiary-color);
+    color: var(--text-color);
+}
+button:hover, input[type="submit"]:hover {
+    background-color: var(--navbar-color);
+}
+input[type="checkbox"] {
+    margin: 10px;
+}
+input[type="checkbox"]:checked {
+    background-color: var(--primary-color);
+}
+select {
+    padding: 0.5rem;
+    margin: 0.5rem;
+    border: 1px solid var(--secondary-color);
+    border-radius: 5px;
+    background-color: var(--tertiary-color);
+    color: var(--text-color);
+}
+a {
+    color: var(--primary-color);
+    text-decoration: none;
+}
+ul {
+    list-style: none;
+}
+#classes, #users, ul.classusers, ul.actions, #schedules {
+    /* margin-top: 20px; */
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+    gap: 20px;
+}
+ul.classusers, ul.actions {
+    grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
+    gap: 2px;
+}
+.class, .user, .classuser, .schedule, li.action {
+    padding: 7px;
+    background-color: var(--secondary-color);
+    border-radius: 5px;
+    text-align: center;
+    transition: background-color 0.3s;
+    font-size: 1.5rem;
+    font-weight: bold;
+}
+.class.currentperiod {
+    color: #47ff6d;
+}
+.classuser, li.action {
+    font-size: 88%;
+    padding: 10px;
+    margin: 5px;
+}
+.classuser {
+    background-color: var(--user-color);
+}
+.classcreator {
+    background-color: var(--user-primary-color);
+}
+li.action {
+    background-color: var(--action-color);
+}
+li.action[onclick]:hover {
+    background-color: var(--action-hover-color);
+    cursor: pointer;
+}
+.room {
+    font-size: 1rem;
+    color: var(--secondary-text-color);
+    font-weight: normal;
+}
+.class[onclick]:hover, .user[onclick]:hover {
+    background-color: var(--tertiary-color);
+    cursor: pointer;
+}
+.class.unverified {
+    background-color: #9e4343;
+}
+.hidden-text {
+    background-color: black;
+    color: black;
+    display: inline;
+}
+.hidden-text:hover {
+    color: var(--text-color);
+}

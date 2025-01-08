@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ClassFinder - {% if classes|length == 0 %}Welcome{%else%}Dashboard{% endif %}</title>
+    <link rel="stylesheet" href="/index.css">
+</head>
+<body>
+    {% include 'header.html' %}
+    <main id="dashboard">
+        {% if classes|length == 0 %}
+            <h1>Welcome, {{username}}!</h1><br>
+            <h2>Welcome to ClassFinder! To begin, add your classes <a href="/addclasses">here</a>.</h2>
+        {% else %}
+            <h1>Dashboard</h1><br>
+            {% if currentclasses|length == 0 %}
+                <h2>No classes today.</h2>{% if classestoadd > 0 %}<br><h2>Some classes may not be shown, as you still need to add {{classestoadd}} classes. You can add them <a href="/addclasses">here</a>.</h2>{% endif %}
+            {% else %}
+                <ul id="classes">
+                    {% for class in currentclasses|sort(attribute='period') %}
+                        <li style="padding: 15px" class="class {% if currentperiod.period == class.period %}currentperiod{%endif%}" {% if class.canvasid %} onclick="window.location.href = '{{canvasurl}}/courses/{{class.canvasid}}'" {%endif%}>
+                            {{class.name}}
+                            <br>
+                            <span style="font-size: 0.8em;">{{class.room}}</span>
+                        </li>
+                    {% endfor %}
+                </ul>
+            {% endif %}
+        {% endif %}
+    </main>
+    {% if currentperiod is not none %}<script>
+        var countDownDate = new Date("{{ endtime }}").getTime();
+
+        function updatetimer(first=false) {
+            var now = new Date().getTime();
+            var distance = countDownDate - now;
+            var days = Math.floor(distance / (1000 * 60 * 60 * 24));
+            var hours = Math.floor((distance % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+            var minutes = Math.floor((distance % (1000 * 60 * 60)) / (1000 * 60));
+            var seconds = Math.floor((distance % (1000 * 60)) / 1000);
+            if (hours === 0 && minutes === 0) {
+                document.getElementById("timertext").innerHTML = seconds + "s";
+            } else if (hours === 0) {
+                document.getElementById("timertext").innerHTML = minutes + "m " + seconds + "s";
+            } else {
+                document.getElementById("timertext").innerHTML = hours + "h " + minutes + "m " + seconds + "s";
+            }
+            if (hours === 0 && minutes === 0 && seconds === 0) {
+                if (first) {
+                    alert("Please make sure your computer's time is correct.");
+                    clearInterval(x);
+                    document.getElementById("timertext").innerHTML = "Timer";
+                } else {
+                    clearInterval(x);
+                    document.getElementById("timertext").innerHTML = "0s";
+                    setTimeout(function() {
+                        location.reload();
+                    }, 5000);
+                }
+            } else if (hours <= 0 && minutes <= 0 && seconds <= 0) {
+                if (first) {
+                    alert("Please make sure your computer's time is correct.");
+                    clearInterval(x);
+                    document.getElementById("timertext").innerHTML = "Timer";
+                } else {
+                    clearInterval(x);
+                    document.getElementById("timertext").innerHTML = "0s";
+                    location.reload();
+                }
+            }
+        }
+        updatetimer(first=true)
+        var x = setInterval(updatetimer, 500);
+    </script>{%endif%}
+</body>
+</html>
