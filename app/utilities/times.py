@@ -1,6 +1,11 @@
 from app import app
 from app.db import Schedule, db, Class
 from datetime import date, timedelta, time, datetime
+from reportlab.pdfgen import canvas 
+from reportlab.pdfbase.ttfonts import TTFont 
+from reportlab.pdfbase import pdfmetrics 
+from reportlab.lib import colors 
+import random
 
 classtimes: list = []
 day_of_week: int = 0  # Not the actual day of the week, but the preset
@@ -638,3 +643,44 @@ def set_schedule(start: date, end: date, simulated_day: int):
         db.session.add(schedule)
     db.session.commit()
     update_times()
+
+def create_time_pdf():
+    global classtimes
+    times = classtimes
+    pdfpath = f"/tmp/ClassFinderSchedule{random.randint(0, 1000000)}.pdf"
+    c = canvas.Canvas(pdfpath)
+    c.setFont("Helvetica", 12)
+    c.drawString(100, 800, f"Schedule - {datetime.today().strftime('%m/%d/%y')} - {readable_days[day_of_week]}")
+    y = 750
+    for time in times:
+        if time['passing'] or time['period'] == '1':
+            continue
+        start_time = time['start'].strftime('%I:%M %p')
+        end_time = time['end'].strftime('%I:%M %p')
+        c.drawString(100, y, f"Period {time['period']} - {start_time} to {end_time}")
+        y -= 20
+    c.save()
+    return pdfpath
+
+def create_personal_time_pdf(user):
+    global classtimes
+    times = classtimes
+    pdfpath = f"/tmp/ClassFinderSchedulePersonal{random.randint(0, 1000000)}.pdf"
+    c = canvas.Canvas(pdfpath)
+    c.setFont("Helvetica", 12)
+    c.drawString(100, 800, f"{user.username}'s Schedule - {datetime.today().strftime('%m/%d/%y')} - {readable_days[day_of_week]}")
+    y = 750
+    for time in times:
+        if time['passing'] or time['period'] == '1':
+            continue
+        course = None
+        for class_ in user.classes:
+            if class_.period == time['period']:
+                course = class_
+                break
+        start_time = time['start'].strftime('%I:%M %p')
+        end_time = time['end'].strftime('%I:%M %p')
+        c.drawString(100, y, f"Period {time['period']} - {start_time} to {end_time}" + (f" - {course.name}" if course else ""))
+        y -= 20
+    c.save()
+    return pdfpath

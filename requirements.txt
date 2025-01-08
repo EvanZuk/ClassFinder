@@ -7,3 +7,4 @@ waitress
 better-profanity
 requests
 Flask-Migrate
+reportlab
