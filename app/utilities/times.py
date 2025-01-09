@@ -649,20 +649,22 @@ def set_schedule(start: date, end: date, simulated_day: int):
         db.session.add(schedule)
     db.session.commit()
 
-def create_schedule_pdf(user: User=None, days: list[int]=None):
+def create_schedule_pdf(user: User=None, days: list[int]=None, separate: bool=False, showperiod: bool=True, showclass: bool=True, showroom: bool=True, showtime: bool=True, showlunch: bool=True, smalltext: bool=False):
     if not days:
         days = [get_current_day()]
     file_path = f"/tmp/{user.username if user else 'schedule'}ClassFinderSchedule.pdf"
     c = canvas.Canvas(file_path)
     c.setTitle("School Schedule")
-    c.setFont("Helvetica", 20)
-    y = 820
+    c.setFont("Helvetica", 20 if not smalltext else 12)
+    y = 820 if not smalltext else 818
+    app.logger.debug(f"Creating schedule PDF for {user.username if user else 'a guest user'} for days {days}")
+    app.logger.debug(f"seperate: {separate}, showclass: {showclass}, showroom: {showroom}, showtime: {showtime}, showlunch: {showlunch}, smalltext: {smalltext}")
     for day in days:
-        y -= 10
-        c.setFont("Helvetica", 16)
+        y -= 10 if not smalltext else 5
+        c.setFont("Helvetica-Bold", 16 if not smalltext else 10)
         c.drawString(50, y, readable_days[day])
-        y -= 20
-        c.setFont("Helvetica", 12)
+        y -= 20 if not smalltext else 10
+        c.setFont("Helvetica", 12 if not smalltext else 8)
         classtimes = classtime_dict[day]['classtimes']
         for time in classtimes:
             if time['passing'] or time['period'] == "1":
@@ -675,14 +677,29 @@ def create_schedule_pdf(user: User=None, days: list[int]=None):
                         break
             start_time = time['start'].strftime("%I:%M %p")
             end_time = time['end'].strftime("%I:%M %p")
-            c.drawString(50, y, f"{('Period ' + time['period']) if time['period'] != 'Access' else time['period']}: {start_time} - {end_time}" + (f" - {course.name} - {course.room}" if course else ""))
-            y -= 15
-            if time['lunchactive'] and course and course.lunch:
+            # c.drawString(50, y, f"{('Period ' + time['period']) if time['period'] != 'Access' else time['period']}: {start_time} - {end_time}" + (f" - {course.name} - {course.room}" if course else ""))
+            drawthings = []
+            if showperiod: drawthings.append(f"Period {time['period'] if time['period'] != 'Access' else 'Access'}")
+            if showtime: drawthings.append(f"{start_time} - {end_time}")
+            if showclass and course: drawthings.append(course.name)
+            if showroom and course: drawthings.append(course.room)
+            if drawthings:
+                c.drawString(50, y, " - ".join(drawthings))
+                y -= 15 if not smalltext else 10
+            if showlunch and time['lunchactive'] and course and course.lunch:
                 lunchtime = classtime_dict[day]['lunchtimes'][course.lunch]
                 start_time = lunchtime['start'].strftime("%I:%M %p")
                 end_time = lunchtime['end'].strftime("%I:%M %p")
-                c.drawString(50, y, f"{course.lunch} lunch: {start_time} - {end_time}")
-                y -= 15
+                #c.drawString(50, y, f"{course.lunch} lunch" + (f": {start_time} - {end_time}" if showtime else ""))
+                drawthings = []
+                drawthings.append(f"{course.lunch} lunch")
+                if showtime: drawthings.append(f"{start_time} - {end_time}")
+                c.drawString(50, y, " - ".join(drawthings))
+                y -= 15 if not smalltext else 10
+        if separate:
+            c.showPage()
+            c.setFont("Helvetica", 20 if not smalltext else 12)
+            y = 820 if not smalltext else 818
     c.showPage()
     c.save()
     return file_path
