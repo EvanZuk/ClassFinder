@@ -14,5 +14,5 @@ def schedulepdfday(user, days):
     if days == "all":
         ndays = "0,1,2,3,4,7,8"
     else:
-        ndays = days.lower().replace("m", "0").replace("monday", "0").replace("t", "1").replace("tuesday", "1").replace("w", "2").replace("wednesday", "2").replace("r", "3").replace("thursday", "3").replace("f", "4").replace("friday", "4").replace("s", "7").replace("saturday", "7").replace("u", "8").replace("sunday", "8")
+        ndays = days.lower().replace("monday", "0").replace("m", "0").replace("tuesday", "1").replace("t", "1").replace("wednesday", "2").replace("w", "2").replace("thursday", "3").replace("r", "3").replace("friday", "4").replace("f", "4").replace("eb", "7").replace("eg", "8")
     return send_file(create_schedule_pdf(user, [int(day) for day in ndays.split(",")]), download_name=f"schedule.pdf")
