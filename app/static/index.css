@@ -65,6 +65,12 @@ header ul li a:hover {
 main {
     padding: 1rem;
 }
+
+@media (max-width: 450px) {
+    main {
+        text-align: center;
+    }
+}
 #landingpage, main:has(form) {
     display: flex;
     flex-direction: column;

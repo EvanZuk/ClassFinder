@@ -9,7 +9,7 @@
 <body>
     {% include 'header.html' %}
     <main>
-        <h1 style="display: inline;">Hello, {{user.username}}!  </h1><p class="hidden-text">{{user.email}}</p><br>
+        <h1 style="display: inline;">Hello, {{user.username}}!  </h1><br><p class="hidden-text">{{user.email}}</p><br>
         {% if user.role == "admin" %}<button onclick="window.location.href = '/admin'">Admin</button>{%endif %}
         {% if classestoadd|length > 0 %}<h2>You still need to add {{classestoadd|length}} classes.</h2> <button onclick="window.location.href = '/addclasses'">Add classes</button>{% endif %}
         {% if needcanvaslink %}<button onclick="window.location.href = '/classes/canvaslink'">Link canvas classes</button>{% endif %}
