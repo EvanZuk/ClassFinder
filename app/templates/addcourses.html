@@ -24,10 +24,6 @@
             event.preventDefault();
             const classes = document.getElementById('classes').value;
             const lines = classes.split('\n');
-            if (lines.length % 5 !== 0 && (lines.length - 2 ) % 5 !== 0) {
-                alert('Make sure to copy the room value for each class');
-                return;
-            }
             fetch('/addclasses', {
                 method: 'POST',
                 headers: {
