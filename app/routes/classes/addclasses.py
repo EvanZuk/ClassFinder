@@ -42,7 +42,10 @@ def addclasses(user):
 def addclasses_post(user):
     if len(get_periods_of_user_classes(user)) == len(neededperiods):
         return error_response("You already have all of your classes."), 400
-    if len(request.json) % 5 != 0:
+    classes = request.json
+    classes = [course for course in classes if "Day: T" not in course]
+    classes = [course for course in classes if "Day: W" not in course]
+    if len(classes) % 5 != 0:
         return (
             error_response(
                 "Make sure you copied your classes from infinite campus, and that you have copied everything."
