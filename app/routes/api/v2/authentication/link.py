@@ -9,6 +9,7 @@ from app.utilities.users import create_token, verify_user
 from app.addons.limiter import limiter
 import random
 
+
 link_codes = {}
 
 # TODO: Verify this works
