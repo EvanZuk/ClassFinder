@@ -64,7 +64,7 @@ def log_request():
         params["password"] = ("*" * len(params["password"])) if len(params["password"]) < 25 else "*****"
     if params.get("token"):
         params["token"] = params["token"][:3] + "*" * (len(params["token"]) - 2)
-    app.logger.debug(f"Processing {method_color}{request.method}{reset_color} {request.path} with {}")
+    app.logger.debug(f"Processing {method_color}{request.method}{reset_color} {request.path} with {str(params)}")
 
 @app.after_request
 def log_response(response):
