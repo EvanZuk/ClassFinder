@@ -30,7 +30,7 @@ RUN adduser \
     --uid "${UID}" \
     appuser
 
-# Install sqlite3
+# Install sqlite3, mostly for debugging purposes.
 RUN apt-get update && apt-get install -y sqlite3
 
 # Download dependencies as a separate step to take advantage of Docker's caching.

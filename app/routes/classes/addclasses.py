@@ -42,9 +42,7 @@ def addclasses(user):
 def addclasses_post(user):
     if len(get_periods_of_user_classes(user)) == len(neededperiods):
         return error_response("You already have all of your classes."), 400
-    classes = request.json
-    classes = [course for course in classes if "Day: T" not in course]
-    classes = [course for course in classes if "Day: W" not in course]
+    classes = [course for course in request.json if "Day: T" not in course and "Day: W" not in course]
     if len(classes) % 5 != 0:
         return (
             error_response(
@@ -52,7 +50,7 @@ def addclasses_post(user):
             ),
             400,
         )
-    classes = split_list(request.json, 5)
+    classes = split_list(classes, 5)
     for course in classes:
         loop = asyncio.new_event_loop()
         asyncio.set_event_loop(loop)

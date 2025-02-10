@@ -47,31 +47,28 @@
                 document.getElementById("timertext").innerHTML = hours + "h " + minutes + "m " + seconds + "s";
             }
             if (hours === 0 && minutes === 0 && seconds === 0) {
+                clearInterval(x);
                 if (first) {
-                    alert("Please make sure your computer's time is correct.");
-                    clearInterval(x);
                     document.getElementById("timertext").innerHTML = "Timer";
                 } else {
-                    clearInterval(x);
                     document.getElementById("timertext").innerHTML = "0s";
                     setTimeout(function() {
                         location.reload();
                     }, 5000);
                 }
             } else if (hours <= 0 && minutes <= 0 && seconds <= 0) {
-                if (first) {
-                    alert("Please make sure your computer's time is correct.");
-                    clearInterval(x);
-                    document.getElementById("timertext").innerHTML = "Timer";
-                } else {
-                    clearInterval(x);
-                    document.getElementById("timertext").innerHTML = "0s";
-                    location.reload();
-                }
+                clearInterval(x);
+                document.getElementById("timertext").innerHTML = "Timer";
             }
         }
         updatetimer(first=true)
         var x = setInterval(updatetimer, 500);
+        paramaters = new URLSearchParams(window.location.search);
+        if (paramaters.has("reload")) {
+            var ReloadAttempt = parseInt(paramaters.get("reload"));
+        } else {
+            var ReloadAttempt = 0;
+        }
     </script>{%endif%}
 </body>
 </html>
