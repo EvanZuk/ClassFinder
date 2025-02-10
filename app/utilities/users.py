@@ -177,6 +177,9 @@ def verify_user(
                                 + " with basic authentication"
                             )
                             return func(user, *args, **kwargs)
+                else:
+                    app.logger.debug("Trying legacy password authentication for " + func.__name__)
+                    token = auth.split(" ")[1]
             if token:
                 app.logger.debug("Trying token/refresh authentication for " + func.__name__)
                 user = check_token(token)

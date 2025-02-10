@@ -37,3 +37,4 @@ def apicurrentperiod(user):
         'nextclass': int(datetime.combine(datetime.today(), currentperiod['end']).timestamp()) if (currentperiod is not None) else None,
     })
     return response
+
