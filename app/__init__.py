@@ -59,7 +59,12 @@ def log_request():
         "PATCH": "\033[94m", # blue
     }
     method_color = method_colors.get(request.method, "\033[97m")  # white
-    app.logger.debug(f"Processing {method_color}{request.method}{reset_color} {request.path} with {request.args.to_dict() if request.method == 'GET' else request.json}")
+    params = request.args.to_dict() if request.method == 'GET' else request.json
+    if params.get("password"):
+        params["password"] = ("*" * len(params["password"])) if len(params["password"]) < 25 else "*****"
+    if params.get("token"):
+        params["token"] = params["token"][:3] + "*" * (len(params["token"]) - 2)
+    app.logger.debug(f"Processing {method_color}{request.method}{reset_color} {request.path} with {}")
 
 @app.after_request
 def log_response(response):
