@@ -20,6 +20,8 @@ app.secret_key = os.environ.get("APP_KEY", "devkey")
 
 app.logger.setLevel(os.environ.get("LOG_LEVEL", "DEBUG" if devmode else "INFO"))
 
+app.config["POSTHOG_API_KEY"] = os.environ.get("POSTHOG_API_KEY")
+
 class CustomFormatter(logging.Formatter):
     def format(self, record):
         relative_path = os.path.relpath(record.pathname, os.path.dirname(__file__)).removesuffix(".py")
@@ -60,10 +62,11 @@ def log_request():
     }
     method_color = method_colors.get(request.method, "\033[97m")  # white
     params = request.args.to_dict() if request.method == 'GET' else request.json
-    if params.get("password"):
-        params["password"] = ("*" * len(params["password"])) if len(params["password"]) < 25 else "*****"
-    if params.get("token"):
-        params["token"] = params["token"][:3] + "*" * (len(params["token"]) - 2)
+    if isinstance(params, dict):
+        if params.get("password"):
+            params["password"] = ("*" * len(params["password"])) if len(params["password"]) < 25 else "*****"
+        if params.get("token"):
+            params["token"] = params["token"][:3] + "*" * (len(params["token"]) - 2)
     app.logger.debug(f"Processing {method_color}{request.method}{reset_color} {request.path} with {str(params)}")
 
 @app.after_request
@@ -94,6 +97,9 @@ def log_response(response):
     status_color = status_colors.get(response.status_code, "\033[97m")  # white
     method_color = method_colors.get(request.method, "\033[97m") # white
     app.logger.debug(f"Response for {method_color}{request.method}{reset_color} {request.path} is {status_color}{response.status_code}{reset_color}")
+    # PostHog integration
+    if response.content_type == "text/html":
+        response.set_data(response.get_data(as_text=True).replace("<head>", "<head><title>Classfinder</title>"))
     return response
 
 def import_routes(directory):
