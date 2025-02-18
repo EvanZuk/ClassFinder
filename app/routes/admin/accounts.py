@@ -1,5 +1,8 @@
-from app import app
+"""
+Allows the admin to manage user accounts.
+"""
 from flask import render_template, request, redirect, url_for
+from app import app
 from app.utilities.users import (
     verify_user,
     get_user,

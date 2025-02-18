@@ -1,3 +1,6 @@
+"""
+This module contains utility functions for managing courses, as well as a users relationship with courses.
+"""
 from app.utilities.times import get_classtimes, get_lunchtimes
 from app.db import User, Class, db
 from datetime import datetime
@@ -128,6 +131,19 @@ def get_today_courses(user: User):
 
 
 def add_class(name: str, period: int, room: str, created_by: str, commit: bool = True):
+    """
+    Add a new class to the database.
+    
+    Args:
+        name (str): The name of the class.
+        period (int): The period of the class.
+        room (str): The room of the class.
+        created_by (str): The user who created the class.
+        commit (bool): Whether to commit the changes to the database.
+
+    Returns:
+        Class: The newly created class object.
+    """
     newclass = Class(
         id=f"{room}p{period}",
         name=name,

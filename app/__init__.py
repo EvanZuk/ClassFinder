@@ -2,14 +2,13 @@
 Sets up the flask app and imports all routes.
 """
 
-from flask import Flask, request
-from werkzeug.middleware.proxy_fix import ProxyFix
 import os
 import importlib
 import logging
+from datetime import datetime
+from flask import Flask, request
 from flask_apscheduler import APScheduler
 from app.utilities.config import devmode
-from datetime import datetime
 
 
 app = Flask(__name__, template_folder="templates", static_folder="static")
@@ -27,6 +26,9 @@ app.logger.setLevel(os.environ.get("LOG_LEVEL", "DEBUG" if devmode else "INFO"))
 app.config["POSTHOG_API_KEY"] = os.environ.get("POSTHOG_API_KEY")
 
 class CustomFormatter(logging.Formatter):
+    """
+    Custom formatter for app.logger that adds color to the output.
+    """
     def format(self, record):
         relative_path = os.path.relpath(record.pathname, os.path.dirname(__file__)).removesuffix(".py")
         reset_color = "\033[0m"
@@ -56,6 +58,9 @@ waitress_logger.addHandler(handler)
 
 @app.before_request
 def log_request():
+    """
+    Logs the request method and path with the parameters.
+    """
     reset_color = "\033[0m"
     method_colors = {
         "GET": "\033[92m",  # green
@@ -75,6 +80,9 @@ def log_request():
 
 @app.after_request
 def log_response(response):
+    """
+    Logs the response status code.
+    """
     reset_color = "\033[0m"
     status_colors = {
         200: "\033[92m",  # green
@@ -121,19 +129,22 @@ def import_routes(directory):
                     .replace(os.sep, ".")
                     .replace(".py", "")
                 )
-                btime = datetime.now()
+                imbtime = datetime.now()
                 importlib.import_module(module_name)
-                atime = datetime.now()
+                imatime = datetime.now()
                 app.logger.debug(f"Imported {module_name} in {(atime - btime).total_seconds()}s")
 
 
 import_routes(os.path.join(os.path.dirname(__file__), "routes"))
 
 scheduler = APScheduler()
-from app.db import db_cleanup
+from app.db import db_cleanup # pylint: disable=wrong-import-position # This import wont work if it is at the top of the file as it causes a circular import
 
 @scheduler.task("cron", hour=2, misfire_grace_time=3600)
 def do_daily_tasks():
+    """
+    Cleans up the database and does other daily tasks. (Runs at 2am)
+    """
     app.logger.info("Cleaning up database...")
     db_cleanup()
 
@@ -159,6 +170,9 @@ for handler in app.logger.handlers[:]:
 app.logger.addHandler(handler)
 
 class CustomWerkzeugFormatter(logging.Formatter):
+    """
+    Custom formatter for werkzeug logger that only logs exceptions. I cant tell if this actually does anything. 
+    """
     def format(self, record):
         if "Exception" in record.getMessage() or "Traceback" in record.getMessage():
             return super().format(record)
