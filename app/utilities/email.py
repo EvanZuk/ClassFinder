@@ -1,7 +1,11 @@
+"""
+Handles email sending and email id creation
+"""
+
 import os
 import sys
-from email.mime.text import MIMEText
-from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText  # pylint: disable=no-name-in-module, import-error  # These work fine but pylint doesn't recognize them
+from email.mime.multipart import MIMEMultipart # pylint: disable=no-name-in-module, import-error # These work fine but pylint doesn't recognize them
 import smtplib
 from app.utilities.config import devmode
 from app import app

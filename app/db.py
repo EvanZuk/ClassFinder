@@ -1,7 +1,13 @@
-import os
-from app import app
-from flask_sqlalchemy import SQLAlchemy
+"""
+This file contains the database models for the application. 
+It also contains a function to clean up the database by removing expired tokens and schedules. 
+Before directly using the database, check if there is already a utility function that does what you want.
+"""
+
 from datetime import datetime, timedelta
+import os
+from flask_sqlalchemy import SQLAlchemy
+from app import app
 
 db_path = os.environ.get("DB_PATH", "sqlite:///db.sqlite3")
 app.config["SQLALCHEMY_DATABASE_URI"] = db_path
@@ -21,6 +27,19 @@ user_class_association = db.Table(
 
 
 class User(db.Model):
+    """
+    A user of the application.
+
+    Attributes:
+        username (str): The username of the user.
+        email (str): The email of the user.
+        password (str): The hashed password of the user.
+        classes (list): The classes the user is in.
+        created_at (datetime): The time the user was created.
+        created_by (str): The user who created the user.
+        role (str): The role of the user.
+        tokens (list): The tokens the user has.
+    """
     username = db.Column(db.String(20), primary_key=True, unique=True, nullable=False)
     email = db.Column(db.String(100), nullable=False, unique=True)
     password = db.Column(db.String(500), nullable=False)
@@ -34,12 +53,25 @@ class User(db.Model):
 
     def __str__(self):
         return self.username
-    
+
     def __repr__(self):
         return f"<User {self.username} ({self.role})>"
 
 
 class Class(db.Model):
+    """
+    A class in the application.
+
+    Attributes:
+        id (str): The ID of the class.
+        name (str): The name of the class.
+        room (str): The room the class is in.
+        period (str): The period the class is in.
+        canvasid (int): The ID of the class in Canvas.
+        lunch (str): The lunch the class is in.
+        created_by (str): The user who created the class.
+        verified (bool): Whether the class has been verified.
+    """
     id = db.Column(db.String(20), primary_key=True)
     name = db.Column(db.String(100), nullable=False)
     room = db.Column(db.String(7), nullable=False)
@@ -51,11 +83,18 @@ class Class(db.Model):
 
     def __str__(self):
         return self.name
-    
+
     def __repr__(self):
         return f"<Class {self.name} ({self.id})>"
 
 class Token(db.Model):
+    """
+    A token for the application.
+
+    Attributes:
+        token (str): The token string.
+        user_id (str): The user the token is for.
+    """
     token = db.Column(db.String, primary_key=True, unique=True, nullable=False)
     user_id = db.Column(db.String(20), db.ForeignKey("user.username"), nullable=False)
     type = db.Column(db.String(20), nullable=False)
@@ -63,12 +102,19 @@ class Token(db.Model):
 
     def __str__(self):
         return self.token + " for " + self.user_id
-    
+
     def __repr__(self):
         return f"<Token {self.token} ({self.user_id})>"
 
 
 class Schedule(db.Model):
+    """
+    A schedule for the application.
+
+    Attributes:
+        day (datetime): The day the schedule is for.
+        type (int): The type of schedule.
+    """
     day = db.Column(db.Date, primary_key=True, nullable=False, unique=True)
     type = db.Column(db.Integer, nullable=False)
 
@@ -82,6 +128,9 @@ class Schedule(db.Model):
 def db_cleanup():
     """
     Clean up the database by removing everything expired
+
+    Returns:
+        None
     """
     expired_tokens = db.session.query(Token).filter(Token.expire < datetime.now())
     expired_schedules = db.session.query(Schedule).filter(Schedule.day < datetime.now().date())

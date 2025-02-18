@@ -1,11 +1,11 @@
 """
 This module contains utility functions for managing courses, as well as a users relationship with courses.
 """
+from datetime import datetime
+import typing
 from app.utilities.times import get_classtimes, get_lunchtimes
 from app.db import User, Class, db
-from datetime import datetime
 from app import app
-import typing
 
 neededperiods = ["2", "3", "4", "5", "6", "7", "8", "9", "Access"]
 
@@ -158,44 +158,131 @@ def add_class(name: str, period: int, room: str, created_by: str, commit: bool =
 
 
 def add_user_to_class(user: User, course: Class):
+    """
+    Adds a user to a class.
+
+    Args:
+        user (User): The user to add to the class.
+        course (Class): The class to add the user to.
+
+    Returns:
+        User: The updated user object.
+    """
     user.classes.append(course)
     db.session.commit()
     return user
 
 
 def remove_user_from_class(user: User, course: Class):
+    """
+    Removes a user from a class.
+
+    Args:
+        user (User): The user to remove from the class.
+        course (Class): The class to remove the user from.
+
+    Returns:
+        User: The updated user object.
+    """
     user.classes.remove(course)
     db.session.commit()
     return user
 
 
 def remove_class(course: Class):
+    """
+    Deletes a class from the database.
+
+    Args:
+        course (Class): The class to delete.
+
+    Returns:
+        None
+    """
     db.session.delete(course)
     db.session.commit()
-    return course
+    return None
 
 
 def get_course(period: int, room: str):
+    """
+    Retrieve a course by period and room.
+    
+    Args:
+        period (int): The period of the course.
+        room (str): The room of the course.
+        
+    Returns:
+        Class: The course object if found, otherwise None.
+    """
     return db.session.query(Class).filter_by(period=period, room=room).first()
 
 
-def get_course_by_id(id: str):
-    return db.session.query(Class).filter_by(id=id).first()
+def get_course_by_id(classid: str):
+    """
+    Retrieve a course by id.
+
+    Args:
+        id (str): The id of the course.
+
+    Returns:
+        Class: The course object if found, otherwise None.
+    """
+    return db.session.query(Class).filter_by(id=classid).first()
 
 
 def check_if_class_exists(room: str, period: int):
+    """
+    Check if a class exists by room and period.
+    
+    Args:
+        room (str): The room of the class.
+        period (int): The period of the class.
+        
+    Returns:
+        bool: True if the class exists, otherwise False.
+    """
     return get_course(period=period, room=room) is not None
 
 
 def check_if_user_in_class(user: User, course: Class):
+    """
+    Check if a user is in a class.
+
+    Args:
+        user (User): The user to check.
+        course (Class): The class to check.
+
+    Returns:
+        bool: True if the user is in the class, otherwise False.
+    """
     return course in user.classes
 
 
 def get_periods_of_user_classes(user: User):
+    """
+    Retrieve the periods of the user's classes.
+
+    Args:
+        user (User): The user object containing class information
+
+    Returns:
+        list: A list of periods that the user has classes in.
+    """
     return [course.period for course in user.classes]
 
 
 def set_canvas_id(course: Class, canvasid: int):
+    """
+    Set the canvas id for a course.
+    
+    Args:
+        course (Class): The course to set the canvas id for.
+        canvasid (int): The canvas id to set.
+        
+    Returns:
+        Class: The updated course object.
+    """
     app.logger.debug(f"Setting canvas id for {course.name} to {canvasid}")
     course.canvasid = canvasid
     db.session.commit()
@@ -203,6 +290,16 @@ def set_canvas_id(course: Class, canvasid: int):
 
 
 def set_lunch(course: Class, lunch: typing.Literal["A", "B", "C"]):
+    """
+    Set the lunch period for a course.
+
+    Args:
+        course (Class): The course to set the lunch period for.
+        lunch (str): The lunch period to set.
+
+    Returns:
+        Class: The updated course object.
+    """
     app.logger.debug(f"Setting lunch for {course.name} to {lunch}")
     course.lunch = lunch
     db.session.commit()

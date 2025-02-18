@@ -1,12 +1,16 @@
+"""
+This file contains functions for user management.
+"""
+
+from typing import Literal
+from datetime import datetime, timedelta
 import os
 import functools
 import base64
-from app.db import db, User, Token
-from app import app
 from flask_bcrypt import Bcrypt
 from flask import request, redirect
-from typing import Literal
-from datetime import datetime, timedelta
+from app.db import db, User, Token
+from app import app
 
 bcrypt = Bcrypt()
 
@@ -16,6 +20,16 @@ def create_user(
 ):
     """
     Create a user
+
+    Args:
+        username (str): The username of the user.
+        email (str): The email of the user.
+        password (str): The password of the user.
+        created_by (str): The user who created the user.
+        role (str): The role of the user.
+
+    Returns:
+        User: The user that was created.
     """
     hashed_password = bcrypt.generate_password_hash(password).decode("utf-8")
     user = User(
@@ -33,6 +47,13 @@ def create_user(
 def change_password(user: User, password: str):
     """
     Change a user's password
+
+    Args:
+        user (User): The user to change the password for.
+        password (str): The new password.
+
+    Returns:
+        User: The user with the new password.
     """
     user.password = bcrypt.generate_password_hash(password).decode("utf-8")
     db.session.commit()
@@ -42,6 +63,13 @@ def change_password(user: User, password: str):
 def check_password(username: str, password: str):
     """
     Check if a password is valid for a user
+
+    Args:
+        username (str): The username of the user.
+        password (str): The password to check.
+
+    Returns:
+        bool: Whether the password is valid.
     """
     user = User.query.filter_by(username=username).first()
     if user and bcrypt.check_password_hash(user.password, password):
@@ -49,23 +77,32 @@ def check_password(username: str, password: str):
     return False
 
 
-def create_token(username: str, type: Literal["api", "refresh", "system", "app", "admin"], expiry: datetime = None):
+def create_token(username: str, tokentype: Literal["api", "refresh", "system", "app", "admin"], expiry: datetime = None):
     """
     Create a token for a user
-    type can be either "api", "refresh", or "system"
+
+    Args:
+        username (str): The username of the user.
+        tokentype (Literal["api", "refresh", "system", "app", "admin"]): The type of token to create.
+        expiry (datetime): The expiry date of the token.
+
+    Returns:
+        Token: The token that was created
     """
     nexpiry = expiry
     if nexpiry is None:
         nexpiry = datetime.now()
-        if type == "api" or type == "app":
+        if tokentype == "api" or tokentype == "app":
             nexpiry += timedelta(days=60)
-        elif type == "refresh":
+        elif tokentype == "refresh":
             nexpiry += timedelta(days=7)
-        elif type == "system":
+        elif tokentype == "system":
             nexpiry += timedelta(days=30)
+        elif tokentype == "admin":
+            nexpiry += timedelta(hours=1)
         else:
             nexpiry += timedelta(days=1)
-    token = Token(token=os.urandom(30).hex(), user_id=username, type=type, expire=expiry)
+    token = Token(token=os.urandom(30).hex(), user_id=username, type=tokentype, expire=expiry)
     db.session.add(token)
     db.session.commit()
     return token
@@ -74,6 +111,12 @@ def create_token(username: str, type: Literal["api", "refresh", "system", "app",
 def check_token(token: str):
     """
     Check if a token is valid
+
+    Args:
+        token (str): The token string to check.
+
+    Returns:
+        User: The user that the token belongs to.
     """
     token = Token.query.filter_by(token=token).first()
     if token:
@@ -85,6 +128,12 @@ def check_token(token: str):
 def get_token(token: str):
     """
     Get a token
+
+    Args:
+        token (str): The token string to get.
+
+    Returns:
+        Token: The token.
     """
     return Token.query.filter_by(token=token).first()
 
@@ -92,6 +141,12 @@ def get_token(token: str):
 def delete_token(token: Token):
     """
     Delete a token
+
+    Args:
+        token (Token): The token to delete.
+
+    Returns:
+        None
     """
     db.session.delete(token)
     db.session.commit()
@@ -101,6 +156,12 @@ def delete_token(token: Token):
 def check_email(email: str):
     """
     Check if an email has a user
+
+    Args:
+        email (str): The email to check.
+
+    Returns:
+        User: The user with the email.
     """
     user = User.query.filter_by(email=email).first()
     if user:
@@ -108,16 +169,28 @@ def check_email(email: str):
     return False
 
 
-def get_user_count():
+def get_user_count(blacklist_roles: list = []): # pylint: disable=dangerous-default-value
     """
-    Get the number of users
+    Get the number of users in the database
+
+    Args:
+        blacklist_roles (list): Roles to exclude from the count.
+
+    Returns:
+        int: The number of users.
     """
-    return User.query.count()
+    return User.query.filter(User.role.notin_(blacklist_roles)).count()
 
 
 def get_user(username: str):
     """
     Get a user by username
+
+    Args:
+        username (str): The username of the user.
+
+    Returns:
+        User: The user.
     """
     return User.query.filter_by(username=username).first()
 
@@ -125,6 +198,12 @@ def get_user(username: str):
 def get_user_by_email(email: str):
     """
     Get a user by email
+
+    Args:
+        email (str): The email of the user.
+
+    Returns:
+        User: The user.
     """
     return User.query.filter_by(email=email).first()
 
@@ -132,6 +211,12 @@ def get_user_by_email(email: str):
 def delete_user(user: User):
     """
     Delete a user
+
+    Args:
+        user (User): The user to delete.
+
+    Returns:
+        None
     """
     for token in user.tokens:
         delete_token(token)
@@ -140,7 +225,7 @@ def delete_user(user: User):
     return None
 
 
-def verify_user(
+def verify_user( # pylint: disable=dangerous-default-value
     func=None,
     required: bool = True,
     allowed_roles: list = ["user", "teacher", "admin", "testing"],
@@ -148,14 +233,23 @@ def verify_user(
 ):
     """
     Decorator to verify a user
+
+    Args:
+        func: The function to decorate.
+        required (bool): Whether the user is required.
+        allowed_roles (list): Roles that are allowed.
+        onfail: The function to call if the user is not verified.
+
+    This populates the request object with the user and token.
     """
 
     def decorator(func):
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
+            request.user = None
+            request.token = None
             auth = request.headers.get("Authorization")
             token = request.cookies.get("token")
-
             if auth:
                 if auth.startswith("Bearer "):
                     app.logger.debug("Trying bearer authentication for " + func.__name__)
@@ -200,10 +294,10 @@ def verify_user(
                             + " with token/refresh authentication"
                         )
                         request.user = user
+                        request.token = token
                         return func(*args, **kwargs)
             app.logger.debug("Rejected user for " + func.__name__)
             if not required:
-                request.user = None
                 return func(*args, **kwargs)
             failresponse = onfail()
             if request.cookies.get("token"):

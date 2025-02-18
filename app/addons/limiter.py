@@ -1,3 +1,6 @@
+"""
+Implements rate limiting.
+"""
 from flask_limiter import Limiter
 from flask import request
 from app import app

@@ -1,7 +1,11 @@
-from app import app
-from flask import render_template, request
-from app.utilities.users import verify_user
+"""
+Hosts the dashboard route.
+"""
+
 from datetime import datetime
+from flask import render_template, request
+from app import app
+from app.utilities.users import verify_user
 from app.utilities.classes import (
     get_today_courses,
     neededperiods,
@@ -14,6 +18,9 @@ from app.utilities.config import canvas_url
 @app.route("/dashboard")
 @verify_user
 def dashboard():
+    """
+    Hosts the dashboard route.
+    """
     user = request.user
     currentperiod = get_user_current_period(user)
     app.logger.debug(currentperiod)

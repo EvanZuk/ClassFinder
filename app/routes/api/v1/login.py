@@ -1,8 +1,8 @@
+from flask import request, jsonify
 from app import app
 from app.utilities.users import check_password, create_token
 from app.utilities.responses import success_response, error_response
 from app.addons.limiter import limiter
-from flask import request, jsonify
 
 @app.route('/api/v1/login/', methods=['POST'])
 @limiter.limit("2 per minute")

@@ -1,3 +1,7 @@
+"""
+This file contains the functions and data structures for the schedule of the school.
+"""
+
 from app import app
 from app.db import Schedule, db, User
 from datetime import date, timedelta, time, datetime
@@ -622,6 +626,12 @@ readable_days = {
 }
 
 def get_current_day():
+    """
+    Get the current day of the week, as defined by the schedule.
+
+    Returns:
+        int: The simulated day of the week.
+    """
     day = datetime.today().date()
     with app.app_context():
         schedule = Schedule.query.filter_by(day=day).first()
@@ -630,12 +640,35 @@ def get_current_day():
     return datetime.today().weekday()
 
 def get_classtimes():
+    """
+    Get the class times for the current day.
+
+    Returns:
+        list: A list of class times.
+    """
     return classtime_dict[get_current_day()]['classtimes']
 
 def get_lunchtimes():
+    """
+    Get the lunch times for the current day.
+
+    Returns:
+        dict: A dictionary of lunch
+    """
     return classtime_dict[get_current_day()]['lunchtimes']
 
 def set_schedule(start: date, end: date, simulated_day: int):
+    """
+    Set the schedule for a range of days.
+
+    Args:
+        start (date): The start date.
+        end (date): The end date.
+        simulated_day (int): The type of day to simulate.
+
+    Returns:
+        None
+    """
     app.logger.info(f"Setting schedule for {start} to {end}")
     schedules = []
     for i in range((end - start).days + 1):
@@ -650,6 +683,20 @@ def set_schedule(start: date, end: date, simulated_day: int):
     db.session.commit()
 
 def create_schedule_pdf(user: User=None, days: list[int]=None, separate: bool=False, showperiod: bool=True, showclass: bool=True, showroom: bool=True, showtime: bool=True, showlunch: bool=True, smalltext: bool=False):
+    """
+    Create a PDF of the schedule for a user.
+
+    Args:
+        user (User): The user to create the schedule for.
+        days (list[int]): The days to create the schedule for.
+        separate (bool): Whether to separate the days.
+        showperiod (bool): Whether to show the period.
+        showclass (bool): Whether to show the class.
+        showroom (bool): Whether to show the room.
+        showtime (bool): Whether to show the time.
+        showlunch (bool): Whether to show the lunch.
+        smalltext (bool): Whether to use small text.
+    """
     if not days:
         days = [get_current_day()]
     file_path = f"/tmp/{user.username if user else 'schedule'}ClassFinderSchedule.pdf"

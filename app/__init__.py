@@ -3,6 +3,7 @@ Sets up the flask app and imports all routes.
 """
 
 import os
+import sys
 import importlib
 import logging
 from datetime import datetime
@@ -15,9 +16,14 @@ app = Flask(__name__, template_folder="templates", static_folder="static")
 #app.wsgi_app = ProxyFix(app.wsgi_app, x_for=2, x_proto=2, x_host=2, x_port=2, x_prefix=2)
 
 @app.before_request
-def fix_ip():
+def beforerequest():
+    """
+    Fixes the IP address when proxied through Cloudflare.
+    """
     if request.headers.get("Cf-Connecting-Ip"):
         request.remote_addr = request.headers.get("Cf-Connecting-Ip")
+    request.user = None
+    request.token = None
 
 app.secret_key = os.environ.get("APP_KEY", "devkey")
 
@@ -41,9 +47,9 @@ class CustomFormatter(logging.Formatter):
         }.get(record.levelname, reset_color)  # default to no color
         bold = "\033[1m"
         if os.path.basename(record.pathname) == "__init__.py":
-            return f"{bold}{level_color}{record.levelname}{reset_color}{level_color}: {record.getMessage().replace('\033[0m', '\033[0m'+level_color)}{reset_color}"
+            return f"{bold}{level_color}{record.levelname}{reset_color}{level_color}: {record.getMessage().replace('\033[0m', '\033[0m'+level_color)}{reset_color}" # pylint: disable=line-too-long
         else:
-            return f"{bold}{level_color}{record.levelname}{reset_color}{level_color} in {bold}{relative_path}{reset_color}{level_color} at {bold}{record.lineno}{reset_color}{level_color}: {record.getMessage()}{reset_color}"
+            return f"{bold}{level_color}{record.levelname}{reset_color}{level_color} in {bold}{relative_path}{reset_color}{level_color} at {bold}{record.lineno}{reset_color}{level_color}: {record.getMessage()}{reset_color}" # pylint: disable=line-too-long
 
 formatter = CustomFormatter()
 handler = logging.StreamHandler()
@@ -111,11 +117,16 @@ def log_response(response):
     app.logger.debug(f"Response for {method_color}{request.method}{reset_color} {request.path} is {status_color}{response.status_code}{reset_color}")
     # PostHog integration
     if "text/html" in response.content_type:
-        if app.config.get("POSTHOG_API_KEY"):
+        if app.config.get("POSTHOG_API_KEY") and not (devmode or 'pytest' in sys.modules):
             api_key = app.config["POSTHOG_API_KEY"]
             script = """
-            <script>    !function(t,e){var o,n,p,r;e.__SV||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}(p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host.replace(".i.posthog.com","-assets.i.posthog.com")+"/static/array.js",(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r);var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],u.toString=function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e},u.people.toString=function(){return u.toString(1)+".people (stub)"},o="init capture register register_once register_for_session unregister unregister_for_session getFeatureFlag getFeatureFlagPayload isFeatureEnabled reloadFeatureFlags updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures on onFeatureFlags onSessionId getSurveys getActiveMatchingSurveys renderSurvey canRenderSurvey getNextSurveyStep identify setPersonProperties group resetGroups setPersonPropertiesForFlags resetPersonPropertiesForFlags setGroupPropertiesForFlags resetGroupPropertiesForFlags reset get_distinct_id getGroups get_session_id get_session_replay_url alias set_config startSessionRecording stopSessionRecording sessionRecordingStarted captureException loadToolbar get_property getSessionProperty createPersonProfile opt_in_capturing opt_out_capturing has_opted_in_capturing has_opted_out_capturing clear_opt_in_out_capturing debug getPageViewId".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);    posthog.init('{api_key}', {        api_host: 'https://us.i.posthog.com',        person_profiles: 'identified_only', }); posthog.identify('{username}') </script>
-            """.replace("{api_key}", api_key).replace("{username}", request.user.email)
+            <script>   !function(t,e){var o,n,p,r;e.__SV||(window.posthog=e,e._i=[],e.init=function(i,s,a){function g(t,e){var o=e.split(".");2==o.length&&(t=t[o[0]],e=o[1]),t[e]=function(){t.push([e].concat(Array.prototype.slice.call(arguments,0)))}}(p=t.createElement("script")).type="text/javascript",p.crossOrigin="anonymous",p.async=!0,p.src=s.api_host.replace(".i.posthog.com","-assets.i.posthog.com")+"/static/array.js",(r=t.getElementsByTagName("script")[0]).parentNode.insertBefore(p,r);var u=e;for(void 0!==a?u=e[a]=[]:a="posthog",u.people=u.people||[],u.toString=function(t){var e="posthog";return"posthog"!==a&&(e+="."+a),t||(e+=" (stub)"),e},u.people.toString=function(){return u.toString(1)+".people (stub)"},o="init capture register register_once register_for_session unregister unregister_for_session getFeatureFlag getFeatureFlagPayload isFeatureEnabled reloadFeatureFlags updateEarlyAccessFeatureEnrollment getEarlyAccessFeatures on onFeatureFlags onSessionId getSurveys getActiveMatchingSurveys renderSurvey canRenderSurvey getNextSurveyStep identify setPersonProperties group resetGroups setPersonPropertiesForFlags resetPersonPropertiesForFlags setGroupPropertiesForFlags resetGroupPropertiesForFlags reset get_distinct_id getGroups get_session_id get_session_replay_url alias set_config startSessionRecording stopSessionRecording sessionRecordingStarted captureException loadToolbar get_property getSessionProperty createPersonProfile opt_in_capturing opt_out_capturing has_opted_in_capturing has_opted_out_capturing clear_opt_in_out_capturing debug getPageViewId".split(" "),n=0;n<o.length;n++)g(u,o[n]);e._i.push([i,s,a])},e.__SV=1)}(document,window.posthog||[]);    posthog.init('{api_key}', {        api_host: 'https://us.i.posthog.com',        person_profiles: 'identified_only', }); posthog.identify('{username}') </script>
+            """.replace("{api_key}", api_key)
+            if request.user:
+                script = script.replace("{username}", request.user.email)
+            else:
+                app.logger.debug("Anonymous user request")
+                script = script.replace("{username}", "anonymous")
             response.data = response.data.decode("utf-8").replace("</head>", f"{script}</head>").encode("utf-8")
     return response
 
@@ -132,7 +143,7 @@ def import_routes(directory):
                 imbtime = datetime.now()
                 importlib.import_module(module_name)
                 imatime = datetime.now()
-                app.logger.debug(f"Imported {module_name} in {(atime - btime).total_seconds()}s")
+                app.logger.debug(f"Imported {module_name} in {(imatime - imbtime).total_seconds()}s")
 
 
 import_routes(os.path.join(os.path.dirname(__file__), "routes"))

@@ -1,7 +1,11 @@
-from app import app
-from flask import send_from_directory, render_template
-from app.utilities.config import devmode
+# pylint: disable=missing-function-docstring
+"""
+Static routes for the application.
+"""
 
+from flask import send_from_directory, render_template
+from app import app
+from app.utilities.config import devmode
 
 @app.route("/index.css")
 def index_css():
@@ -18,3 +22,10 @@ def privacy():
 @app.route("/ping")
 def ping():
     return "Pong"
+
+@app.route("/robots.txt")
+def robots():
+    return """
+        User-agent: *
+        Disallow: /
+    """ # There is no reason to allow robots to index this site, as it is not a public site.

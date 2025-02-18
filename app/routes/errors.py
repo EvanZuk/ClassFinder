@@ -1,16 +1,20 @@
-from app import app
-import random
-from app.utilities.responses import success_response, error_response
-from flask import render_template
+# pylint: disable=missing-function-docstring
+"""
+Handles error codes.
+"""
 
+import random
+from flask import render_template
+from app import app
+from app.utilities.responses import error_response
 
 @app.errorhandler(404)
-def page_not_found(e):
+def page_not_found(e): # pylint: disable=unused-argument
     return render_template("404.html"), 404
 
 
 @app.errorhandler(401)
-def unauthorized(e):
+def unauthorized(e): # pylint: disable=unused-argument
     return render_template("401.html"), 401
 
 @app.errorhandler(500)

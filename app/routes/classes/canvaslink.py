@@ -21,7 +21,7 @@ def canvaslink():
             app.logger.debug(f"Course {course.name} is not linked to a canvas course.")
             newcourses.append(course)
             if request.args.get("token") is None:
-                return render_template("canvasaskfortoken.html")
+                return render_template("canvasaskfortoken.html", canvas_url=canvas_url)
         else:
             app.logger.debug(
                 f"Course {course.name} is already linked to a canvas course: {course.canvasid}"
@@ -29,10 +29,15 @@ def canvaslink():
     if len(newcourses) == 0:
         app.logger.debug(f"User {user.username} has no courses to link to canvas.")
         return redirect(url_for("dashboard"))
-    cards = requests.get(
-        f"{canvas_url}/api/v1/dashboard/dashboard_cards",
-        headers={"Authorization": f'Bearer {request.args.get("token")}'},
-    )
+    try:
+        cards = requests.get(
+            f"{canvas_url}/api/v1/dashboard/dashboard_cards",
+            headers={"Authorization": f'Bearer {request.args.get("token")}'},
+            timeout=5,
+        )
+    except requests.exceptions.Timeout:
+        app.logger.error("Request to Canvas API timed out.")
+        return render_template("canvasaskfortoken.html", canvas_url=canvas_url, error="Request to Canvas API timed out.")
     app.logger.debug(cards.text)
     if cards.status_code != 200:
         return redirect(url_for("canvaslink"))

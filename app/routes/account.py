@@ -1,5 +1,9 @@
-from app import app
+"""
+Account routes
+"""
+
 from flask import render_template, request
+from app import app
 from app.utilities.users import verify_user, delete_user
 from app.utilities.responses import success_response, error_response
 from app.utilities.classes import (

@@ -1,3 +1,7 @@
+"""
+About route, shows basic info about the site.
+"""
+
 from flask import render_template, redirect, request
 from app import app
 from app.utilities.config import devmode
