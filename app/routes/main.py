@@ -1,5 +1,5 @@
 from app import app
-from flask import render_template
+from flask import render_template, request
 from app.utilities.users import verify_user
 from datetime import datetime
 from app.utilities.classes import (
@@ -13,7 +13,8 @@ from app.utilities.config import canvas_url
 
 @app.route("/dashboard")
 @verify_user
-def dashboard(user):
+def dashboard():
+    user = request.user
     currentperiod = get_user_current_period(user)
     app.logger.debug(currentperiod)
     return render_template(

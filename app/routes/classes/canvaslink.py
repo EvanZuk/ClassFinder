@@ -10,7 +10,8 @@ from app.addons.limiter import limiter
 
 @app.route("/classes/canvaslink")
 @verify_user
-def canvaslink(user):
+def canvaslink():
+    user = request.user
     newcourses = []
     for course in user.classes:
         app.logger.debug(
@@ -50,7 +51,8 @@ def canvaslink(user):
 @app.route("/classes/canvaslink", methods=["POST"])
 @limiter.limit("2/minute")
 @verify_user
-def canvaslink_post(user):
+def canvaslink_post():
+    user = request.user
     token = request.args.get("token")
     for course in user.classes:
         if course.canvasid is None:

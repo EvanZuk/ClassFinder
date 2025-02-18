@@ -7,7 +7,7 @@ from flask import request, render_template
 
 @app.route("/class/<courseid>/setlunch")
 @verify_user
-def setlunch(user, courseid):
+def setlunch(courseid):
     course = get_course_by_id(courseid)
     if not course:
         return error_response("Course not found."), 404
@@ -16,7 +16,8 @@ def setlunch(user, courseid):
 
 @app.route("/class/<courseid>/setlunch", methods=["POST"])
 @verify_user
-def setlunch_post(user, courseid):
+def setlunch_post(courseid):
+    user = request.user
     course = get_course_by_id(courseid)
     if course not in user.classes:
         return error_response("Course not found."), 404

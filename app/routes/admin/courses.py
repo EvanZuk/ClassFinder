@@ -8,7 +8,7 @@ from app.db import db
 
 @app.route("/admin/class/<courseid>", methods=["DELETE"])
 @verify_user(allowed_roles=["admin"])
-def delete_course(user, courseid):
+def delete_course(courseid):
     course = get_course_by_id(courseid)
     if course:
         remove_class(course)
@@ -18,7 +18,7 @@ def delete_course(user, courseid):
 
 @app.route("/admin/class/<courseid>/edit")
 @verify_user(allowed_roles=["admin"])
-def edit_course(user, courseid):
+def edit_course(courseid):
     course = get_course_by_id(courseid)
     if course:
         return render_template("editcourse.html", course=course)
@@ -28,7 +28,7 @@ def edit_course(user, courseid):
 
 @app.route("/admin/class/<courseid>/edit", methods=["POST"])
 @verify_user(allowed_roles=["admin"])
-def edit_course_post(user, courseid):
+def edit_course_post(courseid):
     course = get_course_by_id(courseid)
     if course:
         response = request.json
@@ -49,7 +49,7 @@ def edit_course_post(user, courseid):
 
 @app.route("/admin/class/<courseid>/verify", methods=["POST"])
 @verify_user(allowed_roles=["admin"])
-def verify_course(user, courseid):
+def verify_course(courseid):
     course = get_course_by_id(courseid)
     if course:
         course.verified = True

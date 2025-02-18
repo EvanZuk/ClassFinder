@@ -19,7 +19,8 @@ import asyncio
 
 @app.route("/addclasses")
 @verify_user
-def addclasses(user):
+def addclasses():
+    user = request.user
     if len(get_periods_of_user_classes(user)) == len(neededperiods):
         app.logger.debug(
             f"User already has all of their classes. ({len(get_periods_of_user_classes(user))}/{len(neededperiods)})"
@@ -39,7 +40,8 @@ def addclasses(user):
 @verify_user(
     onfail=lambda:({"status": "error", "message": "You must be logged in to do that."}, 401)
 )
-def addclasses_post(user):
+def addclasses_post():
+    user = request.user
     if len(get_periods_of_user_classes(user)) == len(neededperiods):
         return error_response("You already have all of your classes."), 400
     classes = [course for course in request.json if "Day: T" not in course and "Day: W" not in course]

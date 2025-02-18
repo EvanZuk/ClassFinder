@@ -16,7 +16,8 @@ def logout_post():
 
 @app.route("/api/v2/logout/all", methods=["GET", "POST"])
 @verify_user(onfail=lambda:(error_response("You must be logged in to do that."), 401))
-def logout_all(user):
+def logout_all():
+    user = request.user
     for token in user.tokens:
         delete_token(token)
     return success_response("Logout of all devices Successful"), 200

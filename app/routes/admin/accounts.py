@@ -16,7 +16,8 @@ from app.utilities.responses import error_response, success_response
 
 @app.route("/admin/account/<username>", methods=["DELETE"])
 @verify_user(allowed_roles=["admin"])
-def delete_account(user, username):
+def delete_account(username):
+    user = request.user
     deluser = get_user(username)
     if deluser:
         if deluser == user:
@@ -28,7 +29,7 @@ def delete_account(user, username):
 
 @app.route("/admin/account/<username>/login", methods=["POST", "GET"])
 @verify_user(allowed_roles=["admin"])
-def login_as(user, username):
+def login_as(username):
     loguser = get_user(username)
     if loguser:
         token = create_token(username, type="admin")
@@ -59,13 +60,14 @@ def login_as(user, username):
 
 @app.route("/admin/create/account")
 @verify_user(allowed_roles=["admin"])
-def create_account(user):
+def create_account():
     return render_template("createaccount.html")
 
 
 @app.route("/admin/create/account", methods=["POST"])
 @verify_user(allowed_roles=["admin"])
-def create_account_post(user):
+def create_account_post():
+    user = request.user
     username = request.json.get("username")
     email = request.json.get("email")
     password = request.json.get("password")
@@ -88,7 +90,7 @@ def create_account_post(user):
 
 @app.route("/admin/account/<username>/edit")
 @verify_user(allowed_roles=["admin"])
-def edit_account(user, username):
+def edit_account(username):
     edituser = get_user(username)
     if edituser:
         return render_template("editaccount.html", user=edituser)
@@ -96,7 +98,8 @@ def edit_account(user, username):
 
 @app.route("/admin/account/<username>/edit", methods=["POST"])
 @verify_user(allowed_roles=["admin"])
-def edit_account_post(user, username):
+def edit_account_post(username):
+    user = request.user
     edituser = get_user(username)
     if edituser:
         email = request.json.get("email")

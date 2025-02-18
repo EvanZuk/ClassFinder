@@ -49,7 +49,8 @@ def redir_link():
 
 @app.route("/account/link")
 @verify_user
-def account_link(user):
+def account_link():
+    user = request.user
     """
     The account linking page.
     """
@@ -57,7 +58,8 @@ def account_link(user):
 
 @app.route("/account/link/<code>")
 @verify_user
-def account_link_code(user, code):
+def account_link_code(code):
+    user = request.user
     """
     Link the user's account to an external application.
     """
@@ -67,7 +69,8 @@ def account_link_code(user, code):
 
 @app.route("/account/link/<code>", methods=["POST"])
 @verify_user
-def account_link_confirm(user, code):
+def account_link_confirm(code):
+    user = request.user
     """
     Confirm the linking of the user's account to an external application.
     """

@@ -6,7 +6,8 @@ from datetime import datetime
 
 @app.route('/timer/')
 @verify_user(required=False)
-def timer(user):
+def timer():
+    user = request.user
     app.logger.debug(request.args.get('noredirect', "false"))
     if user is None:
         period = get_current_period()

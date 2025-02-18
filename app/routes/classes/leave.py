@@ -1,5 +1,5 @@
 from app import app
-from flask import render_template
+from flask import request
 from app.utilities.users import verify_user
 from app.utilities.responses import success_response, error_response
 from app.utilities.classes import get_periods_of_user_classes, remove_class, get_course_by_id, remove_user_from_class
@@ -7,7 +7,8 @@ from app.utilities.config import canvas_url, allow_leave
 
 @app.route("/classes/<classid>/leave", methods=["POST"])
 @verify_user
-def leave_class(user, classid):
+def leave_class(classid):
+    user = request.user
     if not allow_leave:
         return error_response("Leaving classes is disabled")
     course = get_course_by_id(classid)

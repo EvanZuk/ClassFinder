@@ -5,7 +5,7 @@ from app.utilities.users import verify_user, get_token, delete_token
 
 @app.route("/logout")
 @verify_user()
-def logout(user):
+def logout():
     token = get_token(request.cookies.get("token"))
     delete_token(token)
     response = redirect(url_for("account"))

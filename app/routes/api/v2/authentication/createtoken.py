@@ -4,6 +4,7 @@ from flask import request, jsonify
 
 @app.route("/api/v2/createtoken", methods=["POST", "GET"])
 @verify_user
-def api_v2_createtoken(user):
+def api_v2_createtoken():
+    user = request.user
     token = create_token(user.username, "api")
     return jsonify(token.token)

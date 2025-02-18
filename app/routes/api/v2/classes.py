@@ -3,10 +3,12 @@ from app.utilities.users import verify_user
 from app.utilities.classes import get_user_current_period, get_today_courses, get_current_period
 from app.utilities.responses import success_response, error_response
 from datetime import datetime
+from flask import request
 
 @app.route("/api/v2/classes/current")
 @verify_user(onfail=lambda:(error_response("You must be logged in to do that."), 401))
-def current_classes(user):
+def current_classes():
+    user = request.user
     currentperiod = get_user_current_period(user)
     app.logger.debug(f"Current period: {currentperiod}")
     return success_response(None, {
@@ -28,7 +30,8 @@ def current_classes(user):
 
 @app.route("/api/v2/classes/all")
 @verify_user(onfail=lambda:(error_response("You must be logged in to do that."), 401))
-def all_classes(user):
+def all_classes():
+    user = request.user
     return success_response(None, {
         "classes": {
             c.id: {

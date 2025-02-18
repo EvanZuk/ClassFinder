@@ -176,7 +176,8 @@ def verify_user(
                                 + func.__name__
                                 + " with basic authentication"
                             )
-                            return func(user, *args, **kwargs)
+                            request.user = user
+                            return func(*args, **kwargs)
                 else:
                     app.logger.debug("Trying legacy password authentication for " + func.__name__)
                     token = auth.split(" ")[1]
@@ -198,10 +199,12 @@ def verify_user(
                             + func.__name__
                             + " with token/refresh authentication"
                         )
-                        return func(user, *args, **kwargs)
+                        request.user = user
+                        return func(*args, **kwargs)
             app.logger.debug("Rejected user for " + func.__name__)
             if not required:
-                return func(None, *args, **kwargs)
+                request.user = None
+                return func(*args, **kwargs)
             failresponse = onfail()
             if request.cookies.get("token"):
                 app.logger.debug("Clearing token")
