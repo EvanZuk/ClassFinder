@@ -1,6 +1,6 @@
 from app import app
 from app.utilities.users import verify_user
-from app.utilities.classes import get_user_current_period, get_today_courses
+from app.utilities.classes import get_user_current_period, get_today_courses, get_current_period
 from app.utilities.responses import success_response, error_response
 from datetime import datetime
 
@@ -40,4 +40,13 @@ def all_classes(user):
                 "canvasid": c.canvasid
             } for c in user.classes
         }
+    })
+
+@app.route("/api/v2/classes/timeuntilend")
+def time_until_end():
+    currentperiod = get_current_period()
+    return success_response(None, {
+        "time": int(datetime.combine(datetime.today(), currentperiod['end']).timestamp()) if (currentperiod is not None) else None,
+        "passing": currentperiod['passing'] if currentperiod is not None and 'passing' in currentperiod else None,
+        "period": currentperiod['period'] if currentperiod is not None else None,
     })
