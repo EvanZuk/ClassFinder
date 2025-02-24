@@ -3,7 +3,7 @@ Hosts the dashboard route.
 """
 
 from datetime import datetime, timedelta
-from flask import render_template, request
+from flask import render_template, request, make_response
 from app import app
 from app.utilities.users import verify_user
 from app.utilities.classes import (
@@ -24,21 +24,23 @@ def dashboard():
     user = request.user
     currentperiod = get_user_current_period(user)
     app.logger.debug(currentperiod)
-    response = render_template(
-        "dashboard.html",
-        classes=user.classes,
-        username=user.username,
-        currentperiod=currentperiod,
-        endtime=datetime.combine(datetime.today(), currentperiod['end']).strftime("%m/%d/%Y %I:%M %p") if (currentperiod is not None) else None,
-        currentclasses=get_today_courses(user),
-        classestoadd=len(
-            [
-                period
-                for period in neededperiods
-                if period not in get_periods_of_user_classes(user)
-            ]
-        ),
-        canvasurl=canvas_url,
+    response = make_response(
+        render_template(
+            "dashboard.html",
+            classes=user.classes,
+            username=user.username,
+            currentperiod=currentperiod,
+            endtime=datetime.combine(datetime.today(), currentperiod['end']).strftime("%m/%d/%Y %I:%M %p") if (currentperiod is not None) else None,
+            currentclasses=get_today_courses(user),
+            classestoadd=len(
+                [
+                    period
+                    for period in neededperiods
+                    if period not in get_periods_of_user_classes(user)
+                ]
+            ),
+            canvasurl=canvas_url,
+        )
     )
     if currentperiod is not None:
         end_time = datetime.combine(datetime.today(), currentperiod['end'])
