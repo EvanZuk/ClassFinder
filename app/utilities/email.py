@@ -3,7 +3,6 @@ Handles email sending and email id creation
 """
 
 import os
-import sys
 from email.mime.text import MIMEText  # pylint: disable=no-name-in-module, import-error  # These work fine but pylint doesn't recognize them
 from email.mime.multipart import MIMEMultipart # pylint: disable=no-name-in-module, import-error # These work fine but pylint doesn't recognize them
 import smtplib
@@ -25,11 +24,11 @@ def send_email(email: str, subject: str, message: str):
     """
     Send an email
     """
-    if devmode or "pytest" in sys.modules:
+    if devmode or app.config.get("TESTING"):
         app.logger.info(
             f"An email was sent to {email} with subject {subject} and message {message}"
         )
-        return
+        return 
     msg = MIMEMultipart()
     msg["From"] = emailconfig["from"]
     msg["To"] = email

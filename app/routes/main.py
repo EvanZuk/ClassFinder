@@ -2,7 +2,7 @@
 Hosts the dashboard route.
 """
 
-from datetime import datetime
+from datetime import datetime, timedelta
 from flask import render_template, request
 from app import app
 from app.utilities.users import verify_user
@@ -24,7 +24,7 @@ def dashboard():
     user = request.user
     currentperiod = get_user_current_period(user)
     app.logger.debug(currentperiod)
-    return render_template(
+    response = render_template(
         "dashboard.html",
         classes=user.classes,
         username=user.username,
@@ -40,3 +40,12 @@ def dashboard():
         ),
         canvasurl=canvas_url,
     )
+    if currentperiod is not None:
+        end_time = datetime.combine(datetime.today(), currentperiod['end'])
+    else:
+        end_time = datetime.combine(datetime.today(), datetime.strptime("06:00", "%H:%M").time())
+        end_time += timedelta(days=1)
+
+    response.headers["Cache-Control"] = f"max-age={(end_time - datetime.now()).total_seconds()}, immutable, must-revalidate"
+    return response
+
