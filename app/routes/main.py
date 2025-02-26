@@ -48,6 +48,6 @@ def dashboard():
         end_time = datetime.combine(datetime.today(), datetime.strptime("06:00", "%H:%M").time())
         end_time += timedelta(days=1)
 
-    response.headers["Cache-Control"] = f"max-age={(end_time - datetime.now()).total_seconds()}, immutable, must-revalidate"
+    response.headers["Cache-Control"] = f"max-age={round((end_time - datetime.now()).total_seconds())}, immutable, must-revalidate, private"
     return response
 

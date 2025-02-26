@@ -5,7 +5,7 @@ Account routes
 from flask import render_template, request
 from app import app
 from app.utilities.users import verify_user, delete_user
-from app.utilities.responses import success_response, error_response
+from app.utilities.responses import success_response
 from app.utilities.classes import (
     get_today_courses,
     neededperiods,
@@ -17,10 +17,13 @@ from app.utilities.config import canvas_url, allow_leave
 @app.route("/account")
 @verify_user
 def account():
+    """
+    This route displays the user's account information.
+    """
     user = request.user
     needcanvaslink = False
     for course in user.classes:
-        if course.canvasid == None:
+        if course.canvasid is None:
             needcanvaslink = True
             break
     return render_template(
@@ -47,4 +50,3 @@ def account_delete_get():
 def account_delete():
     delete_user(request.user)
     return success_response("User deleted successfully")
-

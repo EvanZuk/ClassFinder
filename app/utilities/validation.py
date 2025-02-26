@@ -12,7 +12,7 @@ def validate_email(email: str):
     Args:
         email (str): The email to check.
     """
-    return re.fullmatch(r"[a-z]*\.[a-z]*(@s.stemk12.org|@stemk12.org)", email)
+    return re.fullmatch(r"[a-z]*\.[a-z]*[0-9]{0,1}(@s.stemk12.org|@stemk12.org)", email)
 
 
 def validate_username(username: str):

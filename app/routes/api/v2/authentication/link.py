@@ -14,7 +14,7 @@ link_codes = {}
 
 # TODO: Verify this works
 
-@app.route("/api/v2/link/create", methods=["POST"])
+@app.route("/api/v2/link/create", methods=["POST", "GET"])
 @limiter.limit("5/minute")
 def create_link_code():
     """
@@ -22,6 +22,7 @@ def create_link_code():
     """
     code = random.randint(100000, 999999)
     link_codes[code] = {"ip": request.remote_addr, "user": None}
+    app.logger.debug(f"Code {code} generated for IP {request.remote_addr[:3] + '*' * (len(request.remote_addr) - 3)}")
     return success_response("Code generated", {"code": code})
 
 @app.route("/api/v2/link/verify", methods=["GET"])
@@ -29,16 +30,25 @@ def verify_link_code():
     """
     Verify that a link code is valid, and return the user's information if it is.
     """
-    code = request.args.get("code")
+    code = int(request.args.get("code"))
+    app.logger.debug(f"Verifying code {code} for IP {request.remote_addr[:3] + '*' * (len(request.remote_addr) - 3)}")
     if code not in link_codes:
+        app.logger.debug(f"Code {code} not found: {link_codes}")
         return error_response("Invalid code"), 404
     if link_codes[code]["ip"] != request.remote_addr:
         return error_response("Code not generated from this IP"), 403
     if link_codes[code]["user"] is None:
         return success_response("Code verified", {"user": None}), 204
-    token = create_token(link_codes[code]["user"].username)
+    ctype = request.args.get("type", "api")
+    if ctype not in ["api", "app", "refresh"]:
+        return error_response("Invalid type"), 400
+    token = create_token(link_codes[code]["user"].username, ctype)
+    nuser = link_codes[code]["user"].username
     del link_codes[code]
-    return success_response("Code verified", {"user": link_codes[code]["user"].username, "token": token})
+    response = success_response("Code verified", {"user": nuser, "token": token.token})
+    response.set_cookie("token", token.token, httponly=True, samesite="Lax", secure=True, max_age=604800)
+    app.logger.info(f"User {nuser} linked to {ctype} with code {code}")
+    return response
 
 @app.route("/link")
 def redir_link():
@@ -50,30 +60,30 @@ def redir_link():
 @app.route("/account/link")
 @verify_user
 def account_link():
-    user = request.user
     """
     The account linking page.
     """
+    user = request.user
     return render_template("link.html", user=user)
 
-@app.route("/account/link/<code>")
+@app.route("/account/link/<int:code>")
 @verify_user
 def account_link_code(code):
-    user = request.user
     """
     Link the user's account to an external application.
     """
+    user = request.user
     if code not in link_codes:
         return redirect(url_for("account_link"))
     return render_template("finallink.html", user=user, code=code, codedata=link_codes[code], ip=request.remote_addr)
 
-@app.route("/account/link/<code>", methods=["POST"])
+@app.route("/account/link/<int:code>", methods=["POST"])
 @verify_user
 def account_link_confirm(code):
-    user = request.user
     """
     Confirm the linking of the user's account to an external application.
     """
+    user = request.user
     if code not in link_codes:
         return error_response("Invalid code"), 404
     link_codes[code]["user"] = user

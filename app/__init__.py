@@ -48,8 +48,7 @@ class CustomFormatter(logging.Formatter):
         bold = "\033[1m"
         if os.path.basename(record.pathname) == "__init__.py":
             return f"{bold}{level_color}{record.levelname}{reset_color}{level_color}: {record.getMessage().replace('\033[0m', '\033[0m'+level_color)}{reset_color}" # pylint: disable=line-too-long
-        else:
-            return f"{bold}{level_color}{record.levelname}{reset_color}{level_color} in {bold}{relative_path}{reset_color}{level_color} at {bold}{record.lineno}{reset_color}{level_color}: {record.getMessage()}{reset_color}" # pylint: disable=line-too-long
+        return f"{bold}{level_color}{record.levelname}{reset_color}{level_color} in {bold}{relative_path}{reset_color}{level_color} at {bold}{record.lineno}{reset_color}{level_color}: {record.getMessage()}{reset_color}" # pylint: disable=line-too-long
 
 formatter = CustomFormatter()
 handler = logging.StreamHandler()
@@ -131,6 +130,9 @@ def log_response(response):
     return response
 
 def import_routes(directory):
+    """
+    Imports all routes in the specified directory. Should not be called manually.
+    """
     for root, _, files in os.walk(directory):
         for file in files:
             if file.endswith(".py") and file != "__init__.py":
