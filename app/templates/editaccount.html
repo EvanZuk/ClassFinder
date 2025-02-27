@@ -24,6 +24,7 @@
             <input type="password" id="password" name="password"><br>
             <button onclick="attemptEdit(event)">Submit</button><br>
         </form>
+        <button onclick="changeUserName()">Change username</button>
         <p id="status"></p>
     </main>
     <script>
@@ -54,6 +55,33 @@
             .catch(error => {
                 document.getElementById('status').innerText = 'An error occurred: ' + error.message;
             });
+        }
+        function changeUserName() {
+            let newUsername = prompt('Enter new username');
+            if (newUsername) {
+                fetch(window.location.toString(), {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ 
+                        username: newUsername
+                    }),
+                    credentials: 'include'
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if (data.status == "success") {
+                        document.getElementById('status').innerText = data.message;
+                        window.location.href = '/admin';
+                    } else {
+                        document.getElementById('status').innerText = 'Edit failed: ' + data.message;
+                    }
+                })
+                .catch(error => {
+                    document.getElementById('status').innerText = 'An error occurred: ' + error.message;
+                });
+            }
         }
     </script>
 </body>

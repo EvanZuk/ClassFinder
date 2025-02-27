@@ -9,7 +9,7 @@ import functools
 import base64
 from flask_bcrypt import Bcrypt
 from flask import request, redirect
-from app.db import db, User, Token
+from app.db import db, User, Token, Class
 from app import app
 
 bcrypt = Bcrypt()
@@ -194,6 +194,44 @@ def get_user(username: str):
     """
     return User.query.filter_by(username=username).first()
 
+def change_user_role(user: User, role: str):
+    """
+    Change a user's role
+
+    Args:
+        user (User): The user to change the role for.
+        role (str): The new role.
+
+    Returns:
+        User: The user with the new role.
+    """
+    user.role = role
+    db.session.commit()
+    return user
+
+def change_username(user: User, username: str):
+    """
+    Change a user's username
+
+    Args:
+        user (User): The user to change the username for.
+        username (str): The new username.
+
+    Returns:
+        User: The user with the new username.
+    """
+    old_username = user.username
+    user.username = username
+    
+    # Update related records in other tables
+    related_tokens = Token.query.filter_by(user_id=old_username).all()
+    for token in related_tokens:
+        token.user_id = username
+
+    # Commit
+    db.session.commit()
+    
+    return user
 
 def get_user_by_email(email: str):
     """

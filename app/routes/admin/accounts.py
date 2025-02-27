@@ -11,6 +11,7 @@ from app.utilities.users import (
     create_user,
     get_user_by_email,
     change_password,
+    change_username
 )
 from app.db import db
 from app.utilities.validation import validate_username
@@ -21,12 +22,16 @@ from app.utilities.responses import error_response, success_response
 @verify_user(allowed_roles=["admin"])
 def delete_account(username):
     user = request.user
+    app.logger.info(f"Deleting account for {username} by {user.username}.")
     deluser = get_user(username)
     if deluser:
         if deluser == user:
+            app.logger.warning(f"{user.username} tried to delete their own account.")
             return error_response("Cannot delete own account."), 403
+        app.logger.info(f"{user.username} has deleted {deluser.username}'s account.")
         delete_user(deluser)
         return success_response("User deleted."), 200
+    app.logger.warning(f"{user.username} tried to delete non-existent account {username}.")
     return error_response("User not found."), 404
 
 
@@ -35,7 +40,7 @@ def delete_account(username):
 def login_as(username):
     loguser = get_user(username)
     if loguser:
-        token = create_token(username, type="admin")
+        token = create_token(username, tokentype="admin")
         response = (
             success_response("Logged in as user.")
             if request.method == "POST"
@@ -105,6 +110,11 @@ def edit_account_post(username):
     user = request.user
     edituser = get_user(username)
     if edituser:
+        nusername = request.json.get("username")
+        if nusername:
+            app.logger.info(f"{user.username} has changed {edituser.username}'s username to {nusername}.")
+            change_username(edituser, nusername)
+            return success_response("User updated."), 200
         email = request.json.get("email")
         role = request.json.get("role")
         password = request.json.get("password")

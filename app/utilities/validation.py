@@ -3,7 +3,9 @@ Provides functions to validate user input.
 """
 
 import re
+import better_profanity
 
+profanity = better_profanity.Profanity()
 
 def validate_email(email: str):
     """
@@ -25,6 +27,12 @@ def validate_username(username: str):
     Returns:
         bool: True if the username is valid, False otherwise
     """
+    if profanity.contains_profanity(username):
+        return False
+    if username.lower() in ["admin", "root", "superuser", "moderator", "mod"]:
+        return False
+    if username.lower().startswith("admin"):
+        return False
     return re.fullmatch(r"[a-z0-9_]{3,20}", username)
 
 

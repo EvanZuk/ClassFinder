@@ -14,7 +14,7 @@ def createtoken():
     """
     Allows users to create a token for the API.
     """
-    unu7 ser = request.user
+    user = request.user
     expiry = request.args.get("expiry")
     if expiry:
         try:
