@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ClassFinder</title>
+    <link rel="stylesheet" href="/index.css">
+</head>
+<body>
+    {% include 'header.html' %}
+    <main>
+        <h1>Change username</h1>
+        <form onsubmit="attemptRename(event)">
+            <label for="username">New username:</label><br>
+            <input type="text" id="username" name="username" required><br>
+            <button onclick="attemptRename(event)">Rename</button><br>
+        </form>
+        <p id="status"></p>
+    </main>
+    <script>
+        function attemptRename(event) {
+            event.preventDefault();
+            fetch('/account/changeusername', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json'
+                },
+                credentials: 'include',
+                body: JSON.stringify({
+                    username: document.getElementById('username').value
+                })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status == "success") {
+                    document.getElementById('status').innerText = 'Rename successful!';
+                    window.location.href = '/';
+                } else {
+                    document.getElementById('status').innerText = 'Rename failed: ' + data.message;
+                }
+            })
+            .catch(error => {
+                document.getElementById('status').innerText = 'An error occurred: ' + error.message;
+            });
+        }
+    </script>
+</body>
+</html>

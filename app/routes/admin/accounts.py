@@ -111,20 +111,30 @@ def edit_account_post(username):
     edituser = get_user(username)
     if edituser:
         nusername = request.json.get("username")
-        if nusername:
-            app.logger.info(f"{user.username} has changed {edituser.username}'s username to {nusername}.")
-            change_username(edituser, nusername)
-            return success_response("User updated."), 200
         email = request.json.get("email")
         role = request.json.get("role")
         password = request.json.get("password")
         if password is not None and password != "":
             app.logger.info(f"{user.username} has changed {edituser.username}'s password.")
             change_password(edituser, password)
-        if email:
+        if email and email != edituser.email:
+            app.logger.info(f"{user.username} has changed {edituser.username}'s email to {email}.")
             edituser.email = email
-        if role:
+        if role and role != edituser.role and role != "":
+            app.logger.info(f"{user.username} has changed {edituser.username}'s role to {role}.")
             edituser.role = role
+        if nusername != edituser.username and nusername:
+            if not validate_username(nusername):
+                return error_response("Invalid username."), 400
+            if get_user(nusername):
+                return error_response("Username already exists."), 400
+            app.logger.info(f"{user.username} has changed {edituser.username}'s username to {nusername}.")
+            change_username(edituser, nusername)
+        if edituser == user:
+            app.logger.info(f"{user.username} has changed their own account.")
+        if edituser.requires_username_change != request.json.get("requires_username_change", False):
+            app.logger.info(f"{user.username} has changed {edituser.username}'s requires_username_change to {request.json.get('requires_username_change', False)}.")
+            edituser.requires_username_change = request.json.get("requires_username_change", False)
         db.session.commit()
         return success_response("User updated."), 200
     return error_response("User not found."), 404

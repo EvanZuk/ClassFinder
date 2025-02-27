@@ -11,26 +11,29 @@
     <main>
         <h1>Editing user: {{user.username}}</h1>
         <form onsubmit="attemptEdit(event)"></form>
+            <label for="username">Username</label>
+            <input type="text" id="username" name="username" value="{{user.username}}"><br>
             <label for="role">Role</label>
             <select id="role" name="role">
-                <option value="user">User</option>
-                <option value="teacher">Teacher</option>
-                <option value="admin">Admin</option>
-                <option value="testing">Test account</option>
+                <option value="">Dont change</option>
+                <option value="user" {%if user.role == user %}checked{%endif%}>User</option>
+                <option value="teacher" {%if user.role == teacher %}checked{%endif%}>Teacher</option>
+                <option value="admin" {%if user.role == admin %}checked{%endif%}>Admin</option>
+                <option value="testing" {%if user.role == testing %}checked{%endif%}>Test account</option>
             </select><br>
             <label for="email">Email</label>
             <input type="email" id="email" name="email" value="{{user.email}}" required><br>
             <label for="password">Password</label>
             <input type="password" id="password" name="password"><br>
+            <label for="userchange">Request username change</label>
+            <input type="checkbox" id="userchange" name="userchange" {% if user.requires_username_change %}checked{%endif%}><br>
             <button onclick="attemptEdit(event)">Submit</button><br>
         </form>
-        <button onclick="changeUserName()">Change username</button>
         <p id="status"></p>
     </main>
     <script>
         function attemptEdit(event) {
             event.preventDefault();
-
             fetch(window.location.toString(), {
                 method: 'POST',
                 headers: {
@@ -39,7 +42,9 @@
                 body: JSON.stringify({ 
                     role: document.getElementById('role').value,
                     email: document.getElementById('email').value,
-                    password: document.getElementById('password').value
+                    password: document.getElementById('password').value,
+                    requires_username_change: document.getElementById('userchange').checked,
+                    username: document.getElementById('username').value
                 }),
                 credentials: 'include'
             })
@@ -55,33 +60,6 @@
             .catch(error => {
                 document.getElementById('status').innerText = 'An error occurred: ' + error.message;
             });
-        }
-        function changeUserName() {
-            let newUsername = prompt('Enter new username');
-            if (newUsername) {
-                fetch(window.location.toString(), {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ 
-                        username: newUsername
-                    }),
-                    credentials: 'include'
-                })
-                .then(response => response.json())
-                .then(data => {
-                    if (data.status == "success") {
-                        document.getElementById('status').innerText = data.message;
-                        window.location.href = '/admin';
-                    } else {
-                        document.getElementById('status').innerText = 'Edit failed: ' + data.message;
-                    }
-                })
-                .catch(error => {
-                    document.getElementById('status').innerText = 'An error occurred: ' + error.message;
-                });
-            }
         }
     </script>
 </body>

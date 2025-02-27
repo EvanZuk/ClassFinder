@@ -209,7 +209,7 @@ def change_user_role(user: User, role: str):
     db.session.commit()
     return user
 
-def change_username(user: User, username: str):
+def change_username(user: User, username: str, require_change: bool = None):
     """
     Change a user's username
 
@@ -220,6 +220,8 @@ def change_username(user: User, username: str):
     Returns:
         User: The user with the new username.
     """
+    if User.query.filter_by(username=username).first():
+        raise ValueError("Username already exists")
     old_username = user.username
     user.username = username
     
@@ -227,6 +229,11 @@ def change_username(user: User, username: str):
     related_tokens = Token.query.filter_by(user_id=old_username).all()
     for token in related_tokens:
         token.user_id = username
+
+    if require_change == True:
+        user.requires_username_change = True
+    elif require_change == False:
+        user.requires_username_change = False
 
     # Commit
     db.session.commit()
