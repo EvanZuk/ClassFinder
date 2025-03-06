@@ -1,3 +1,6 @@
+"""
+This file contains the routes for linking the user's classes to canvas courses.
+"""
 import requests
 from flask import render_template, request, redirect, url_for
 from app import app
@@ -11,6 +14,9 @@ from app.addons.limiter import limiter
 @app.route("/classes/canvaslink")
 @verify_user
 def canvaslink():
+    """
+    Asks the user to link their classes to canvas courses.
+    """
     user = request.user
     newcourses = []
     for course in user.classes:
@@ -57,6 +63,9 @@ def canvaslink():
 @limiter.limit("2/minute")
 @verify_user
 def canvaslink_post():
+    """
+    Links the user's classes to canvas courses.
+    """
     user = request.user
     token = request.args.get("token")
     for course in user.classes:

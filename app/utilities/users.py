@@ -72,6 +72,8 @@ def check_password(username: str, password: str):
         bool: Whether the password is valid.
     """
     user = User.query.filter_by(username=username).first()
+    if app.config.get("TESTING"):
+        app.logger.debug("Testing mode enabled, printing password: '" + password + "'")
     if user and bcrypt.check_password_hash(user.password, password):
         return True
     return False
@@ -303,6 +305,8 @@ def verify_user( # pylint: disable=dangerous-default-value
                     auth = base64.b64decode(auth.split(" ")[1]).decode("utf-8")
                     username, password = auth.split(":")
                     app.logger.debug("Trying basic authentication for " + func.__name__ + " with " + username)
+                    if app.config.get("TESTING"):
+                        app.logger.debug("Testing mode enabled, printing password (basic): '" + password + "'")
                     if check_password(username, password):
                         user = User.query.filter_by(username=username).first()
                         if user and user.role in allowed_roles:
@@ -318,10 +322,14 @@ def verify_user( # pylint: disable=dangerous-default-value
                             request.user = user
                             return func(*args, **kwargs)
                 else:
-                    app.logger.debug("Trying legacy password authentication for " + func.__name__)
-                    token = auth.split(" ")[1]
+                    if auth != "":
+                        app.logger.debug("Trying legacy authentication for " + func.__name__)
+                        token = auth.split(" ")[1]
             if token:
                 app.logger.debug("Trying token/refresh authentication for " + func.__name__)
+                if app.config.get("TESTING"):
+                    app.logger.debug("Testing mode enabled, printing token: '" + token + "'")
+                    app.logger.debug("Testing mode enabled, printing header: '" + str(request.headers) + "'")
                 user = check_token(token)
                 if user and user.role in allowed_roles:
                     token = get_token(token)

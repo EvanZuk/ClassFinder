@@ -1,3 +1,6 @@
+"""
+This file contains the routes for adding classes to a user's account.
+"""
 from flask import render_template, redirect, request, send_from_directory, Response
 from app import app
 from app.utilities.other import split_list
@@ -20,6 +23,9 @@ import asyncio
 @app.route("/addclasses")
 @verify_user
 def addclasses():
+    """
+    Checks if the user has all of their classes, and if not, renders the addclasses page.
+    """
     user = request.user
     if len(get_periods_of_user_classes(user)) == len(neededperiods):
         app.logger.debug(
@@ -41,10 +47,13 @@ def addclasses():
     onfail=lambda:({"status": "error", "message": "You must be logged in to do that."}, 401)
 )
 def addclasses_post():
+    """
+    Adds the classes to the user's account.
+    """
     user = request.user
     if len(get_periods_of_user_classes(user)) == len(neededperiods):
         return error_response("You already have all of your classes."), 400
-    classes = [course for course in request.json if "Day: T" not in course and "Day: W" not in course]
+    classes = [course for course in request.json if "Day: T" not in course and "Day: W" not in course and course.strip() != ""]
     if len(classes) % 5 != 0:
         return (
             error_response(
@@ -75,7 +84,7 @@ def addclasses_post():
             add_user_to_class(user, newclass)
     return success_response("Classes added successfully."), 200
 
-async def process_course(course, user):
+async def process_course(course, user): # Making it async dosent improve performance by a lot, but it is still a little bit faster.
     app.logger.debug(f"Processing course: {course}")
     newcourse = {
         "period": course[0].strip(),
@@ -111,4 +120,7 @@ async def process_course(course, user):
 
 @app.route("/addclasses/help.gif")
 def addclasses_help():
+    """
+    Renders the help gif for adding classes.
+    """
     return send_from_directory("static", "addclasses.gif")

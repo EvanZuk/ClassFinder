@@ -38,16 +38,21 @@ RUN apt-get update && apt-get install -y sqlite3
 # Leverage a bind mount to requirements.txt to avoid having to copy them into
 # into this layer.
 RUN --mount=type=cache,target=/root/.cache/pip \
+    python -m pip install pytest
+
+RUN --mount=type=cache,target=/root/.cache/pip \
     --mount=type=bind,source=requirements.txt,target=requirements.txt \
     python -m pip install -r requirements.txt
-
-
 
 # Switch to the non-privileged user to run the application.
 USER appuser
 
 # Copy the source code into the container.
 COPY . .
+
+# Run tests with pytest and fail the build if any test fails.
+RUN --mount=type=cache,target=/root/.cache/pip \
+    pytest
 
 # Expose the port that the application listens on.
 EXPOSE 7842

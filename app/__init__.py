@@ -11,9 +11,12 @@ from flask import Flask, request
 from flask_apscheduler import APScheduler
 from app.utilities.config import devmode
 
-
 app = Flask(__name__, template_folder="templates", static_folder="static")
 #app.wsgi_app = ProxyFix(app.wsgi_app, x_for=2, x_proto=2, x_host=2, x_port=2, x_prefix=2)
+
+if 'pytest' in sys.modules:
+    app.config['TESTING'] = True
+    app.config['SQLALCHEMY_DATABASE_URI'] = "sqlite:///:memory:"
 
 @app.before_request
 def beforerequest():

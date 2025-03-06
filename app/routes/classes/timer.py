@@ -1,12 +1,18 @@
+"""
+Handles the timer page
+"""
+from datetime import datetime
+from flask import render_template, url_for, redirect, request, make_response
 from app import app
 from app.utilities.classes import get_user_current_period, get_current_period
 from app.utilities.users import verify_user
-from flask import render_template, url_for, redirect, request, make_response
-from datetime import datetime, timedelta
 
 @app.route('/timer/')
 @verify_user(required=False)
 def timer():
+    """
+    Handles the timer page
+    """
     user = request.user
     app.logger.debug(request.args.get('noredirect', "false"))
     if user is None:

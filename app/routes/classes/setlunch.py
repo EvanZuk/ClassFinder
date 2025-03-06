@@ -1,3 +1,6 @@
+"""
+This file contains the route for setting the lunch period for a class.
+"""
 from app import app
 from app.utilities.users import verify_user
 from app.utilities.classes import set_lunch, get_course_by_id
@@ -8,6 +11,9 @@ from flask import request, render_template
 @app.route("/class/<courseid>/setlunch")
 @verify_user
 def setlunch(courseid):
+    """
+    Renders the setlunch page.
+    """
     course = get_course_by_id(courseid)
     if not course:
         return error_response("Course not found."), 404
@@ -17,6 +23,9 @@ def setlunch(courseid):
 @app.route("/class/<courseid>/setlunch", methods=["POST"])
 @verify_user
 def setlunch_post(courseid):
+    """
+    Sets the lunch period for a class.
+    """
     user = request.user
     course = get_course_by_id(courseid)
     if course not in user.classes:

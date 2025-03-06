@@ -1,3 +1,6 @@
+"""
+This file contains the route for leaving a class
+"""
 from app import app
 from flask import request
 from app.utilities.users import verify_user
@@ -8,6 +11,9 @@ from app.utilities.config import canvas_url, allow_leave
 @app.route("/classes/<classid>/leave", methods=["POST"])
 @verify_user
 def leave_class(classid):
+    """
+    Leave a class
+    """
     user = request.user
     if not allow_leave:
         return error_response("Leaving classes is disabled")

@@ -10,6 +10,8 @@ from flask_sqlalchemy import SQLAlchemy
 from app import app
 
 db_path = os.environ.get("DB_PATH", "sqlite:///db.sqlite3" if not app.config.get("TESTING") else "sqlite:///:memory:")
+if db_path == "sqlite:///:memory:":
+    app.logger.info("Using in-memory database, probably for testing purposes. Data will not be saved.")
 app.config["SQLALCHEMY_DATABASE_URI"] = db_path
 db = SQLAlchemy(app)
 

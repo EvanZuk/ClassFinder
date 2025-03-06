@@ -2,7 +2,7 @@ from flask import render_template, request, url_for, redirect, jsonify
 import sys
 from app import app
 from app.utilities.email import send_email, create_email_id, check_email_id
-from app.utilities.users import create_user, check_email, get_user_count, create_token
+from app.utilities.users import create_user, check_email, get_user_count, create_token, get_user
 from app.utilities.validation import validate_email, validate_username
 from app.addons.limiter import limiter
 from app.utilities.responses import error_response, success_response
@@ -29,7 +29,7 @@ def register_post():
         + url_for("register_confirm", _external=True, emailid=emailid, _scheme="https"),
     )
     if app.config.get("TESTING"):
-        return {"status": "success", "message": "Email sent", "emailid": emailid}, 200
+        return success_response("Email sent", {"emailid": emailid}), 200
     return success_response("Email sent"), 200
 
 
@@ -54,6 +54,8 @@ def register_confirm_post(emailid):
     if get_user_count() == 0:
         role = "admin"
         app.logger.info(f"{username} has become the first user and is now an admin")
+    if get_user(username):
+        return error_response("Username taken"), 400
     if create_user(username, email, password, role=role, created_by="email"):
         newtoken = create_token(username, 'refresh').token
         response = success_response("User created.") if not app.config.get("TESTING") else success_response("User created.", {"token": newtoken})

@@ -1,0 +1,50 @@
+Day: T
+
+    3
+    Class1
+    Time
+    Teacher
+    Room: MS Cafe
+    5
+    Class2
+    Time
+    Teacher
+    Room: 111
+    7
+    Class3
+    Time
+    Teacher
+    Room: E222
+    9
+    Class4
+    Time
+    Teacher
+    Room: 333
+
+Day: W
+
+    2
+    Class 5
+    Time
+    Teacher
+    Room: 333
+    4
+    Class 1, 2, & 3
+    Time
+    Teacher
+    Room: 232
+    Access
+    MS Access
+    Time
+    Teacher
+    Room: E555
+    6
+    Class 6
+    Time
+    Teacher
+    Room: 177
+    8
+    Class 7
+    Time
+    Teacher
+    Room: E224 
