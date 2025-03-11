@@ -18,7 +18,8 @@
         <button onclick="window.location.href = '/account/delete'">Delete account</button>
         {% if user.classes|length > 0%}
         <h2>Your classes:</h2>
-        <button onclick="document.querySelectorAll('.classusers').forEach(e => e.style.display = 'block'); this.style.display = 'none';">Show people</button>
+        <button onclick="document.querySelectorAll('.classusers').forEach(e => e.style.display = 'block'); document.getElementById('highlightusers').style.display = 'block'; this.style.display = 'none';">Show people</button>
+        <button id="highlightusers" onclick="user = prompt('Enter the username of the person you want to highlight'); document.querySelectorAll('.classuser').forEach(e => {if (e.innerText == user) {e.style.backgroundColor = '#1b6d4e';}});" style="display:none;">Highlight a person</button>
         <ul id="classes">
             {% for class in user.classes|sort(attribute='period') %}
                 <li class="class" id="{{class.id}}" {% if class.canvasid %} onclick="window.location.href = '{{canvasurl}}/courses/{{class.canvasid}}'" {%endif%}>{{class.name}}
