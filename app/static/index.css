@@ -138,13 +138,13 @@ a {
 ul {
     list-style: none;
 }
-#classes, #users, ul.classusers, ul.actions, #schedules {
+#classes, #users, ul.actions, #schedules {
     /* margin-top: 20px; */
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
     gap: 20px;
 }
-ul.classusers, ul.actions {
+ ul.actions {
     grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
     gap: 2px;
 }

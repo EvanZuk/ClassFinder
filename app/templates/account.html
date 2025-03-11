@@ -18,6 +18,7 @@
         <button onclick="window.location.href = '/account/delete'">Delete account</button>
         {% if user.classes|length > 0%}
         <h2>Your classes:</h2>
+        <button onclick="document.querySelectorAll('.classusers').forEach(e => e.style.display = 'block'); this.style.display = 'none';">Show people</button>
         <ul id="classes">
             {% for class in user.classes|sort(attribute='period') %}
                 <li class="class" id="{{class.id}}" {% if class.canvasid %} onclick="window.location.href = '{{canvasurl}}/courses/{{class.canvasid}}'" {%endif%}>{{class.name}}
@@ -25,7 +26,7 @@
                         {% if class.lunch is none and (class.period == "6" or class.period == "7")%}<li class="action" onclick="window.location.href = '/class/{{class.id}}/setlunch'">Set lunch</li>{% endif %}
                         {% if allow_leave and class.period != "Access" %}<li class="action" onclick="event.stopPropagation(); leaveClass('{{class.id}}')">Leave</li>{% endif %}
                     </ul>
-                    <ul class="classusers">
+                    <ul class="classusers" style="display: none;">
                         {%for user in class.users%}
                             {% if not user.role == "testing" %}
                                 <li class="classuser">

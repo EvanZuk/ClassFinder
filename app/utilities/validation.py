@@ -33,7 +33,7 @@ def validate_username(username: str):
         return False
     if username.lower().startswith("admin"):
         return False
-    return re.fullmatch(r"[a-z0-9_]{3,20}", username)
+    return re.fullmatch(r"[a-z0-9_]{3,15}", username)
 
 
 def validate_room(room: str):
