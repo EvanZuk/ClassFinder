@@ -130,6 +130,9 @@ def log_response(response):
                 app.logger.debug("Anonymous user request")
                 script = script.replace("{username}", "anonymous")
             response.data = response.data.decode("utf-8").replace("</head>", f"{script}</head>").encode("utf-8")
+    response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
+    response.headers["Pragma"] = "no-cache"
+    response.headers["Expires"] = "0"
     return response
 
 def import_routes(directory):

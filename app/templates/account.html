@@ -19,7 +19,7 @@
         {% if user.classes|length > 0%}
         <h2>Your classes:</h2>
         <button onclick="document.querySelectorAll('.classusers').forEach(e => e.style.display = 'block'); document.getElementById('highlightusers').style.display = 'block'; this.style.display = 'none';">Show people</button>
-        <button id="highlightusers" onclick="user = prompt('Enter the username of the person you want to highlight'); document.querySelectorAll('.classuser').forEach(e => {if (e.innerText == user) {e.style.backgroundColor = '#1b6d4e';}});" style="display:none;">Highlight a person</button>
+        <button id="highlightusers" onclick="user = prompt('Enter the username of the person you want to highlight'); highlightUser(user)" style="display:none;">Highlight a person</button>
         <ul id="classes">
             {% for class in user.classes|sort(attribute='period') %}
                 <li class="class" id="{{class.id}}" {% if class.canvasid %} onclick="window.location.href = '{{canvasurl}}/courses/{{class.canvasid}}'" {%endif%}>{{class.name}}
@@ -30,7 +30,7 @@
                     <ul class="classusers" style="display: none;">
                         {%for user in class.users%}
                             {% if not user.role == "testing" %}
-                                <li class="classuser">
+                                <li class="classuser" onclick="event.stopPropagation(); highlightUser('{{user.username}}')" style="cursor: pointer;">
                                     {{user.username}}
                                 </li>
                             {% endif %}
@@ -62,6 +62,14 @@
                     alert('An error occurred while trying to leave the class.');
                 });
             }
+        }
+        function highlightUser(user) {
+            document.querySelectorAll('.classuser').forEach(e => {
+                if (e.innerText == user) {
+                    e.style.backgroundColor = '#1b6d4e';
+                }
+            }
+        );
         }
     </script>
 </body>
