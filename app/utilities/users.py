@@ -225,6 +225,9 @@ def change_username(user: User, username: str, require_change: bool = None):
     if User.query.filter_by(username=username).first():
         raise ValueError("Username already exists")
     old_username = user.username
+    related_classes = Class.query.filter(Class.users.any(username=old_username)).all()
+    for course in related_classes:
+        course.users.remove(user)
     user.username = username
     
     # Update related records in other tables
@@ -232,6 +235,11 @@ def change_username(user: User, username: str, require_change: bool = None):
     for token in related_tokens:
         token.user_id = username
 
+    # Update classes
+    for course in related_classes:
+        course.users.append(user)
+
+    # Update requires_username_change
     if require_change == True:
         user.requires_username_change = True
     elif require_change == False:
