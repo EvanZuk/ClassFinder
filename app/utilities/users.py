@@ -10,6 +10,7 @@ import base64
 from flask_bcrypt import Bcrypt
 from flask import request, redirect
 from app.db import db, User, Token, Class
+from app.utilities.validation import validate_username
 from app import app
 
 bcrypt = Bcrypt()
@@ -224,14 +225,26 @@ def change_username(user: User, username: str, require_change: bool = None):
     """
     if User.query.filter_by(username=username).first():
         raise ValueError("Username already exists")
+    if not validate_username(username):
+        raise ValueError("Invalid username")
+    # Update class relationship
+    related_classes = Class.query.filter(Class.users.any(username=user.username)).all()
+    for class_ in related_classes:
+        class_.users.remove(user)
     old_username = user.username
     user.username = username
-    
+    # Update class relationship
+    related_classes = Class.query.filter(Class.users.any(username=user.username)).all()
+    for class_ in related_classes:
+        class_.users.append(user)
+
     # Update related records in other tables
     related_tokens = Token.query.filter_by(user_id=old_username).all()
     for token in related_tokens:
         token.user_id = username
 
+    # Update class relationship
+    related_classes = Class.query.filter(Class.users.any(username=old_username)).all()
     if require_change == True:
         user.requires_username_change = True
     elif require_change == False:
