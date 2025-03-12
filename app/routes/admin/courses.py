@@ -1,9 +1,11 @@
 from app import app
 from flask import render_template, abort, request
 from app.utilities.users import verify_user
-from app.utilities.classes import get_course_by_id, remove_class
+from app.utilities.classes import get_course_by_id, remove_class, get_all_courses
 from app.utilities.responses import success_response, error_response
 from app.db import db
+import shutil
+import datetime
 
 
 @app.route("/admin/class/<courseid>", methods=["DELETE"])
@@ -58,3 +60,19 @@ def verify_course(courseid):
         return success_response("Course verified."), 200
     app.logger.debug(f"Course not found: {courseid}")
     return error_response("Course not found."), 404
+
+@app.route("/admin/class/all", methods=["DELETE"])
+@verify_user(allowed_roles=["admin"])
+def delete_all_courses():
+    app.logger.warning("Deleting all courses, requested by " + request.user.username)
+    dbfile = app.config["SQLALCHEMY_DATABASE_URI"].replace("sqlite:///","")
+    newfile = dbfile.replace(".",f"_backup_{datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.")
+    app.logger.info(f"Copying database to {newfile}")
+    shutil.copy(dbfile, newfile)
+    for course in get_all_courses():
+        if "Access" in course.name:
+            app.logger.debug(f"Skipping course: {course.name}")
+            continue
+        app.logger.info(f"Deleting course: {course.name}")
+        remove_class(course)
+    return success_response("All courses deleted."), 200

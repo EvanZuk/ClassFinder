@@ -37,6 +37,7 @@
         {% if classes|length > 0%}
         <h2 onclick="document.getElementById('classes').style.display = 'grid'; document.getElementById('showusers').style.display = 'block'; this.style.cursor = 'auto'" style="cursor: pointer;">Classes</h2>
         <button onclick="document.querySelectorAll('.classusers').forEach(el => el.style.display = 'grid'); this.remove();" id="showusers">Show users</button>
+        <button onclick="deleteAllClasses()" id="deleteallclasses">Delete all classes</button>
         <ul id="classes">
             {% for class in classes|sort(attribute='verified') %}
                 <li class="class {% if not class.verified %}unverified{%endif%}" id="{{class.id}}">{{class.name}}
@@ -115,6 +116,22 @@
         const urlParams = new URLSearchParams(window.location.search);
         if (urlParams.get('showClasses') === 'true') {
             document.getElementById('classes').style.display = 'grid';
+        }
+        function deleteAllClasses() {
+            securitycode = Math.floor(Math.random() * (9999 - 1000 + 1)) + 1000;
+            if (prompt("Are you sure you want to delete all classes? If so, enter the following code: " + securitycode) == securitycode) {
+                fetch('/admin/class/all', {
+                    method: 'DELETE'
+                }).then(response => {
+                    if (response.ok) {
+                        location.reload();
+                    } else {
+                        response.json().then(data => {
+                            alert('Failed to delete classes: ' + data.message);
+                        });
+                    }
+                });
+            }
         }
     </script>
 </body>

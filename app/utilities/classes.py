@@ -304,3 +304,12 @@ def set_lunch(course: Class, lunch: typing.Literal["A", "B", "C"]):
     course.lunch = lunch
     db.session.commit()
     return course
+
+def get_all_courses():
+    """
+    Retrieve all courses from the database.
+
+    Returns:
+        list: A list of all courses in the database.
+    """
+    return db.session.query(Class).all()
