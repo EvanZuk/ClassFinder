@@ -78,6 +78,6 @@ def account_changeusername():
     newusername = request.json.get("username")
     if not newusername:
         return {"error": "No username provided"}, 400
-    change_username(request.user, newusername, require_change=False)
+    change_username(request.user, newusername, requires_change=False)
     return success_response("Username changed successfully")
 
