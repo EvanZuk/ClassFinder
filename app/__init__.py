@@ -78,7 +78,10 @@ def log_request():
         "PATCH": "\033[94m", # blue
     }
     method_color = method_colors.get(request.method, "\033[97m")  # white
-    params = request.args.to_dict() if request.method == 'GET' else request.json
+    if request.content_type == "application/json":
+        params = request.get_json() or {}
+    else:
+        params = request.args.to_dict()
     if isinstance(params, dict):
         if params.get("password"):
             params["password"] = ("*" * len(params["password"])) if len(params["password"]) < 25 else "*****"

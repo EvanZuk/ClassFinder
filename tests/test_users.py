@@ -13,7 +13,7 @@ def client():
         yield cclient
 
 @pytest.fixture(scope="session")
-def admintoken(client): # Simulates the first registration
+def admintoken(client): # Simulates the first registration, with no classes
     print("Creating user")
     response = client.post("/register", json={"email": "admin.pytest@s.stemk12.org"})
     assert response.status_code == 200
@@ -30,7 +30,7 @@ def admintoken(client): # Simulates the first registration
 
 
 @pytest.fixture(scope="session")
-def token(client): # Simulates a users first login and actions
+def token(client): # Simulates a users first login and actions, with classes
     print("Creating user")
     response = client.post("/register", json={"email": "a.a@s.stemk12.org"})
     assert response.status_code == 200
@@ -45,6 +45,11 @@ def token(client): # Simulates a users first login and actions
     assert response.json.get('token')
     ntoken = response.json.get('token')
     assert ntoken
+    with open("tests/democlasses.txt") as f:
+        classlist = f.read().split("\n")
+    response = client.post("/addclasses", json=classlist, headers={"Authorization": f"Bearer {ntoken}"})
+    assert response.status_code == 200
+    assert response.json.get('status') == "success"
     yield ntoken
 
 def test_dashboard_no_token(client):
@@ -71,7 +76,9 @@ def test_export_data(client, token):
     assert response.json.get('username') == "pytest"
     assert response.json.get('email') == "a.a@s.stemk12.org"
     assert response.json.get('role') == "user"
-    assert response.json.get('classes') == []
+    assert len(response.json.get('classes')) == 9
+    assert {"canvasid": None,"lunch": None,"name":"Class 5","period":"2","room":"333"} in response.json.get('classes')
+
     assert len(response.json.get('sessions')) == 1
 
 # I cant get basic authentication to be testable.
