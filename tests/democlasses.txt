@@ -1,4 +1,4 @@
-Day: T
+DAY: T
 
     3
     Class1

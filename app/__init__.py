@@ -10,13 +10,17 @@ from datetime import datetime
 from flask import Flask, request
 from flask_apscheduler import APScheduler
 from app.utilities.config import devmode
-
+import shutil
+start_init_time = datetime.now()
 app = Flask(__name__, template_folder="templates", static_folder="static")
+if devmode:
+    if os.path.exists("data/db.sqlite3"):
+        app.logger.info("Copying production database to local instance folder")
+        shutil.copy("data/db.sqlite3", "instance/db.sqlite3")
 #app.wsgi_app = ProxyFix(app.wsgi_app, x_for=2, x_proto=2, x_host=2, x_port=2, x_prefix=2)
 
 if 'pytest' in sys.modules:
     app.config['TESTING'] = True
-    app.config['SQLALCHEMY_DATABASE_URI'] = "sqlite:///:memory:"
 
 @app.before_request
 def beforerequest():
@@ -58,6 +62,8 @@ handler = logging.StreamHandler()
 handler.setFormatter(formatter)
 app.logger.handlers.clear()
 app.logger.addHandler(handler)
+
+app.logger.debug("Logger initialized")
 
 # Configure waitress logger to use the same handler
 waitress_logger = logging.getLogger('waitress')
@@ -207,6 +213,8 @@ werkzeug_handler.addFilter(lambda record: "Exception" in record.getMessage() or 
 werkzeug_logger.addHandler(werkzeug_handler)
 logging.basicConfig(handlers=[werkzeug_handler], level=app.logger.level)
 
-app.logger.info("App initialized")
+end_init_time = datetime.now()
+
+app.logger.info(f"Initialization completed in {(end_init_time - start_init_time).total_seconds()}s")
 
 app.logger.info(f"Starting app on {os.environ.get('FLASK_RUN_HOST', '127.0.0.1')}:{os.environ.get('FLASK_RUN_PORT', '5000')} ...")

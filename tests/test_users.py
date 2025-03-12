@@ -5,6 +5,8 @@ import os
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 from app import app
 
+# If anyone can help me split this into test_users and test_classes, that would be great. I'm not sure how to do that.
+
 app.config['TESTING'] = True
 
 @pytest.fixture(scope="session")
@@ -92,13 +94,32 @@ def test_dashboard_invalid_legacy_auth(client):
     assert response.status_code == 302 or response.status_code == 400
 
 @freezegun.freeze_time("2025-03-12 11:14:00")
-def test_dashboard(client, token):
+def test_dashboard_wensday(client, token):
     response = client.get("/dashboard", headers={"Authorization": f"Bearer {token}"})
     assert response.status_code == 200
     assert response.content_type == 'text/html; charset=utf-8'
     assert b"Class 5" in response.data
     assert b"Class2" not in response.data
     assert b"Access" in response.data
+
+@freezegun.freeze_time("2025-03-11 11:14:00")
+def test_dashboard_tuesday(client, token):
+    response = client.get("/dashboard", headers={"Authorization": f"Bearer {token}"})
+    assert response.status_code == 200
+    assert response.content_type == 'text/html; charset=utf-8'
+    assert b"Class 5" not in response.data
+    assert b"Class2" in response.data
+    assert b"Access" not in response.data
+
+@freezegun.freeze_time("2025-03-14 11:14:00")
+def test_dashboard_friday(client, token):
+    response = client.get("/dashboard", headers={"Authorization": f"Bearer {token}"})
+    assert response.status_code == 200
+    assert response.content_type == 'text/html; charset=utf-8'
+    assert b"Class 5" in response.data
+    assert b"Class2" in response.data
+    assert b"Access" not in response.data
+
 
 def test_dashboard_invalid_token(client):
     response = client.get("/dashboard", headers={"Authorization": "Bearer invalidtoken"}, follow_redirects=False)
