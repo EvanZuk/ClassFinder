@@ -78,7 +78,6 @@ def test_export_data(client, token):
     assert response.json.get('role') == "user"
     assert len(response.json.get('classes')) == 9
     assert {"canvasid": None,"lunch": None,"name":"Class 5","period":"2","room":"333"} in response.json.get('classes')
-
     assert len(response.json.get('sessions')) == 1
 
 # I cant get basic authentication to be testable.
@@ -92,10 +91,14 @@ def test_dashboard_invalid_legacy_auth(client):
     response = client.get("/dashboard", headers={"Authorization": "pytest invalidtoken"})
     assert response.status_code == 302 or response.status_code == 400
 
+@freezegun.freeze_time("2025-03-12 11:14:00")
 def test_dashboard(client, token):
     response = client.get("/dashboard", headers={"Authorization": f"Bearer {token}"})
     assert response.status_code == 200
     assert response.content_type == 'text/html; charset=utf-8'
+    assert b"Class 5" in response.data
+    assert b"Class2" not in response.data
+    assert b"Access" in response.data
 
 def test_dashboard_invalid_token(client):
     response = client.get("/dashboard", headers={"Authorization": "Bearer invalidtoken"}, follow_redirects=False)
