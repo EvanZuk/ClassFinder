@@ -157,6 +157,7 @@ ul {
     font-size: 1.5rem;
     font-weight: bold;
 }
+
 .class.currentperiod {
     color: var(--current-period-color);
 }
@@ -183,8 +184,12 @@ li.action[onclick]:hover {
     color: var(--secondary-text-color);
     font-weight: normal;
 }
-.class[onclick]:hover, .user[onclick]:hover {
+.class[onclick]:hover:not(:has(li[onclick]:hover)), .user[onclick]:hover:not(:has(li[onclick]:hover)) {
     background-color: var(--tertiary-color);
+    cursor: pointer;
+}
+.class li[onclick], .user li[onclick] {
+    background-color: var(--action-hover-color);
     cursor: pointer;
 }
 .class.unverified {
