@@ -188,7 +188,7 @@ li.action[onclick]:hover {
     background-color: var(--tertiary-color);
     cursor: pointer;
 }
-.class li[onclick], .user li[onclick] {
+.class li[onclick]:hover, .user li[onclick]:hover {
     background-color: var(--action-hover-color);
     cursor: pointer;
 }
