@@ -9,3 +9,4 @@ services:
     restart: always
     hostname: classfinder
     stop_signal: SIGINT
+    stop_grace_period: 3s
