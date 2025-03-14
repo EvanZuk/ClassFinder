@@ -1,9 +1,14 @@
-import pytest
+# pylint: disable=redefined-outer-name, import-error
+"""
+This file tests the user functions, like login and registration, and general user actions.
+"""
+
 import sys
-import freezegun
 import os
+import pytest
+import freezegun
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from app import app
+from app import app # pylint: disable=wrong-import-position, import-error
 
 # If anyone can help me split this into test_users and test_classes, that would be great. I'm not sure how to do that.
 
@@ -11,11 +16,17 @@ app.config['TESTING'] = True
 
 @pytest.fixture(scope="session")
 def client():
-    with app.test_client() as cclient:
+    """
+    Creates a test client
+    """
+    with app.test_client(False) as cclient:
         yield cclient
 
 @pytest.fixture(scope="session")
 def admintoken(client): # Simulates the first registration, with no classes
+    """
+    Creates an admin user
+    """
     print("Creating user")
     response = client.post("/register", json={"email": "admin.pytest@s.stemk12.org"})
     assert response.status_code == 200
@@ -33,6 +44,9 @@ def admintoken(client): # Simulates the first registration, with no classes
 
 @pytest.fixture(scope="session")
 def token(client): # Simulates a users first login and actions, with classes
+    """
+    Creates a normal user
+    """
     print("Creating user")
     response = client.post("/register", json={"email": "a.a@s.stemk12.org"})
     assert response.status_code == 200
@@ -55,11 +69,17 @@ def token(client): # Simulates a users first login and actions, with classes
     yield ntoken
 
 def test_dashboard_no_token(client):
+    """
+    Tests the dashboard route without a token, should fail
+    """
     response = client.get("/dashboard", follow_redirects=False, headers={"Authorization": ""})
     assert response.status_code == 302
     assert response.location == "/login"
 
 def test_export_data_admin(client, admintoken):
+    """
+    Tests the export route for an admin, also forces the creation of a session
+    """
     response = client.get("/export", headers={"Authorization": f"Bearer {admintoken}"})
     assert response.status_code == 200
     assert response.content_type == "application/json"
@@ -71,6 +91,9 @@ def test_export_data_admin(client, admintoken):
     assert len(response.json.get('sessions')) == 1
 
 def test_export_data(client, token):
+    """
+    Tests the export route for a user, also forces the creation of the normal user to happen after the admin
+    """
     response = client.get("/export", headers={"Authorization": f"Bearer {token}"})
     assert response.status_code == 200
     assert response.content_type == "application/json"
@@ -85,16 +108,25 @@ def test_export_data(client, token):
 # I cant get basic authentication to be testable.
 
 def test_dashboard_legacy_auth(client, token):
+    """
+    Tests the dashboard route with a legacy token
+    """
     response = client.get("/dashboard", headers={"Authorization": f"pytest {token}"})
     assert response.status_code == 200
     assert response.content_type == 'text/html; charset=utf-8'
 
 def test_dashboard_invalid_legacy_auth(client):
+    """
+    Tests the dashboard route with an invalid legacy token
+    """
     response = client.get("/dashboard", headers={"Authorization": "pytest invalidtoken"})
     assert response.status_code == 302 or response.status_code == 400
 
 @freezegun.freeze_time("2025-03-12 11:14:00")
 def test_dashboard_wensday(client, token):
+    """
+    Tests the dashboard route on a Wednesday
+    """
     response = client.get("/dashboard", headers={"Authorization": f"Bearer {token}"})
     assert response.status_code == 200
     assert response.content_type == 'text/html; charset=utf-8'
@@ -104,6 +136,9 @@ def test_dashboard_wensday(client, token):
 
 @freezegun.freeze_time("2025-03-11 11:14:00")
 def test_dashboard_tuesday(client, token):
+    """
+    Tests the dashboard route on a Tuesday
+    """
     response = client.get("/dashboard", headers={"Authorization": f"Bearer {token}"})
     assert response.status_code == 200
     assert response.content_type == 'text/html; charset=utf-8'
@@ -113,6 +148,9 @@ def test_dashboard_tuesday(client, token):
 
 @freezegun.freeze_time("2025-03-14 11:14:00")
 def test_dashboard_friday(client, token):
+    """
+    Tests the dashboard route on a Friday
+    """
     response = client.get("/dashboard", headers={"Authorization": f"Bearer {token}"})
     assert response.status_code == 200
     assert response.content_type == 'text/html; charset=utf-8'
@@ -122,11 +160,17 @@ def test_dashboard_friday(client, token):
 
 
 def test_dashboard_invalid_token(client):
+    """
+    Tests the dashboard route with an invalid token
+    """
     response = client.get("/dashboard", headers={"Authorization": "Bearer invalidtoken"}, follow_redirects=False)
     assert response.status_code == 302
     assert response.location == "/login"
 
 def test_account(client, token):
+    """
+    Tests the account route
+    """
     response = client.get("/account", headers={"Authorization": f"Bearer {token}"})
     assert response.status_code == 200
     assert response.content_type == 'text/html; charset=utf-8'

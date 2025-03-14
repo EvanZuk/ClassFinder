@@ -14,7 +14,6 @@ from app import app
 
 bcrypt = Bcrypt()
 
-
 def create_user(
     username: str, email: str, password: str, created_by="system", role="user"
 ):
@@ -43,7 +42,6 @@ def create_user(
     db.session.commit()
     return user
 
-
 def change_password(user: User, password: str):
     """
     Change a user's password
@@ -58,7 +56,6 @@ def change_password(user: User, password: str):
     user.password = bcrypt.generate_password_hash(password).decode("utf-8")
     db.session.commit()
     return user
-
 
 def check_password(username: str, password: str):
     """
@@ -77,7 +74,6 @@ def check_password(username: str, password: str):
     if user and bcrypt.check_password_hash(user.password, password):
         return True
     return False
-
 
 def create_token(username: str, tokentype: Literal["api", "refresh", "system", "app", "admin"], expiry: datetime = None):
     """
@@ -109,7 +105,6 @@ def create_token(username: str, tokentype: Literal["api", "refresh", "system", "
     db.session.commit()
     return token
 
-
 def check_token(token: str):
     """
     Check if a token is valid
@@ -126,7 +121,6 @@ def check_token(token: str):
         return user
     return None
 
-
 def get_token(token: str):
     """
     Get a token
@@ -138,7 +132,6 @@ def get_token(token: str):
         Token: The token.
     """
     return Token.query.filter_by(token=token).first()
-
 
 def delete_token(token: Token):
     """
@@ -153,7 +146,6 @@ def delete_token(token: Token):
     db.session.delete(token)
     db.session.commit()
     return None
-
 
 def check_email(email: str):
     """
@@ -170,7 +162,6 @@ def check_email(email: str):
         return user
     return False
 
-
 def get_user_count(blacklist_roles: list = []): # pylint: disable=dangerous-default-value
     """
     Get the number of users in the database
@@ -182,7 +173,6 @@ def get_user_count(blacklist_roles: list = []): # pylint: disable=dangerous-defa
         int: The number of users.
     """
     return User.query.filter(User.role.notin_(blacklist_roles)).count()
-
 
 def get_user(username: str):
     """
@@ -269,7 +259,6 @@ def get_user_by_email(email: str):
     """
     return User.query.filter_by(email=email).first()
 
-
 def delete_user(user: User):
     """
     Delete a user
@@ -285,7 +274,6 @@ def delete_user(user: User):
     db.session.delete(user)
     db.session.commit()
     return None
-
 
 def verify_user( # pylint: disable=dangerous-default-value
     func=None,
