@@ -12,6 +12,7 @@ from app.utilities.classes import (
     get_periods_of_user_classes,
     get_user_current_period,
 )
+from app.utilities.times import get_lunchtimes
 from app.utilities.config import canvas_url
 
 
@@ -40,7 +41,8 @@ def dashboard():
                 ]
             ),
             canvasurl=canvas_url,
-        )
+            lunchtimes=get_lunchtimes(),
+        ),
     )
     # if currentperiod is not None:
     #     end_time = datetime.combine(datetime.today(), currentperiod['end'])
