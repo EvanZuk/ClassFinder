@@ -61,7 +61,7 @@ def token(client): # Simulates a users first login and actions, with classes
     assert response.json.get('token')
     ntoken = response.json.get('token')
     assert ntoken
-    with open("tests/democlasses.txt") as f:
+    with open("tests/democlasses.txt", encoding="utf-8") as f:
         classlist = f.read().split("\n")
     response = client.post("/addclasses", json=classlist, headers={"Authorization": f"Bearer {ntoken}"})
     assert response.status_code == 200
@@ -120,7 +120,7 @@ def test_dashboard_invalid_legacy_auth(client):
     Tests the dashboard route with an invalid legacy token
     """
     response = client.get("/dashboard", headers={"Authorization": "pytest invalidtoken"})
-    assert response.status_code == 302 or response.status_code == 400
+    assert response.status_code in (302, 400)
 
 @freezegun.freeze_time("2025-03-12 11:14:00")
 def test_dashboard_wensday(client, token):
