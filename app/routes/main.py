@@ -2,7 +2,7 @@
 Hosts the dashboard route.
 """
 
-from datetime import datetime, timedelta
+from datetime import datetime, time
 from flask import render_template, request, make_response
 from app import app
 from app.utilities.users import verify_user
@@ -41,7 +41,7 @@ def dashboard():
                 ]
             ),
             canvasurl=canvas_url,
-            lunchtimes=get_lunchtimes(),
+            haslunch=get_lunchtimes()['A']['start'] != time(0, 0),
         ),
     )
     # if currentperiod is not None:

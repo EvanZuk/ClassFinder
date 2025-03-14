@@ -12,14 +12,17 @@
         {%if user.requires_username_change%}
             <h2>You have been requested to change your username <a href="/account/changeusername">here</a>.</h2>
         {%endif%}
-        {% if lunchtimes | length == 0 %}
-            <h2>There is no lunch today</h2>
-        {% endif %}
         {% if classes|length == 0 %}
             <h1>Welcome, {{user.username}}!</h1><br>
+            {% if not haslunch %}
+                <h3>There is no lunch today</h2>
+            {% endif %}
             <h2>Welcome to ClassFinder! To begin, add your classes <a href="/addclasses">here</a>.</h2>
         {% else %}
             <h1>Dashboard</h1><br>
+            {% if not haslunch %}
+                <h3>There is no lunch today</h2>
+            {% endif %}
             {% if currentclasses|length == 0 %}
                 <h2>No classes today.</h2>{% if classestoadd > 0 %}<br><h2>Some classes may not be shown, as you still need to add {{classestoadd}} classes. You can add them <a href="/addclasses">here</a>.</h2>{% endif %}
             {% else %}
