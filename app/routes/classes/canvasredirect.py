@@ -17,7 +17,10 @@ def canvas():
     user = request.user
     period = get_user_current_period(user)
     if period is None or period["course"] is None or period["course"].canvasid is None:
+        reason = "no current period" if period is None else "no course for period" if period["course"] is None else "course has no Canvas ID"
+        app.logger.debug(f"Redirecting user {user.username} to Canvas homepage: {reason}")
         return redirect(canvas_url)
+    app.logger.debug(f"Redirecting user {user.username} to Canvas course {period['course'].canvasid}")
     return redirect(f"{canvas_url}/courses/{period['course'].canvasid}")
 
 

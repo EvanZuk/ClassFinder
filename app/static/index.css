@@ -11,6 +11,7 @@
     --action-hover-color: #113a6f;
     --user-color: #1b6ad0;
     --user-primary-color: #1b6ad0;
+    --highlighted-inner-user-color: #1b6d4e;
 }
 @media (prefers-color-scheme: light) {
     :root {
@@ -26,6 +27,7 @@
         --action-hover-color: #113a6f;
         --user-color: #60a5ff;
         --user-primary-color: #98c5ff;
+        --highlighted-inner-user-color: #1ae094;
     }
 }
 * {
@@ -191,6 +193,9 @@ li.action[onclick]:hover {
 .class li[onclick]:hover, .user li[onclick]:hover {
     background-color: var(--action-hover-color);
     cursor: pointer;
+}
+.class li.classuser.highlight {
+    background-color: var(--highlighted-inner-user-color);
 }
 .class.unverified {
     background-color: #9e4343;
