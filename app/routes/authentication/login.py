@@ -1,5 +1,6 @@
 from app import app
 from flask import render_template, request
+from app.utilities.config import devmode
 from app.utilities.users import check_password, create_token
 from app.addons.limiter import limiter
 from app.utilities.responses import error_response, success_response
@@ -22,7 +23,7 @@ def login_post():
             create_token(username, 'refresh').token,
             httponly=True,
             samesite="Lax",
-            secure=True,
+            secure=True if not devmode else False,
             max_age=604800,
         )
         return response, 200

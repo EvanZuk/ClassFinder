@@ -625,6 +625,20 @@ readable_days = {
     8: "Early Release Gold",
 }
 
+bell_delay = 5
+
+for d, dtimes in classtime_dict.items():
+    app.logger.debug(f"Setting times for {readable_days[d]}")
+    for time in dtimes['classtimes']:
+        time['start'] = datetime.combine(date.today(), time['start'])
+        time['end'] = datetime.combine(date.today(), time['end'])
+        time['start'] += timedelta(seconds=bell_delay)
+        time['end'] += timedelta(seconds=bell_delay)
+        time['start'] = time['start'].time()
+        time['end'] = time['end'].time()
+        classtime_dict[d]['classtimes'] = dtimes['classtimes']
+    # Lunch does not have a bell delay
+
 def get_current_day():
     """
     Get the current day of the week, as defined by the schedule.

@@ -21,7 +21,7 @@ def timer():
             if request.args.get('noredirect', "false") != "false":
                 return render_template('timer.html', nextclass="nothing")
             return redirect(url_for('dashboard'))
-        formatted_time = datetime.combine(datetime.now().date(), period['end']).strftime('%m/%d/%Y %I:%M %p')
+        formatted_time = datetime.combine(datetime.now().date(), period['end']).strftime('%m/%d/%Y %I:%M:%S %p')
         response = make_response(render_template('timer.html', nextclass=formatted_time))
         # if period is not None:
         #     end_time = datetime.combine(datetime.today(), period['end'])
@@ -36,7 +36,7 @@ def timer():
             if request.args.get('noredirect', "false") != "false":
                 return render_template('timer.html', nextclass="nothing")
             return redirect(url_for('dashboard'))
-        formatted_time = datetime.combine(datetime.now().date(), period['end']).strftime('%m/%d/%Y %I:%M %p')
+        formatted_time = datetime.combine(datetime.now().date(), period['end']).strftime('%m/%d/%Y %I:%M:%S %p')
         response = make_response(render_template('timer.html', nextclass=formatted_time))
         # if period is not None:
         #     end_time = datetime.combine(datetime.today(), period['end'])
