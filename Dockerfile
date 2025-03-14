@@ -54,6 +54,18 @@ COPY . .
 RUN --mount=type=cache,target=/root/.cache/pip \
     pytest
 
+# Remove pytest to reduce the size of the final image.
+USER root
+RUN --mount=type=cache,target=/root/.cache/pip \
+    python -m pip uninstall -y pytest freezegun
+
+# Delete the tests folder to reduce the size of the final image.
+
+RUN rm -rf tests
+
+# Switch back to the non-privileged user.
+USER appuser
+
 # Expose the port that the application listens on.
 EXPOSE 7842
 
