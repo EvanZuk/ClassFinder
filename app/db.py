@@ -102,6 +102,7 @@ class Token(db.Model):
     user_id = db.Column(db.String(20), db.ForeignKey("user.username"), nullable=False)
     type = db.Column(db.String(20), nullable=False)
     expire = db.Column(db.DateTime, nullable=True, default=lambda: datetime.now() + timedelta(days=8))
+    scopes = db.Column(db.Text, nullable=True, default=None)
 
     def __str__(self):
         return self.token + " for " + self.user_id

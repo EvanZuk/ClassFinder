@@ -75,7 +75,7 @@ def check_password(username: str, password: str):
         return True
     return False
 
-def create_token(username: str, tokentype: Literal["api", "refresh", "system", "app", "admin"], expiry: datetime = None):
+def create_token(username: str, tokentype: Literal["api", "refresh", "system", "app", "admin"], expiry: datetime = None, scopes: list = None):
     """
     Create a token for a user
 
@@ -100,7 +100,7 @@ def create_token(username: str, tokentype: Literal["api", "refresh", "system", "
             nexpiry += timedelta(hours=1)
         else:
             nexpiry += timedelta(days=1)
-    token = Token(token=os.urandom(30).hex(), user_id=username, type=tokentype, expire=expiry)
+    token = Token(token=os.urandom(30).hex(), user_id=username, type=tokentype, expire=expiry, scopes=" ".join(scopes) if scopes else None)
     db.session.add(token)
     db.session.commit()
     return token

@@ -36,7 +36,8 @@ def export():
             {
                 "token": token.token[:5] + "*" * (len(token.token) - 5),
                 "type": token.type,
-                "expiry": int(datetime.timestamp(token.expire))
+                "expiry": int(datetime.timestamp(token.expire)),
+                "scopes": token.scopes.split(" ") if token.scopes is not None else None
 
             }
             for token in user.tokens
