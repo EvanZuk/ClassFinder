@@ -90,7 +90,7 @@ def create_token(username: str, tokentype: Literal["api", "refresh", "system", "
     nexpiry = expiry
     if nexpiry is None:
         nexpiry = datetime.now()
-        if tokentype == "api" or tokentype == "app":
+        if tokentype in ("api", "app"):
             nexpiry += timedelta(days=60)
         elif tokentype == "refresh":
             nexpiry += timedelta(days=7)
@@ -145,7 +145,6 @@ def delete_token(token: Token):
     """
     db.session.delete(token)
     db.session.commit()
-    return None
 
 def check_email(email: str):
     """
@@ -273,7 +272,6 @@ def delete_user(user: User):
         delete_token(token)
     db.session.delete(user)
     db.session.commit()
-    return None
 
 def verify_user( # pylint: disable=dangerous-default-value
     func=None,
@@ -295,7 +293,7 @@ def verify_user( # pylint: disable=dangerous-default-value
 
     def decorator(func):
         @functools.wraps(func)
-        def wrapper(*args, **kwargs):
+        def wrapper(*args, **kwargs): # pylint: disable=too-many-branches # I have no idea why this is flagged
             request.user = None
             request.token = None
             auth = request.headers.get("Authorization")

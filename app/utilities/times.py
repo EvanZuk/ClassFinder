@@ -692,7 +692,7 @@ def set_schedule(start: date, end: date, simulated_day: int):
         db.session.add(schedule)
     db.session.commit()
 
-def create_schedule_pdf(
+def create_schedule_pdf( # pylint: disable=too-many-arguments, too-many-positional-arguments, too-many-locals, too-many-branches, too-many-statements
         user: User=None,
         days: list[int]=None,
         separate: bool=False,
