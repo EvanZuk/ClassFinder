@@ -52,7 +52,7 @@ class User(db.Model):
     created_by = db.Column(db.String(50), nullable=False)
     role = db.Column(db.String(30), nullable=False)
     tokens = db.relationship("Token", backref="user", lazy=True)
-    requires_username_change = db.Column(db.Boolean, nullable=False, default=False) # add with ALTER TABLE User ADD COLUMN requires_username_change BOOLEAN NOT NULL DEFAULT 0;
+    requires_username_change = db.Column(db.Boolean, nullable=False, default=False)
 
     def __str__(self):
         return self.username

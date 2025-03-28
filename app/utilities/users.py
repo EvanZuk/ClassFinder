@@ -237,14 +237,14 @@ def change_username(user: User, username: str, require_change: bool = None):
         course.users.append(user)
 
     # Update requires_username_change
-    if require_change == True:
+    if require_change is True:
         user.requires_username_change = True
-    elif require_change == False:
+    elif require_change is False:
         user.requires_username_change = False
 
     # Commit
     db.session.commit()
-    
+
     return user
 
 def get_user_by_email(email: str):

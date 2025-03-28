@@ -1,8 +1,8 @@
 """
 This file contains the route for the /canvas endpoint, which redirects the user to the Canvas course page.
 """
-from app import app
 from flask import redirect, request
+from app import app
 from app.utilities.config import canvas_url
 from app.utilities.classes import get_user_current_period
 from app.utilities.users import verify_user

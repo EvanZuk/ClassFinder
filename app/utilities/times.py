@@ -2,14 +2,10 @@
 This file contains the functions and data structures for the schedule of the school.
 """
 
+from datetime import date, timedelta, time, datetime
+from reportlab.pdfgen import canvas
 from app import app
 from app.db import Schedule, db, User
-from datetime import date, timedelta, time, datetime
-from reportlab.pdfgen import canvas 
-from reportlab.pdfbase.ttfonts import TTFont 
-from reportlab.pdfbase import pdfmetrics 
-from reportlab.lib import colors 
-import random
 
 # classtime_dict = {daynumber: {
 #   "classtimes": [...],
@@ -625,15 +621,15 @@ readable_days = {
     8: "Early Release Gold",
 }
 
-bell_delay = 5
+BELL_DELAY = 5
 
 for d, dtimes in classtime_dict.items():
     app.logger.debug(f"Setting times for {readable_days[d]}")
     for time in dtimes['classtimes']:
         time['start'] = datetime.combine(date.today(), time['start'])
         time['end'] = datetime.combine(date.today(), time['end'])
-        time['start'] += timedelta(seconds=bell_delay)
-        time['end'] += timedelta(seconds=bell_delay)
+        time['start'] += timedelta(seconds=BELL_DELAY)
+        time['end'] += timedelta(seconds=BELL_DELAY)
         time['start'] = time['start'].time()
         time['end'] = time['end'].time()
         classtime_dict[d]['classtimes'] = dtimes['classtimes']
@@ -696,7 +692,17 @@ def set_schedule(start: date, end: date, simulated_day: int):
         db.session.add(schedule)
     db.session.commit()
 
-def create_schedule_pdf(user: User=None, days: list[int]=None, separate: bool=False, showperiod: bool=True, showclass: bool=True, showroom: bool=True, showtime: bool=True, showlunch: bool=True, smalltext: bool=False):
+def create_schedule_pdf(
+        user: User=None,
+        days: list[int]=None,
+        separate: bool=False,
+        showperiod: bool=True,
+        showclass: bool=True,
+        showroom: bool=True,
+        showtime: bool=True,
+        showlunch: bool=True,
+        smalltext: bool=False
+    ):
     """
     Create a PDF of the schedule for a user.
 
@@ -719,7 +725,7 @@ def create_schedule_pdf(user: User=None, days: list[int]=None, separate: bool=Fa
     c.setFont("Helvetica", 20 if not smalltext else 12)
     y = 820 if not smalltext else 818
     app.logger.debug(f"Creating schedule PDF for {user.username if user else 'a guest user'} for days {days}")
-    app.logger.debug(f"seperate: {separate}, showclass: {showclass}, showroom: {showroom}, showtime: {showtime}, showlunch: {showlunch}, smalltext: {smalltext}")
+    app.logger.debug(f"seperate: {separate}, showclass: {showclass}, showroom: {showroom}, showtime: {showtime}, showlunch: {showlunch}, smalltext: {smalltext}") # pylint: disable=line-too-long
     for day in days:
         y -= 10 if not smalltext else 5
         c.setFont("Helvetica-Bold", 16 if not smalltext else 10)
@@ -727,34 +733,38 @@ def create_schedule_pdf(user: User=None, days: list[int]=None, separate: bool=Fa
         y -= 20 if not smalltext else 10
         c.setFont("Helvetica", 12 if not smalltext else 8)
         classtimes = classtime_dict[day]['classtimes']
-        for time in classtimes:
-            if time['passing'] or time['period'] == "1":
+        for ctime in classtimes:
+            if ctime['passing'] or ctime['period'] == "1":
                 continue
             course = None
             if user:
                 for ncourse in user.classes:
-                    if ncourse.period == time['period']:
+                    if ncourse.period == ctime['period']:
                         course = ncourse
                         break
-            start_time = time['start'].strftime("%I:%M %p")
-            end_time = time['end'].strftime("%I:%M %p")
-            # c.drawString(50, y, f"{('Period ' + time['period']) if time['period'] != 'Access' else time['period']}: {start_time} - {end_time}" + (f" - {course.name} - {course.room}" if course else ""))
+            start_time = ctime['start'].strftime("%I:%M %p")
+            end_time = ctime['end'].strftime("%I:%M %p")
             drawthings = []
-            if showperiod: drawthings.append(f"Period {time['period'] if time['period'] != 'Access' else 'Access'}")
-            if showtime: drawthings.append(f"{start_time} - {end_time}")
-            if showclass and course: drawthings.append(course.name)
-            if showroom and course: drawthings.append(course.room)
+            if showperiod:
+                drawthings.append(f"Period {ctime['period'] if ctime['period'] != 'Access' else 'Access'}")
+            if showtime:
+                drawthings.append(f"{start_time} - {end_time}")
+            if showclass and course:
+                drawthings.append(course.name)
+            if showroom and course:
+                drawthings.append(course.room)
             if drawthings:
                 c.drawString(50, y, " - ".join(drawthings))
                 y -= 15 if not smalltext else 10
-            if showlunch and time['lunchactive'] and course and course.lunch:
+            if showlunch and ctime['lunchactive'] and course and course.lunch:
                 lunchtime = classtime_dict[day]['lunchtimes'][course.lunch]
                 start_time = lunchtime['start'].strftime("%I:%M %p")
                 end_time = lunchtime['end'].strftime("%I:%M %p")
                 #c.drawString(50, y, f"{course.lunch} lunch" + (f": {start_time} - {end_time}" if showtime else ""))
                 drawthings = []
                 drawthings.append(f"{course.lunch} lunch")
-                if showtime: drawthings.append(f"{start_time} - {end_time}")
+                if showtime:
+                    drawthings.append(f"{start_time} - {end_time}")
                 c.drawString(50, y, " - ".join(drawthings))
                 y -= 15 if not smalltext else 10
         if separate:

@@ -2,11 +2,12 @@
 Allows exporting user data to json.
 """
 
+from datetime import datetime
+from flask import request
 from app import app
 from app.utilities.users import verify_user
 from app.utilities.responses import success_response
-from flask import request
-from datetime import datetime
+
 
 @app.route("/export")
 @verify_user
