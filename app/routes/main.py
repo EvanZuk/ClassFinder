@@ -25,6 +25,7 @@ def dashboard():
     user = request.user
     currentperiod = get_user_current_period(user)
     app.logger.debug(currentperiod)
+    lunchtimes = get_lunchtimes()
     response = make_response(
         render_template(
             "dashboard.html",
@@ -41,7 +42,7 @@ def dashboard():
                 ]
             ),
             canvasurl=canvas_url,
-            haslunch=get_lunchtimes()['A']['start'] != time(0, 0),
+            haslunch='A' in lunchtimes, # FIXME: This dosent actually work as intended, and is a workaround for a bug where lunchtimes would not be set on off days
         ),
     )
     # if currentperiod is not None:
