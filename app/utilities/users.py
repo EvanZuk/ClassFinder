@@ -10,9 +10,16 @@ import base64
 from flask_bcrypt import Bcrypt
 from flask import request, redirect
 from app.db import db, User, Token, Class
+from app.utilities.responses import error_response
 from app import app
 
 bcrypt = Bcrypt()
+
+readable_scopes = { # Any token can read a user's username, DO NOT add a scope for this
+    "read-email": "See your email",
+    "read-classes": "See your classes",
+    "read-misc": "See general data abount your account (like when your account was created)",
+}
 
 def create_user(
     username: str, email: str, password: str, created_by="system", role="user"
@@ -75,7 +82,7 @@ def check_password(username: str, password: str):
         return True
     return False
 
-def create_token(username: str, tokentype: Literal["api", "refresh", "system", "app", "admin"], expiry: datetime = None, scopes: list = None):
+def create_token(username: str, tokentype: Literal["api", "refresh", "system", "app", "admin", "ext"], expiry: datetime = None, scopes: list = None):
     """
     Create a token for a user
 
@@ -98,6 +105,8 @@ def create_token(username: str, tokentype: Literal["api", "refresh", "system", "
             nexpiry += timedelta(days=30)
         elif tokentype == "admin":
             nexpiry += timedelta(hours=1)
+        elif tokentype == "ext":
+            nexpiry = None
         else:
             nexpiry += timedelta(days=1)
     token = Token(token=os.urandom(30).hex(), user_id=username, type=tokentype, expire=expiry, scopes=" ".join(scopes) if scopes else None)
@@ -278,6 +287,7 @@ def verify_user( # pylint: disable=dangerous-default-value
     required: bool = True,
     allowed_roles: list = ["user", "teacher", "admin", "testing"],
     onfail=lambda: redirect("/login"),
+    required_scopes: list[list[str]] = None, # Tokens with a null scope value are always allowed, even through a null required_scopes
 ):
     """
     Decorator to verify a user
@@ -338,6 +348,30 @@ def verify_user( # pylint: disable=dangerous-default-value
                         app.logger.debug("Token for " + user.username + " has expired. Deleting token.")
                         delete_token(token)
                     else:
+                        if not token.scopes:
+                            if required_scopes is None:
+                                app.logger.debug("Required scopes is None and token is scoped, not allowing")
+                                return error_response("This endpoint does not allow scoped tokens"), 403
+                            token_scopes = token.scopes.split(" ")
+                            allow_token = True
+                            for rscopes in required_scopes:
+                                allow_token = True
+                                for scope in rscopes:
+                                    if not scope in token_scopes:
+                                        app.logger.debug("Token does not have required scope " + scope)
+                                        allow_token = False
+                                        break
+                                    else:
+                                        app.logger.debug("Token has required scope " + scope)
+                                if allow_token:
+                                    break
+                                app.logger.debug("Token does not have required scopes " + str(rscopes))
+                                return error_response(
+                                    "You do not have the required scopes. You must match at least one of these scope lists.",
+                                    {
+                                        "required_scopes": required_scopes
+                                    }
+                                ), 403
                         app.logger.debug(
                             "Accepted user "
                             + user.username

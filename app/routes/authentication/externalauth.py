@@ -1,0 +1,75 @@
+"""
+This handles external authentication.
+"""
+from urllib.parse import urlparse
+from flask import request, render_template, redirect
+from app import app
+from app.utilities.users import verify_user, create_token, readable_scopes
+from app.utilities.responses import error_response
+
+@app.route('/auth')
+@verify_user
+def external_auth():
+    """
+    This is the main entry point for external authentication.
+    It verifies the user and redirects them to the appropriate page.
+    """
+    scopes = request.args.get('scopes')
+    if scopes:
+        scopes = scopes.strip().split(',')
+    else:
+        scopes = []
+    # Remove duplicate scopes
+    scopes = list(set(scopes))
+    scopes_readable = []
+    for scope in scopes:
+        if scope in readable_scopes:
+            scopes_readable.append(readable_scopes[scope])
+        else:
+            scopes_readable.append(scope)
+
+    redirect_url = request.args.get('redirect_url')
+
+    # Extract domain from redirect_url
+    redirect_domain = None
+    if redirect_url:
+        parsed_url = urlparse(redirect_url)
+        redirect_domain = parsed_url.netloc
+
+    return render_template(
+        "external_auth.html",
+        scopes_readable=scopes_readable,
+        redirect_domain=redirect_domain
+    )
+
+@app.route('/auth', methods=['POST'])
+@verify_user
+def external_auth_post():
+    """
+    This handles the POST request for external authentication.
+    It verifies the user and redirects them to the appropriate page.
+    """
+    scopes = request.form.get('scopes')
+    if scopes:
+        scopes = scopes.strip().split(',')
+    else:
+        scopes = []
+
+    # Remove duplicate scopes
+    scopes = list(set(scopes))
+
+    redirect_url = request.form.get('redirect_url')
+
+    # Redirect to the redirect_url with the token
+    if redirect_url:
+        # Check if redirect_url is a valid URL
+        parsed_url = urlparse(redirect_url)
+        if parsed_url.scheme and parsed_url.netloc:
+            token = create_token(request.user.username, 'ext', None, scopes)
+            if token is None:
+                return error_response("Failed to create token")
+            return redirect(f"{redirect_url}?token={token.token}")
+        else:
+            return error_response("Invalid redirect URL", {"redirect_url": redirect_url})
+    else:
+        return error_response("No redirect URL provided")
