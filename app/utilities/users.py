@@ -357,9 +357,9 @@ def verify_user( # pylint: disable=dangerous-default-value
                             app.logger.debug("Required scopes is not null")
                             token_scopes = token.scopes.split(" ")
                             allow_token = True
-                            for rscopes in required_scopes:
+                            for scope_group in required_scopes:
                                 allow_token = True
-                                for scope in rscopes:
+                                for scope in scope_group:
                                     if not scope in token_scopes:
                                         app.logger.debug("Token does not have required scope " + scope)
                                         allow_token = False
@@ -368,7 +368,8 @@ def verify_user( # pylint: disable=dangerous-default-value
                                         app.logger.debug("Token has required scope " + scope)
                                 if allow_token:
                                     break
-                                app.logger.debug("Token does not have required scopes " + str(rscopes))
+                            if not allow_token:
+                                app.logger.debug("Token does not have required scopes " + str(required_scopes))
                                 return error_response(
                                     "You do not have the required scopes. You must match at least one of these scope lists.",
                                     {
