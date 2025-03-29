@@ -2,17 +2,15 @@
 This module handles the linking of external applications for authentication purposes.
 """
 
-from app import app
+import random
 from flask import request, render_template, redirect, url_for
+from app import app
 from app.utilities.responses import success_response, error_response
 from app.utilities.users import create_token, verify_user
 from app.addons.limiter import limiter
-import random
 
 
 link_codes = {}
-
-# TODO: Verify this works
 
 @app.route("/api/v2/link/create", methods=["POST", "GET"])
 @limiter.limit("5/minute")
