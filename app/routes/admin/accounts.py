@@ -21,6 +21,9 @@ from app.utilities.responses import error_response, success_response
 @app.route("/admin/account/<username>", methods=["DELETE"])
 @verify_user(allowed_roles=["admin"])
 def delete_account(username):
+    """
+    Deletes a user account.
+    """
     user = request.user
     app.logger.info(f"Deleting account for {username} by {user.username}.")
     deluser = get_user(username)
@@ -38,6 +41,9 @@ def delete_account(username):
 @app.route("/admin/account/<username>/login", methods=["POST", "GET"])
 @verify_user(allowed_roles=["admin"])
 def login_as(username):
+    """
+    Logs in as a user.
+    """
     loguser = get_user(username)
     if loguser:
         token = create_token(username, tokentype="admin")
@@ -69,12 +75,18 @@ def login_as(username):
 @app.route("/admin/create/account")
 @verify_user(allowed_roles=["admin"])
 def create_account():
+    """"
+    Creates a new user account.
+    """
     return render_template("createaccount.html")
 
 
 @app.route("/admin/create/account", methods=["POST"])
 @verify_user(allowed_roles=["admin"])
 def create_account_post():
+    """
+    Creates a new user account.
+    """
     user = request.user
     username = request.json.get("username")
     email = request.json.get("email")
@@ -99,6 +111,9 @@ def create_account_post():
 @app.route("/admin/account/<username>/edit")
 @verify_user(allowed_roles=["admin"])
 def edit_account(username):
+    """"
+    Edits a user account.
+    """
     edituser = get_user(username)
     if edituser:
         return render_template("editaccount.html", user=edituser)
@@ -107,6 +122,9 @@ def edit_account(username):
 @app.route("/admin/account/<username>/edit", methods=["POST"])
 @verify_user(allowed_roles=["admin"])
 def edit_account_post(username):
+    """"
+    Edits a user account.
+    """
     user = request.user
     edituser = get_user(username)
     if edituser:
@@ -133,7 +151,7 @@ def edit_account_post(username):
         if edituser == user:
             app.logger.info(f"{user.username} has changed their own account.")
         if edituser.requires_username_change != request.json.get("requires_username_change", False):
-            app.logger.info(f"{user.username} has changed {edituser.username}'s requires_username_change to {request.json.get('requires_username_change', False)}.")
+            app.logger.info(f"{user.username} has changed {edituser.username}'s requires_username_change to {request.json.get('requires_username_change', False)}.") #pylint: disable=line-too-long
             edituser.requires_username_change = request.json.get("requires_username_change", False)
         db.session.commit()
         return success_response("User updated."), 200
