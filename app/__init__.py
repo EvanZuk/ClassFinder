@@ -10,13 +10,13 @@ from datetime import datetime
 from flask import Flask, request
 from flask_apscheduler import APScheduler
 from app.utilities.config import devmode
-import shutil
+# import shutil
 start_init_time = datetime.now()
 app = Flask(__name__, template_folder="templates", static_folder="static")
-if devmode:
-    if os.path.exists("data/db.sqlite3"):
-        app.logger.info("Copying production database to local instance folder")
-        shutil.copy("data/db.sqlite3", "instance/db.sqlite3")
+# if devmode: # TODO: Convert this to a button in the admin dashboard
+#     if os.path.exists("data/db.sqlite3"):
+#         app.logger.info("Copying production database to local instance folder")
+#         shutil.copy("data/db.sqlite3", "instance/db.sqlite3")
 #app.wsgi_app = ProxyFix(app.wsgi_app, x_for=2, x_proto=2, x_host=2, x_port=2, x_prefix=2)
 
 if 'pytest' in sys.modules:
