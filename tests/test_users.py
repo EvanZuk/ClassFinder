@@ -8,7 +8,7 @@ import os
 import pytest
 import freezegun
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
-from app import app # pylint: disable=wrong-import-position, import-error
+from app import app # pylint: disable=wrong-import-position, import-error, cyclic-import
 
 # If anyone can help me split this into test_users and test_classes, that would be great. I'm not sure how to do that.
 
