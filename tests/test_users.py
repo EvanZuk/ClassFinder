@@ -1,4 +1,4 @@
-# pylint: disable=redefined-outer-name, import-error
+# pylint: disable=redefined-outer-name, import-error, cyclic-import
 """
 This file tests the user functions, like login and registration, and general user actions.
 """

@@ -42,7 +42,6 @@ def external_auth():
             "No redirect URL provided. Provide a redirect_url parameter, along with scopes seperated by commas.", 
             {
                 "valid_scopes": readable_scopes
-                
             }
         )
     return render_template(

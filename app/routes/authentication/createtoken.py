@@ -2,10 +2,10 @@
 Allows users to create a token for the API.
 """
 
+from datetime import datetime, timedelta
 from flask import request
 from app import app
 from app.utilities.users import verify_user, create_token
-from datetime import datetime, timedelta
 from app.utilities.responses import success_response, error_response
 
 @app.route("/createtoken", methods=["POST", "GET"])

@@ -1,4 +1,7 @@
-from flask import request, jsonify
+"""
+Login route for the legacy API.
+"""
+from flask import request
 from app import app
 from app.utilities.users import check_password, create_token
 from app.utilities.responses import success_response, error_response
@@ -7,6 +10,9 @@ from app.addons.limiter import limiter
 @app.route('/api/v1/login/', methods=['POST'])
 @limiter.limit("2 per minute")
 def legacyapilogin():
+    """
+    Legacy login route.
+    """
     app.logger.debug("Using legacy login")
     creds = request.json
     if creds.get('username') is None or creds.get('password') is None:

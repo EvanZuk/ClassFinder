@@ -109,7 +109,9 @@ def create_token(username: str, tokentype: Literal["api", "refresh", "system", "
             nexpiry += timedelta(days=90)
         else:
             nexpiry += timedelta(days=1)
-    token = Token(token=os.urandom(30).hex(), user_id=username, type=tokentype, expire=expiry, scopes=" ".join(scopes) if scopes is not None else None)
+    token = Token(
+        token=os.urandom(30).hex(), user_id=username, type=tokentype, expire=expiry, scopes=" ".join(scopes) if scopes is not None else None
+    )
     db.session.add(token)
     db.session.commit()
     return token
@@ -282,7 +284,7 @@ def delete_user(user: User):
     db.session.delete(user)
     db.session.commit()
 
-def verify_user( # pylint: disable=dangerous-default-value
+def verify_user( # pylint: disable=dangerous-default-value, too-many-statements
     func=None,
     required: bool = True,
     allowed_roles: list = ["user", "teacher", "admin", "testing"],
@@ -301,9 +303,9 @@ def verify_user( # pylint: disable=dangerous-default-value
     This populates the request object with the user and token.
     """
 
-    def decorator(func):
+    def decorator(func): # pylint: disable=too-many-statements
         @functools.wraps(func)
-        def wrapper(*args, **kwargs): # pylint: disable=too-many-branches # I have no idea why this is flagged
+        def wrapper(*args, **kwargs): # pylint: disable=too-many-branches, too-many-statements # I have no idea why too-many-branches is flagged
             request.user = None
             request.token = None
             auth = request.headers.get("Authorization")
@@ -364,8 +366,7 @@ def verify_user( # pylint: disable=dangerous-default-value
                                         app.logger.debug("Token does not have required scope " + scope)
                                         allow_token = False
                                         break
-                                    else:
-                                        app.logger.debug("Token has required scope " + scope)
+                                    app.logger.debug("Token has required scope " + scope)
                                 if allow_token:
                                     break
                             if not allow_token:

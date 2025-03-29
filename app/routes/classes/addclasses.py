@@ -1,7 +1,9 @@
 """
 This file contains the routes for adding classes to a user's account.
 """
-from flask import render_template, redirect, request, send_from_directory, Response
+import asyncio
+from flask import render_template, redirect, request, send_from_directory
+import better_profanity
 from app import app
 from app.utilities.other import split_list
 from app.utilities.users import verify_user
@@ -17,8 +19,6 @@ from app.utilities.classes import (
 from app.db import db
 from app.utilities.validation import validate_room
 from app.utilities.responses import error_response, success_response
-import better_profanity
-import asyncio
 
 @app.route("/addclasses")
 @verify_user
@@ -85,6 +85,9 @@ def addclasses_post():
     return success_response("Classes added successfully."), 200
 
 async def process_course(course, user): # Making it async dosent improve performance by a lot, but it is still a little bit faster.
+    """
+    Processes a course and adds it to the user's account.
+    """
     app.logger.debug(f"Processing course: {course}")
     newcourse = {
         "period": course[0].strip(),

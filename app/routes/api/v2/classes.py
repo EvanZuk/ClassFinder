@@ -1,13 +1,20 @@
+"""
+This file contains the routes for the class API endpoints.
+These endpoints are used to get information about the user's classes and schedule.
+"""
+from datetime import datetime
+from flask import request
 from app import app
 from app.utilities.users import verify_user
 from app.utilities.classes import get_user_current_period, get_today_courses, get_current_period
 from app.utilities.responses import success_response, error_response
-from datetime import datetime
-from flask import request
 
 @app.route("/api/v2/classes/current")
 @verify_user(onfail=lambda:(error_response("You must be logged in to do that."), 401))
 def current_classes():
+    """
+    Returns the current classes for the user.
+    """
     user = request.user
     currentperiod = get_user_current_period(user)
     app.logger.debug(f"Current period: {currentperiod}")
@@ -31,6 +38,9 @@ def current_classes():
 @app.route("/api/v2/classes/all")
 @verify_user(onfail=lambda:(error_response("You must be logged in to do that."), 401))
 def all_classes():
+    """
+    Returns all classes for the user.
+    """
     user = request.user
     return success_response(None, {
         "classes": {
@@ -47,6 +57,9 @@ def all_classes():
 
 @app.route("/api/v2/classes/timeuntilend")
 def time_until_end():
+    """
+    Returns the time until the end of the current period.
+    """
     currentperiod = get_current_period()
     return success_response(None, {
         "time": int(datetime.combine(datetime.today(), currentperiod['end']).timestamp()) if (currentperiod is not None) else None,

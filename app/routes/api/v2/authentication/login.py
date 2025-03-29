@@ -1,3 +1,6 @@
+"""
+Login API
+"""
 from datetime import datetime, timezone
 from flask import request
 from app import app
@@ -24,7 +27,10 @@ def api_login_post():
         return error_response("Invalid token type, valid types are api and app"), 400
     if check_password(username, password):
         app.logger.debug(f"Login successful for {username}")
-        response = success_response("Login Successful", {"token": create_token(username, tokentype=ttype, expiry=expiry).token} if not request.args.get("notoken") else {})
+        response = success_response("Login Successful",
+                                    {
+                                        "token": create_token(username, tokentype=ttype, expiry=expiry).token
+                                    } if not request.args.get("notoken") else {})
         return response, 200
     app.logger.debug(f"Invalid credentials for {username}")
     return error_response("Invalid Credentials"), 400

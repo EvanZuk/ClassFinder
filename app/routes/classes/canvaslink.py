@@ -89,5 +89,6 @@ def canvaslink_post():
         requests.delete(
             f"{canvas_url}/login/oauth2/token",
             headers={"Authorization": f"Bearer {token}"},
+            timeout=5,
         )
     return success_response("Courses linked successfully."), 200

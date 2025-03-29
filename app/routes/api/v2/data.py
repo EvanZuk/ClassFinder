@@ -37,4 +37,3 @@ def get_user_data():
         return_data["created_by"] = request.user.created_by
         return_data["requires_username_change"] = request.user.requires_username_change
     return success_response("User data retrieved successfully", return_data)
-  

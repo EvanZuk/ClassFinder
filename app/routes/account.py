@@ -80,4 +80,3 @@ def account_changeusername():
         return {"error": "No username provided"}, 400
     change_username(request.user, newusername, require_change=False)
     return success_response("Username changed successfully")
-

@@ -1,5 +1,8 @@
-from app import app
+"""
+This module handles the login functionality for the application.
+"""
 from flask import render_template, request
+from app import app
 from app.utilities.config import devmode
 from app.utilities.users import check_password, create_token
 from app.addons.limiter import limiter
@@ -8,12 +11,17 @@ from app.utilities.responses import error_response, success_response
 
 @app.route("/login")
 def login():
+    """
+    Display the login page.
+    """
     return render_template("login.html")
-
 
 @app.route("/login", methods=["POST"])
 @limiter.limit("40/minute")
 def login_post():
+    """
+    Handle the login form submission.
+    """
     username = request.json.get("username")
     password = request.json.get("password")
     if check_password(username, password):
@@ -23,7 +31,7 @@ def login_post():
             create_token(username, 'refresh').token,
             httponly=True,
             samesite="Lax",
-            secure=True if not devmode else False,
+            secure=not devmode,
             max_age=604800,
         )
         return response, 200

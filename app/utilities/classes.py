@@ -201,7 +201,6 @@ def remove_class(course: Class):
     """
     db.session.delete(course)
     db.session.commit()
-    return None
 
 
 def get_course(period: int, room: str):

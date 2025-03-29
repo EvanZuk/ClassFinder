@@ -7,7 +7,6 @@ from app.utilities.config import canvas_url
 from app.utilities.classes import get_user_current_period
 from app.utilities.users import verify_user
 
-
 @app.route("/canvas")
 @verify_user
 def canvas():

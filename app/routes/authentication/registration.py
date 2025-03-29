@@ -1,5 +1,7 @@
-from flask import render_template, request, url_for, redirect, jsonify
-import sys
+"""
+Allows users to register using their email.
+"""
+from flask import render_template, request, url_for, redirect
 from app import app
 from app.utilities.email import send_email, create_email_id, check_email_id
 from app.utilities.users import create_user, check_email, get_user_count, create_token, get_user
@@ -10,12 +12,18 @@ from app.utilities.responses import error_response, success_response
 
 @app.route("/register")
 def register():
+    """
+    Display the registration page.
+    """
     return render_template("register.html")
 
 
 @app.route("/register", methods=["POST"])
 @limiter.limit("2/minute;6/hour")
 def register_post():
+    """
+    Handle the registration form submission.
+    """
     email = request.json.get("email")
     if check_email(email):
         return error_response("Already taken"), 400
@@ -35,6 +43,9 @@ def register_post():
 
 @app.route("/register/<emailid>")
 def register_confirm(emailid):
+    """
+    Confirm the email address.
+    """
     email = check_email_id(emailid)
     if email is None:
         return redirect(url_for("register"))
@@ -43,6 +54,9 @@ def register_confirm(emailid):
 
 @app.route("/register/<emailid>", methods=["POST"])
 def register_confirm_post(emailid):
+    """
+    Handle the final registration step.
+    """
     email = check_email_id(emailid)
     if email is None:
         return error_response("Invalid email id"), 400
