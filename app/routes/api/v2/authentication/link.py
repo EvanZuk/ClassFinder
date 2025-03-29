@@ -12,8 +12,6 @@ import random
 
 link_codes = {}
 
-# TODO: Verify this works
-
 @app.route("/api/v2/link/create", methods=["POST", "GET"])
 @limiter.limit("5/minute")
 def create_link_code():
