@@ -28,7 +28,7 @@ def send_email(email: str, subject: str, message: str):
         app.logger.info(
             f"An email was sent to {email} with subject {subject} and message {message}"
         )
-        return 
+        return True
     msg = MIMEMultipart()
     msg["From"] = emailconfig["from"]
     msg["To"] = email

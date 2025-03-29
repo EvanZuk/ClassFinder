@@ -38,7 +38,13 @@ def external_auth():
         if not redirect_domain:
             return error_response("Invalid redirect URL", {"redirect_url": redirect_url})
     else:
-        return error_response("No redirect URL provided. Provide a redirect_url parameter, along with scopes seperated by commas.", {"valid_scopes": readable_scopes})
+        return error_response(
+            "No redirect URL provided. Provide a redirect_url parameter, along with scopes seperated by commas.", 
+            {
+                "valid_scopes": readable_scopes
+                
+            }
+        )
     return render_template(
         "external_auth.html",
         scopes_readable=scopes_readable,

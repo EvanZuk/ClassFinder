@@ -18,7 +18,7 @@ bcrypt = Bcrypt()
 readable_scopes = { # Any token can read a user's username, DO NOT add a scope for this, unless we implement a userid, which is not planned
     "read-email": "See your email",
     "read-classes": "See your classes",
-    "read-misc": "See general data abount your account (like when your account was created)",
+    "read-misc": "See general data about your account (like when your account was created)",
 }
 
 def create_user(
