@@ -15,7 +15,7 @@ from app import app
 
 bcrypt = Bcrypt()
 
-readable_scopes = { # Any token can read a user's username, DO NOT add a scope for this
+readable_scopes = { # Any token can read a user's username, DO NOT add a scope for this, unless we implement a userid, which is not planned
     "read-email": "See your email",
     "read-classes": "See your classes",
     "read-misc": "See general data abount your account (like when your account was created)",
@@ -109,7 +109,7 @@ def create_token(username: str, tokentype: Literal["api", "refresh", "system", "
             nexpiry += timedelta(days=90)
         else:
             nexpiry += timedelta(days=1)
-    token = Token(token=os.urandom(30).hex(), user_id=username, type=tokentype, expire=expiry, scopes=" ".join(scopes) if scopes else None)
+    token = Token(token=os.urandom(30).hex(), user_id=username, type=tokentype, expire=expiry, scopes=" ".join(scopes) if scopes is not None else None)
     db.session.add(token)
     db.session.commit()
     return token
@@ -348,10 +348,13 @@ def verify_user( # pylint: disable=dangerous-default-value
                         app.logger.debug("Token for " + user.username + " has expired. Deleting token.")
                         delete_token(token)
                     else:
-                        if not token.scopes:
+                        app.logger.debug(f"Required scopes is \"{required_scopes}\" and token has \"{token.scopes}\"")
+                        if token.scopes is not None:
+                            app.logger.debug("Token has scopes: " + token.scopes)
                             if required_scopes is None:
-                                app.logger.debug("Required scopes is None and token is scoped, not allowing")
+                                app.logger.debug("Token has scopes, but this endpoint does not allow scoped tokens")
                                 return error_response("This endpoint does not allow scoped tokens"), 403
+                            app.logger.debug("Required scopes is not null")
                             token_scopes = token.scopes.split(" ")
                             allow_token = True
                             for rscopes in required_scopes:
