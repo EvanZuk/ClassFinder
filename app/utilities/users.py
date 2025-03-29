@@ -106,7 +106,7 @@ def create_token(username: str, tokentype: Literal["api", "refresh", "system", "
         elif tokentype == "admin":
             nexpiry += timedelta(hours=1)
         elif tokentype == "ext":
-            nexpiry = None
+            nexpiry += timedelta(days=90)
         else:
             nexpiry += timedelta(days=1)
     token = Token(token=os.urandom(30).hex(), user_id=username, type=tokentype, expire=expiry, scopes=" ".join(scopes) if scopes else None)
