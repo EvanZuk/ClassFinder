@@ -458,11 +458,19 @@ classtime_dict = {
     },
     5: { # No school
         "classtimes": [],
-        "lunchtimes": {}
+        "lunchtimes": {
+            "A": {"start": time(0, 0), "end": time(0, 0)},
+            "B": {"start": time(0, 0), "end": time(0, 0)},
+            "C": {"start": time(0, 0), "end": time(0, 0)},
+        }
     },
     6: { # No school
         "classtimes": [],
-        "lunchtimes": {}
+        "lunchtimes": {
+            "A": {"start": time(0, 0), "end": time(0, 0)},
+            "B": {"start": time(0, 0), "end": time(0, 0)},
+            "C": {"start": time(0, 0), "end": time(0, 0)},
+        }
     },
     7: { # Early Release Blue
         "classtimes": [
