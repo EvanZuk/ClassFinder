@@ -10,7 +10,7 @@ from app.utilities.classes import get_user_current_period, get_today_courses, ge
 from app.utilities.responses import success_response, error_response
 
 @app.route("/api/v2/classes/current")
-@verify_user(onfail=lambda:(error_response("You must be logged in to do that."), 401))
+@verify_user(onfail=lambda:(error_response("You must be logged in to do that."), 401), required_scopes=[["read-classes"]])
 def current_classes():
     """
     Returns the current classes for the user.
@@ -36,7 +36,7 @@ def current_classes():
     })
 
 @app.route("/api/v2/classes/all")
-@verify_user(onfail=lambda:(error_response("You must be logged in to do that."), 401))
+@verify_user(onfail=lambda:(error_response("You must be logged in to do that."), 401), required_scopes=[["read-classes"]])
 def all_classes():
     """
     Returns all classes for the user.
