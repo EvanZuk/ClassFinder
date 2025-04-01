@@ -1,5 +1,7 @@
 """
 Sets up the flask app and imports all routes.
+This file should not be modified unless you know what you are doing, routes are automatically imported from the routes directory.
+Any pull requests that modify this file will be examined carefully, and may be subject to additional tests.
 """
 
 import os
