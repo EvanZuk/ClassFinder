@@ -154,7 +154,7 @@ def import_routes(directory):
                 imbtime = datetime.now()
                 importlib.import_module(module_name)
                 imatime = datetime.now()
-                app.logger.debug(f"Imported {module_name} in {(imatime - imbtime).total_seconds()}s")
+                app.logger.debug(f"Imported {module_name.removeprefix("app.routes.")} in {(imatime - imbtime).total_seconds()}s")
 
 
 import_routes(os.path.join(os.path.dirname(__file__), "routes"))
