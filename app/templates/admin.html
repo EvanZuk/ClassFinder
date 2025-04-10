@@ -26,7 +26,6 @@
             {% for nuser in users %}
                 <li class="user" id="{{nuser.username}}">{{nuser.username}}<p style="font-size: 75%;">{{nuser.role}}</p>
                     <ul class="actions">
-                        {% if not nuser == user %}<li class="action" onclick="window.location.href = '/admin/account/{{nuser.username}}/login'">Login</li>{%endif%}
                         <li class="action" onclick="window.location.href = '/admin/account/{{nuser.username}}/edit'">Edit</li>
                         {% if not nuser == user %}<li class="action" onclick="deleteUser('{{nuser.username}}')">Delete</li>{%endif%}
                     </ul>
@@ -40,7 +39,15 @@
         <button onclick="deleteAllClasses()" id="deleteallclasses">Delete all classes</button>
         <ul id="classes">
             {% for class in classes|sort(attribute='verified') %}
-                <li class="class {% if not class.verified %}unverified{%endif%}" id="{{class.id}}">{{class.name}}
+                <li class="class {% if not class.verified %}unverified{%endif%}" id="{{class.id}}">
+                    {{class.name}}
+                    {% if class.canvasid == None %}
+                    <br>
+                    <span style="font-size: 0.8em;">No canvas ID</span>
+                    {% else %}
+                    <br>
+                    <span style="font-size: 0.8em;">{{class.canvasid}}</span>
+                    {% endif %}
                     <ul class="actions">
                         <li class="action" onclick="window.location.href = '/admin/class/{{class.id}}/edit'">Edit</li>
                         <li class="action" onclick="deleteClass('{{class.id}}')">Delete</li>

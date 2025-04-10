@@ -53,7 +53,8 @@ def addclasses_post():
     user = request.user
     if len(get_periods_of_user_classes(user)) == len(neededperiods):
         return error_response("You already have all of your classes."), 400
-    classes = [course for course in request.json if "day: t" not in course.lower() and "day: w" not in course.lower() and course.strip() != ""]
+    classes = [course for course in request.json if "day: t" not in course.strip().lower() and "day: w" not in course.strip().lower() and course.strip() != "" and not course.strip().lower().startswith("start: ")]
+    app.logger.debug(f"Classes: {classes}")
     if len(classes) % 5 != 0:
         return (
             error_response(
