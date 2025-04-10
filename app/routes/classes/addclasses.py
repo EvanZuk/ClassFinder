@@ -63,16 +63,15 @@ def addclasses_post():
             400,
         )
     classes = split_list(classes, 5)
-    for course in classes:
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        tasks = [process_course(course, user) for course in classes]
-        results = loop.run_until_complete(asyncio.gather(*tasks))
-        for result in results:
-            if result is not None:
-                return result
-        loop.close()
-        db.session.commit()
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    tasks = [process_course(course, user) for course in classes]
+    results = loop.run_until_complete(asyncio.gather(*tasks))
+    for result in results:
+        if result is not None:
+            return result
+    loop.close()
+    db.session.commit()
     for course in classes:
         newcourse = {
             "period": course[0].strip(),
