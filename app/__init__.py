@@ -60,6 +60,7 @@ app.logger.handlers.clear()
 app.logger.addHandler(handler)
 
 app.logger.debug("Logger initialized")
+app.logger.debug("Log level set to %s and devmode is %s", app.logger.level, devmode)
 
 # Configure waitress logger to use the same handler
 waitress_logger = logging.getLogger('waitress')
