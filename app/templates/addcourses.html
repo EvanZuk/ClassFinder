@@ -13,8 +13,9 @@
         <p>Copy and paste your T and W schedule from infinite campus</p>
         <form onsubmit="sendClasses(event)">
             <textarea id="classes" name="classes" rows="25" cols="40" style="resize: vertical;" required></textarea><br>
-            <button type="submit">Submit</button><button onclick="showHelp(event)">Help</button>
+            <button type="submit" id="submitbutton">Submit</button><button onclick="showHelp(event)">Help</button>
         </form>
+        <div class="loader" id="spinner" style="display:none;"></div>
         <p id="status"></p>
         <h2>Remaining Periods</h2>
         {% for class in neededperiods %}<h3 style="display: inline;">{{class}}</h3>{% endfor %}
@@ -24,6 +25,9 @@
             event.preventDefault();
             const classes = document.getElementById('classes').value;
             const lines = classes.split('\n');
+            const spinner = document.getElementById('spinner');
+            spinner.style.display = 'block';
+            document.getElementById('submitbutton').disabled = true;
             fetch('/addclasses', {
                 method: 'POST',
                 headers: {
@@ -41,6 +45,8 @@
                 } else {
                     document.getElementById('status').innerText = 'Failed: ' + data.message;
                 }
+                spinner.style.display = 'none';
+                document.getElementById('submitbutton').disabled = false;
             })
             .catch(error => {
                 if (error instanceof SyntaxError) {
@@ -48,6 +54,8 @@
                 } else {
                     document.getElementById('status').innerText = 'An error occurred: ' + error.message;
                 }
+                spinner.style.display = 'none';
+                document.getElementById('submitbutton').disabled = false;
             });
         }
         function showHelp(event) {

@@ -108,6 +108,10 @@ button, input[type="submit"] {
     cursor: pointer;
     transition: background-color 0.3s;
 }
+button:disabled, input[type="submit"]:disabled {
+    background-color: var(--secondary-color);
+    cursor: not-allowed;
+}
 input[type="date"] {
     padding: 0.5rem;
     margin: 0.5rem;
@@ -207,4 +211,18 @@ li.action[onclick]:hover {
 }
 .hidden-text:hover {
     color: var(--text-color);
+}
+/* Found from css-loaders.com */
+.loader {
+    width: 50px;
+    aspect-ratio: 1;
+    border-radius: 50%;
+    background: 
+      radial-gradient(farthest-side,var(--primary-color) 94%,#0000) top/8px 8px no-repeat,
+      conic-gradient(#0000 30%,var(--primary-color));
+    -webkit-mask: radial-gradient(farthest-side,#0000 calc(100% - 8px),#000 0);
+    animation: l13 1s infinite linear;
+}
+@keyframes l13{ 
+    100%{transform: rotate(1turn)}
 }

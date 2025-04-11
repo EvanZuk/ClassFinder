@@ -83,7 +83,13 @@ def delete_all_courses():
     dbfile = app.config["SQLALCHEMY_DATABASE_URI"].replace("sqlite:///","")
     newfile = dbfile.replace(".",f"_backup_{datetime.datetime.now().strftime('%Y-%m-%d_%H-%M-%S')}.")
     app.logger.info(f"Copying database to {newfile}")
-    shutil.copy(dbfile, newfile)
+    try:
+        shutil.copy(dbfile, newfile)
+    except FileNotFoundError:
+        shutil.copy(f"instance/{dbfile}", f"instance/{newfile}")
+    except Exception as e:
+        app.logger.error(f"Error copying database: {e}")
+        return error_response("Error copying database."), 500
     for course in get_all_courses():
         if "Access" in course.name:
             app.logger.debug(f"Skipping course: {course.name}")

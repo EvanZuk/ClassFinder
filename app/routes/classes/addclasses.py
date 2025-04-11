@@ -17,6 +17,7 @@ from app.utilities.classes import (
     neededperiods,
 )
 from app.db import db
+import time
 from app.utilities.validation import validate_room
 from app.utilities.responses import error_response, success_response
 
@@ -71,54 +72,65 @@ def addclasses_post():
         if result is not None:
             return result
     loop.close()
+    # Create another new event loop
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    existing_tasks = [process_existing_course(course, user) for course in classes]
+    loop.run_until_complete(asyncio.gather(*existing_tasks))
+    loop.close()
     db.session.commit()
-    for course in classes:
-        newcourse = {
-            "period": course[0].strip(),
-            "room": course[4].strip().replace("Room: ", ""),
-        }
-        newclass = get_course(newcourse["period"], newcourse["room"])
-        if newcourse["period"] in get_periods_of_user_classes(user):
-            continue
-        if not check_if_user_in_class(user, newclass):
-            add_user_to_class(user, newclass)
     return success_response("Classes added successfully."), 200
 
-async def process_course(course, user): # Making it async dosent improve performance by a lot, but it is still a little bit faster.
-    """
-    Processes a course and adds it to the user's account.
-    """
-    app.logger.debug(f"Processing course: {course}")
-    newcourse = {
-        "period": course[0].strip(),
-        "name": course[1].strip().removeprefix("MS "),
-        "room": course[4].strip().replace("Room: ", ""),
-    }
-    if newcourse["period"] not in neededperiods:
-        app.logger.debug(f"Invalid period: {newcourse['period']}")
+async def process_existing_course(course, user):
+    """Add a user to an existing course."""
+    period = course[0].strip()
+    room = course[4].strip().replace("Room: ", "")
+    
+    # Skip if user already has a class in this period
+    user_periods = get_periods_of_user_classes(user)
+    if period in user_periods:
+        return
+    
+    # Get course and add user if not already enrolled
+    newclass = get_course(period, room)
+    if newclass and not check_if_user_in_class(user, newclass):
+        add_user_to_class(user, newclass)
+
+
+async def process_course(course, user):
+    """Process a course and add it to the user's account."""
+    period = course[0].strip()
+    name = course[1].strip().removeprefix("MS ")
+    room = course[4].strip().replace("Room: ", "")
+    
+    # Validate period
+    if period not in neededperiods:
+        app.logger.debug(f"Invalid period: {period}")
         return error_response("Invalid period for a course."), 400
-    if newcourse["period"] in get_periods_of_user_classes(user):
-        app.logger.debug(
-            f"User already has a class in period {newcourse['period']}"
-        )
+    
+    # Check if user already has a class in this period
+    user_periods = get_periods_of_user_classes(user)
+    if period in user_periods:
         return None
-    if not validate_room(newcourse["room"]):
-        app.logger.debug(f"Invalid room number: {newcourse['room']}")
+    
+    # Validate room and name
+    if not validate_room(room):
+        app.logger.debug(f"Invalid room number: {room}")
         return error_response("Invalid room number for a course."), 400
-    if better_profanity.profanity.contains_profanity(newcourse["name"]):
-        app.logger.debug(f"Course name with profanity: {newcourse['name']}")
+    
+    if better_profanity.profanity.contains_profanity(name):
+        app.logger.debug(f"Course name with profanity: {name}")
         return error_response("Invalid course name."), 400
-    if check_if_class_exists(newcourse["room"], newcourse["period"]):
+    
+    # Process the class
+    if check_if_class_exists(room, period):
         return None
+        
+    # Create class and add user
     createdclass = add_class(
-        newcourse["name"],
-        newcourse["period"],
-        newcourse["room"],
-        created_by=user.username,
-        commit=False,
+        name, period, room, created_by=user.username, commit=False
     )
-    if not check_if_user_in_class(user, createdclass):
-        add_user_to_class(user, createdclass)
+    add_user_to_class(user, createdclass)
     return None
 
 @app.route("/addclasses/help.gif")
