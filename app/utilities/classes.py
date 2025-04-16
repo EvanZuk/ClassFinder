@@ -47,6 +47,7 @@ def get_user_current_period(user: User):
     """
     current_time = datetime.now().time()
     current_period = get_current_period()
+    lunchtimes = get_lunchtimes()
     app.logger.debug(f"Current period: {current_period}")
     if current_period is None:
         app.logger.debug("No current period")
@@ -79,23 +80,23 @@ def get_user_current_period(user: User):
             f"User {user.username} is in period {current_period['period']} for course {currentcourse.name}, no lunch has been set."
         )
         return current_period | {"lunch": None, "course": currentcourse}
-    if get_lunchtimes()[currentcourse.lunch]["start"] <= current_time <= get_lunchtimes()[currentcourse.lunch]["end"]:
+    if lunchtimes[currentcourse.lunch]["start"] <= current_time <= lunchtimes[currentcourse.lunch]["end"]:
         app.logger.debug(f"User {user.username} is in lunch {currentcourse.lunch}")
         return {
             "lunch": currentcourse.lunch,
             "period": "Lunch",
-            "end": get_lunchtimes()[currentcourse.lunch]["end"],
-            "start": get_lunchtimes()[currentcourse.lunch]["start"],
+            "end": lunchtimes[currentcourse.lunch]["end"],
+            "start": lunchtimes[currentcourse.lunch]["start"],
             "course": currentcourse,
         }
-    if current_time < get_lunchtimes()[currentcourse.lunch]["start"]:
+    if current_time < lunchtimes[currentcourse.lunch]["start"]:
         app.logger.debug(
             f"User {user.username} is in period {current_period['period']} for course {currentcourse.name}, before lunch"
         )
         return {
             "lunch": None,
             "period": current_period["period"],
-            "end": get_lunchtimes()[currentcourse.lunch]["start"],
+            "end": lunchtimes[currentcourse.lunch]["start"],
             "start": current_period["start"],
             "course": currentcourse,
         }
