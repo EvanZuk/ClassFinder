@@ -11,72 +11,28 @@ from app.db import Schedule, db, User
 #   "classtimes": [...],
 #   "lunchtimes": {}
 #}
+
+BELL_DELAY = 5
+class period:
+    def __init__(self, start: time, end: time, period: str, passing: bool, lunchactive: bool):
+        self.start = (datetime.combine(date.today(), start) + timedelta(seconds=BELL_DELAY)).time()
+        self.end = (datetime.combine(date.today(), end) + timedelta(seconds=BELL_DELAY)).time()
+        self.period = period
+        self.passing = passing
+        self.lunchactive = lunchactive
+
 classtime_dict = {
     0: { # Monday
         "classtimes": [
-            {
-                "start": time(7, 0),
-                "end": time(7, 30),
-                "period": "1",
-                "passing": False,
-                "lunchactive": False,
-            },
-            {
-                "start": time(7, 30),
-                "end": time(7, 50),
-                "period": "2",
-                "passing": True,
-                "lunchactive": False,
-            },
-            {
-                "start": time(7, 50),
-                "end": time(9, 30),
-                "period": "2",
-                "passing": False,
-                "lunchactive": False,
-            },
-            {
-                "start": time(9, 30),
-                "end": time(9, 35),
-                "period": "4",
-                "passing": True,
-                "lunchactive": False,
-            },
-            {
-                "start": time(9, 35),
-                "end": time(11, 10),
-                "period": "4",
-                "passing": False,
-                "lunchactive": False,
-            },
-            {
-                "start": time(11, 10),
-                "end": time(11, 15),
-                "period": "6",
-                "passing": True,
-                "lunchactive": False,
-            },
-            {
-                "start": time(11, 15),
-                "end": time(13, 15),
-                "period": "6",
-                "passing": False,
-                "lunchactive": True,
-            },
-            {
-                "start": time(13, 15),
-                "end": time(13, 20),
-                "period": "8",
-                "passing": True,
-                "lunchactive": False,
-            },
-            {
-                "start": time(13, 20),
-                "end": time(14, 55),
-                "period": "8",
-                "passing": False,
-                "lunchactive": False,
-            },
+            period(time(7, 0), time(7, 30), "1", False, False),
+            period(time(7, 30), time(7, 50), "2", True, False),
+            period(time(7, 50), time(9, 30), "2", False, False),
+            period(time(9, 30), time(9, 35), "4", True, False),
+            period(time(9, 35), time(11, 10), "4", False, False),
+            period(time(11, 10), time(11, 15), "6", True, False),
+            period(time(11, 15), time(13, 15), "6", False, True),
+            period(time(13, 15), time(13, 20), "8", True, False),
+            period(time(13, 20), time(14, 55), "8", False, False),
         ],
         "lunchtimes": {
             "A": {"start": time(11, 15), "end": time(11, 45)},
@@ -86,69 +42,15 @@ classtime_dict = {
     },
     1: { # Tuesday
         "classtimes": [
-            {
-                "start": time(7, 0),
-                "end": time(7, 30),
-                "period": "1",
-                "passing": False,
-                "lunchactive": False,
-            },
-            {
-                "start": time(7, 30),
-                "end": time(7, 50),
-                "period": "3",
-                "passing": True,
-                "lunchactive": False,
-            },
-            {
-                "start": time(7, 50),
-                "end": time(9, 30),
-                "period": "3",
-                "passing": False,
-                "lunchactive": False,
-            },
-            {
-                "start": time(9, 30),
-                "end": time(9, 35),
-                "period": "5",
-                "passing": True,
-                "lunchactive": False,
-            },
-            {
-                "start": time(9, 35),
-                "end": time(11, 10),
-                "period": "5",
-                "passing": False,
-                "lunchactive": False,
-            },
-            {
-                "start": time(11, 10),
-                "end": time(11, 15),
-                "period": "7",
-                "passing": True,
-                "lunchactive": False,
-            },
-            {
-                "start": time(11, 15),
-                "end": time(13, 15),
-                "period": "7",
-                "passing": False,
-                "lunchactive": True,
-            },
-            {
-                "start": time(13, 15),
-                "end": time(13, 20),
-                "period": "9",
-                "passing": True,
-                "lunchactive": False,
-            },
-            {
-                "start": time(13, 20),
-                "end": time(14, 55),
-                "period": "9",
-                "passing": False,
-                "lunchactive": False,
-            },
+            period(time(7, 0), time(7, 30), "1", False, False),
+            period(time(7, 30), time(7, 50), "3", True, False),
+            period(time(7, 50), time(9, 30), "3", False, False),
+            period(time(9, 30), time(9, 35), "5", True, False),
+            period(time(9, 35), time(11, 10), "5", False, False),
+            period(time(11, 10), time(11, 15), "7", True, False),
+            period(time(11, 15), time(13, 15), "7", False, True),
+            period(time(13, 15), time(13, 20), "9", True, False),
+            period(time(13, 20), time(14, 55), "9", False, False),
         ],
         "lunchtimes": {
             "A": {"start": time(11, 15), "end": time(11, 45)},
@@ -158,83 +60,17 @@ classtime_dict = {
     },
     2: { # Wednesday
         "classtimes": [
-            {
-                "start": time(7, 0),
-                "end": time(7, 30),
-                "period": "1",
-                "passing": False,
-                "lunchactive": False,
-            },
-            {
-                "start": time(7, 30),
-                "end": time(7, 50),
-                "period": "2",
-                "passing": True,
-                "lunchactive": False,
-            },
-            {
-                "start": time(7, 50),
-                "end": time(9, 5),
-                "period": "2",
-                "passing": False,
-                "lunchactive": False,
-            },
-            {
-                "start": time(9, 5),
-                "end": time(9, 10),
-                "period": "4",
-                "passing": True,
-                "lunchactive": False,
-            },
-            {
-                "start": time(9, 10),
-                "end": time(10, 25),
-                "period": "4",
-                "passing": False,
-                "lunchactive": False,
-            },
-            {
-                "start": time(10, 25),
-                "end": time(10, 30),
-                "period": "Access",
-                "passing": True,
-                "lunchactive": False,
-            },
-            {
-                "start": time(10, 30),
-                "end": time(11, 40),
-                "period": "Access",
-                "passing": False,
-                "lunchactive": False,
-            },
-            {
-                "start": time(11, 40),
-                "end": time(11, 45),
-                "period": "6",
-                "passing": True,
-                "lunchactive": False,
-            },
-            {
-                "start": time(11, 45),
-                "end": time(13, 35),
-                "period": "6",
-                "passing": False,
-                "lunchactive": True,
-            },
-            {
-                "start": time(13, 35),
-                "end": time(13, 40),
-                "period": "8",
-                "passing": True,
-                "lunchactive": False,
-            },
-            {
-                "start": time(13, 40),
-                "end": time(14, 55),
-                "period": "8",
-                "passing": False,
-                "lunchactive": False,
-            },
+            period(time(7, 0), time(7, 30), "1", False, False),
+        period(time(7, 30), time(7, 50), "2", True, False),
+            period(time(7, 50), time(9, 5), "2", False, False),
+            period(time(9, 5), time(9, 10), "4", True, False),
+            period(time(9, 10), time(10, 25), "4", False, False),
+            period(time(10, 25), time(10, 30), "Access", True, False),
+            period(time(10, 30), time(11, 40), "Access", False, False),
+            period(time(11, 40), time(11, 45), "6", True, False),
+            period(time(11, 45), time(13, 35), "6", False, True),
+            period(time(13, 35), time(13, 40), "8", True, False),
+            period(time(13, 40), time(14, 55), "8", False, False),
         ],
         "lunchtimes": {
             "A": {"start": time(11, 45), "end": time(12, 15)},
@@ -244,83 +80,17 @@ classtime_dict = {
     },
     3: { # Thursday
         "classtimes": [
-            {
-                "start": time(7, 0),
-                "end": time(7, 30),
-                "period": "1",
-                "passing": False,
-                "lunchactive": False,
-            },
-            {
-                "start": time(7, 30),
-                "end": time(7, 50),
-                "period": "3",
-                "passing": True,
-                "lunchactive": False,
-            },
-            {
-                "start": time(7, 50),
-                "end": time(9, 5),
-                "period": "3",
-                "passing": False,
-                "lunchactive": False,
-            },
-            {
-                "start": time(9, 5),
-                "end": time(9, 10),
-                "period": "5",
-                "passing": True,
-                "lunchactive": False,
-            },
-            {
-                "start": time(9, 10),
-                "end": time(10, 25),
-                "period": "5",
-                "passing": False,
-                "lunchactive": False,
-            },
-            {
-                "start": time(10, 25),
-                "end": time(10, 30),
-                "period": "Access",
-                "passing": True,
-                "lunchactive": False,
-            },
-            {
-                "start": time(10, 30),
-                "end": time(11, 40),
-                "period": "Access",
-                "passing": False,
-                "lunchactive": False,
-            },
-            {
-                "start": time(11, 40),
-                "end": time(11, 45),
-                "period": "7",
-                "passing": True,
-                "lunchactive": False,
-            },
-            {
-                "start": time(11, 45),
-                "end": time(13, 35),
-                "period": "7",
-                "passing": False,
-                "lunchactive": True,
-            },
-            {
-                "start": time(13, 35),
-                "end": time(13, 40),
-                "period": "9",
-                "passing": True,
-                "lunchactive": False,
-            },
-            {
-                "start": time(13, 40),
-                "end": time(14, 55),
-                "period": "9",
-                "passing": False,
-                "lunchactive": False,
-            },
+            period(time(7, 0), time(7, 30), "1", False, False),
+            period(time(7, 30), time(7, 50), "3", True, False),
+            period(time(7, 50), time(9, 5), "3", False, False),
+            period(time(9, 5), time(9, 10), "5", True, False),
+            period(time(9, 10), time(10, 25), "5", False, False),
+            period(time(10, 25), time(10, 30), "Access", True, False),
+            period(time(10, 30), time(11, 40), "Access", False, False),
+            period(time(11, 40), time(11, 45), "7", True, False),
+            period(time(11, 45), time(13, 35), "7", False, True),
+            period(time(13, 35), time(13, 40), "9", True, False),
+            period(time(13, 40), time(14, 55), "9", False, False)
         ],
         "lunchtimes": {
             "A": {"start": time(11, 45), "end": time(12, 15)},
@@ -330,125 +100,23 @@ classtime_dict = {
     },
     4: { # Friday
         "classtimes": [
-            {
-                "start": time(7, 0),
-                "end": time(7, 30),
-                "period": "1",
-                "passing": False,
-                "lunchactive": False,
-            },
-            {
-                "start": time(7, 30),
-                "end": time(7, 50),
-                "period": "2",
-                "passing": True,
-                "lunchactive": False,
-            },
-            {
-                "start": time(7, 50),
-                "end": time(8, 35),
-                "period": "2",
-                "passing": False,
-                "lunchactive": False,
-            },
-            {
-                "start": time(8, 35),
-                "end": time(8, 40),
-                "period": "3",
-                "passing": True,
-                "lunchactive": False,
-            },
-            {
-                "start": time(8, 40),
-                "end": time(9, 20),
-                "period": "3",
-                "passing": False,
-                "lunchactive": False,
-            },
-            {
-                "start": time(9, 20),
-                "end": time(9, 25),
-                "period": "4",
-                "passing": True,
-                "lunchactive": False,
-            },
-            {
-                "start": time(9, 25),
-                "end": time(10, 5),
-                "period": "4",
-                "passing": False,
-                "lunchactive": False,
-            },
-            {
-                "start": time(10, 5),
-                "end": time(10, 10),
-                "period": "5",
-                "passing": True,
-                "lunchactive": False,
-            },
-            {
-                "start": time(10, 10),
-                "end": time(10, 50),
-                "period": "5",
-                "passing": False,
-                "lunchactive": False,
-            },
-            {
-                "start": time(10, 50),
-                "end": time(10, 55),
-                "period": "6",
-                "passing": True,
-                "lunchactive": False,
-            },
-            {
-                "start": time(10, 55),
-                "end": time(12, 40),
-                "period": "6",
-                "passing": False,
-                "lunchactive": True,
-            },
-            {
-                "start": time(12, 40),
-                "end": time(12, 45),
-                "period": "7",
-                "passing": True,
-                "lunchactive": False,
-            },
-            {
-                "start": time(12, 45),
-                "end": time(13, 25),
-                "period": "7",
-                "passing": False,
-                "lunchactive": False,
-            },
-            {
-                "start": time(13, 25),
-                "end": time(13, 30),
-                "period": "8",
-                "passing": True,
-                "lunchactive": False,
-            },
-            {
-                "start": time(13, 30),
-                "end": time(14, 10),
-                "period": "8",
-                "passing": False,
-                "lunchactive": False,
-            },
-            {
-                "start": time(14, 10),
-                "end": time(14, 15),
-                "period": "9",
-                "passing": True,
-                "lunchactive": False,
-            },
-            {
-                "start": time(14, 15),
-                "end": time(14, 55),
-                "period": "9",
-                "passing": False,
-                "lunchactive": False,
-            },
+            period(time(7, 0), time(7, 30), "1", False, False),
+            period(time(7, 30), time(7, 50), "2", True, False),
+            period(time(7, 50), time(8, 35), "2", False, False),
+            period(time(8, 35), time(8, 40), "3", True, False),
+            period(time(8, 40), time(9, 20), "3", False, False),
+            period(time(9, 20), time(9, 25), "4", True, False),
+            period(time(9, 25), time(10, 5), "4", False, False),
+            period(time(10, 5), time(10, 10), "5", True, False),
+            period(time(10, 10), time(10, 50), "5", False, False),
+            period(time(10, 50), time(10, 55), "6", True, False),
+            period(time(10, 55), time(12, 40), "6", False, True),
+            period(time(12, 40), time(12, 45), "7", True, False),
+            period(time(12, 45), time(13, 25), "7", False, False),
+            period(time(13, 25), time(13, 30), "8", True, False),
+            period(time(13, 30), time(14, 10), "8", False, False),
+            period(time(14, 10), time(14, 15), "9", True, False),
+            period(time(14, 15), time(14, 55), "9", False, False),
         ],
         "lunchtimes": {
             "A": {"start": time(10, 55), "end": time(11, 25)},
@@ -474,69 +142,15 @@ classtime_dict = {
     },
     7: { # Early Release Blue
         "classtimes": [
-            {
-                "start": time(7, 0),
-                "end": time(7, 30),
-                "period": "1",
-                "passing": False,
-                "lunchactive": False,
-            },
-            {
-                "start": time(7, 30),
-                "end": time(7, 50),
-                "period": "2",
-                "passing": True,
-                "lunchactive": False,
-            },
-            {
-                "start": time(7, 50),
-                "end": time(9, 0),
-                "period": "2",
-                "passing": False,
-                "lunchactive": False,
-            },
-            {
-                "start": time(9, 0),
-                "end": time(9, 5),
-                "period": "4",
-                "passing": True,
-                "lunchactive": False,
-            },
-            {
-                "start": time(9, 5),
-                "end": time(10, 5),
-                "period": "4",
-                "passing": False,
-                "lunchactive": False,
-            },
-            {
-                "start": time(10, 5),
-                "end": time(10, 10),
-                "period": "6",
-                "passing": True,
-                "lunchactive": False,
-            },
-            {
-                "start": time(10, 10),
-                "end": time(11, 10),
-                "period": "6",
-                "passing": False,
-                "lunchactive": True,
-            },
-            {
-                "start": time(11, 10),
-                "end": time(11, 15),
-                "period": "8",
-                "passing": True,
-                "lunchactive": False,
-            },
-            {
-                "start": time(11, 15),
-                "end": time(12, 20),
-                "period": "8",
-                "passing": False,
-                "lunchactive": False,
-            },
+            period(time(7, 0), time(7, 30), "1", False, False),
+            period(time(7, 30), time(7, 50), "2", True, False),
+            period(time(7, 50), time(9, 0), "2", False, False),
+            period(time(9, 0), time(9, 5), "4", True, False),
+            period(time(9, 5), time(10, 5), "4", False, False),
+            period(time(10, 5), time(10, 10), "6", True, False),
+            period(time(10, 10), time(11, 10), "6", False, True),
+            period(time(11, 10), time(11, 15), "8", True, False),
+            period(time(11, 15), time(12, 20), "8", False, False),
         ],
         "lunchtimes": {
             "A": {"start": time(0, 0), "end": time(0, 0)},
@@ -546,69 +160,15 @@ classtime_dict = {
     },
     8: { # Early Release Gold
         "classtimes": [
-            {
-                "start": time(7, 0),
-                "end": time(7, 30),
-                "period": "1",
-                "passing": False,
-                "lunchactive": False,
-            },
-            {
-                "start": time(7, 30),
-                "end": time(7, 50),
-                "period": "3",
-                "passing": True,
-                "lunchactive": False,
-            },
-            {
-                "start": time(7, 50),
-                "end": time(9, 0),
-                "period": "3",
-                "passing": False,
-                "lunchactive": False,
-            },
-            {
-                "start": time(9, 0),
-                "end": time(9, 5),
-                "period": "5",
-                "passing": True,
-                "lunchactive": False,
-            },
-            {
-                "start": time(9, 5),
-                "end": time(10, 5),
-                "period": "5",
-                "passing": False,
-                "lunchactive": False,
-            },
-            {
-                "start": time(10, 5),
-                "end": time(10, 10),
-                "period": "7",
-                "passing": True,
-                "lunchactive": False,
-            },
-            {
-                "start": time(10, 10),
-                "end": time(11, 10),
-                "period": "7",
-                "passing": False,
-                "lunchactive": True,
-            },
-            {
-                "start": time(11, 10),
-                "end": time(11, 15),
-                "period": "9",
-                "passing": True,
-                "lunchactive": False,
-            },
-            {
-                "start": time(11, 15),
-                "end": time(12, 20),
-                "period": "9",
-                "passing": False,
-                "lunchactive": False,
-            },
+            period(time(7, 0), time(7, 30), "1", False, False),
+            period(time(7, 30), time(7, 50), "3", True, False),
+            period(time(7, 50), time(9, 0), "3", False, False),
+            period(time(9, 0), time(9, 5), "5", True, False),
+            period(time(9, 5), time(10, 5), "5", False, False),
+            period(time(10, 5), time(10, 10), "7", True, False),
+            period(time(10, 10), time(11, 10), "7", False, True),
+            period(time(11, 10), time(11, 15), "9", True, False),
+            period(time(11, 15), time(12, 20), "9", False, False),
         ],
         "lunchtimes": {
             "A": {"start": time(0, 0), "end": time(0, 0)},
@@ -629,19 +189,9 @@ readable_days = {
     8: "Early Release Gold",
 }
 
-BELL_DELAY = 5
 
-for d, dtimes in classtime_dict.items():
-    app.logger.debug(f"Setting times for {readable_days[d]}")
-    for time in dtimes['classtimes']:
-        time['start'] = datetime.combine(date.today(), time['start'])
-        time['end'] = datetime.combine(date.today(), time['end'])
-        time['start'] += timedelta(seconds=BELL_DELAY)
-        time['end'] += timedelta(seconds=BELL_DELAY)
-        time['start'] = time['start'].time()
-        time['end'] = time['end'].time()
-        classtime_dict[d]['classtimes'] = dtimes['classtimes']
-    # Lunch does not have a bell delay
+#trey did you see the new comment https://www.youtube.com/watch?v=E_HUrfQqUmA (not a rickroll)
+
 
 def get_current_day():
     """
