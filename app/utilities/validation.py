@@ -46,4 +46,4 @@ def validate_room(room: str):
     Returns:
         bool: True if the room is valid, False otherwise
     """
-    return re.fullmatch(r"(E?[0-9]{3}B?)|MS Cafe", room)
+    return re.fullmatch(r"(E?[0-9]{3}B?)|MS Cafe|PTECH", room)

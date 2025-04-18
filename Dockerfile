@@ -61,7 +61,7 @@ RUN --mount=type=cache,target=/root/.cache/pip \
 
 # Delete the tests folder to reduce the size of the final image.
 
-RUN rm -rf tests
+RUN rm -rf tests pytest.ini
 
 # Switch back to the non-privileged user.
 USER appuser
