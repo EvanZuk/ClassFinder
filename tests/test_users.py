@@ -49,16 +49,30 @@ def token(client): # Simulates a users first login and actions, with classes
     """
     print("Creating user")
     response = client.post("/register", json={"email": "a.a@s.stemk12.org"})
-    assert response.status_code == 200
-    assert response.json.get('emailid')
+    if response.status_code != 200:
+        pytest.fail(f"Failed to get emailid: {response.status_code}")
+        return
+    if response.json.get('emailid') is None:
+        pytest.fail("Failed to get emailid")
+        return
     emailid = response.json.get('emailid')
     response = client.post(f"/register/{emailid}", json={"username": "admin", "password": "password123"})
-    assert response.status_code == 400
+    if response.status_code != 400:
+        pytest.fail(f"User was allowed to register \"admin\" as a username: {response.status_code}")
+        return
     response = client.post(f"/register/{emailid}", json={"username": "pytrwy", "password": "password123"})
-    assert response.status_code == 400
+    if response.status_code != 400:
+        pytest.fail(
+            f"User was allowed to take what should have been an already taken username, check the tests order: {response.status_code}"
+        )
+        return
     response = client.post(f"/register/{emailid}", json={"username": "pytest", "password": "password123"})
-    assert response.status_code == 200
-    assert response.json.get('token')
+    if response.status_code != 200:
+        pytest.fail(f"Failed to register user: {response.status_code}")
+        return
+    if response.json.get('token') is None:
+        pytest.fail("Failed to get token")
+        return
     ntoken = response.json.get('token')
     assert ntoken
     with open("tests/democlasses.txt", encoding="utf-8") as f:
@@ -76,9 +90,21 @@ def test_dashboard_no_token(client):
     assert response.status_code == 302
     assert response.location == "/login"
 
+def test_create_admin(client, admintoken): #pylint: disable=unused-argument
+    """
+    Checks if the admin user is able to be created
+    """
+    assert True
+
+def test_create_user(client, token): #pylint: disable=unused-argument
+    """
+    Checks if the normal user is able to be created, forces the creation of the admin user to happen first
+    """
+    assert True
+
 def test_export_data_admin(client, admintoken):
     """
-    Tests the export route for an admin, also forces the creation of a session
+    Tests the export route for an admin
     """
     response = client.get("/export", headers={"Authorization": f"Bearer {admintoken}"})
     assert response.status_code == 200
@@ -92,7 +118,7 @@ def test_export_data_admin(client, admintoken):
 
 def test_export_data(client, token):
     """
-    Tests the export route for a user, also forces the creation of the normal user to happen after the admin
+    Tests the export route for a user
     """
     response = client.get("/export", headers={"Authorization": f"Bearer {token}"})
     assert response.status_code == 200
@@ -158,7 +184,6 @@ def test_dashboard_friday(client, token):
     assert b"Class2" in response.data
     assert b"Access" not in response.data
 
-
 def test_dashboard_invalid_token(client):
     """
     Tests the dashboard route with an invalid token
@@ -174,3 +199,27 @@ def test_account(client, token):
     response = client.get("/account", headers={"Authorization": f"Bearer {token}"})
     assert response.status_code == 200
     assert response.content_type == 'text/html; charset=utf-8'
+
+def test_schedule_pdf(client, token):
+    """
+    Tests the schedule route
+    """
+    response = client.get("/classes/exportschedule", headers={"Authorization": f"Bearer {token}"})
+    if response.status_code != 200:
+        pytest.fail(f"Failed to get load schedule settings page: {response.status_code}")
+    response = client.get(
+        "/classes/schedulepdf/monday,tuesday,wednesday,thursday,friday,eb,eg?",
+        headers={"Authorization": f"Bearer {token}"}
+    )
+    if response.status_code != 200:
+        pytest.fail(f"Failed to get schedule pdf: {response.status_code}")
+    if response.content_type != "application/pdf":
+        pytest.fail(f"Failed to get schedule pdf: {response.content_type}")
+    response = client.get(
+        "/classes/schedulepdf/monday,tuesday,wednesday,eb,eg?notime=true&noperiod=true",
+        headers={"Authorization": f"Bearer {token}"}
+    )
+    if response.status_code != 200:
+        pytest.fail("Failed to get 2nd schedule pdf: {response.status_code}")
+    if response.content_type != "application/pdf":
+        pytest.fail("Failed to get 2nd schedule pdf: {response.content_type}")
