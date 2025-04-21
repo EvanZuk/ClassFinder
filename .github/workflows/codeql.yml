@@ -45,8 +45,22 @@ jobs:
         include:
         - language: actions
           build-mode: none
+          if: >
+            contains(github.event.pull_request.changes_requested_files.*.filename, '.github/workflows/') ||
+            contains(github.event.push.commits[*].modified, '.github/workflows/')
         - language: python
           build-mode: none
+          if: >
+            contains(github.event.pull_request.changes_requested_files.*.filename, '.py') ||
+            contains(github.event.push.commits[*].modified, '.py')
+        - language: javascript
+          build-mode: none
+          if: >
+            contains(github.event.pull_request.changes_requested_files.*.filename, '.js') ||
+            contains(github.event.push.commits[*].modified, '.js') ||
+            contains(github.event.pull_request.changes_requested_files.*.filename, '.html') ||
+            contains(github.event.push.commits[*].modified, '.html') ||
+
         # CodeQL supports the following values keywords for 'language': 'actions', 'c-cpp', 'csharp', 'go', 'java-kotlin', 'javascript-typescript', 'python', 'ruby', 'swift'
         # Use `c-cpp` to analyze code written in C, C++ or both
         # Use 'java-kotlin' to analyze code written in Java, Kotlin or both
