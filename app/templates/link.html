@@ -18,8 +18,8 @@
         <script>
             function redirectToCode(event) {
                 event.preventDefault();
-                const code = document.getElementById('code').value;
-                if (code >= 100000 && code <= 999999) {
+                const code = Number(document.getElementById('code').value);
+                if (!isNaN(code) && code >= 100000 && code <= 999999) {
                     window.location.href = `/account/link/${code}`;
                 } else {
                     alert('Please enter a valid code.');
