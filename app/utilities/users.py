@@ -76,8 +76,6 @@ def check_password(username: str, password: str):
         bool: Whether the password is valid.
     """
     user = User.query.filter_by(username=username).first()
-    if app.config.get("TESTING"):
-        app.logger.debug("Testing mode enabled, printing password: '" + password + "'")
     if user and bcrypt.check_password_hash(user.password, password):
         return True
     return False

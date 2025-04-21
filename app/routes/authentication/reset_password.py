@@ -3,6 +3,7 @@ Allows users to reset their password.
 """
 from flask import render_template, request, redirect, url_for
 from app import app
+from app.utilities.config import devmode
 from app.utilities.users import get_user_by_email, create_token, change_password
 from app.utilities.validation import validate_email
 from app.utilities.email import send_email, create_reset_email_id, check_reset_email_id
@@ -69,5 +70,12 @@ def reset_password_confirm_post(emailid):
         return error_response("User not found"), 400
     change_password(user, password)
     response = success_response("Password changed")
-    response.set_cookie("token", create_token(user.username, 'refresh').token)
+    response.set_cookie(
+            "token",
+            create_token(user.username, 'refresh').token,
+            httponly=True,
+            samesite="Lax",
+            secure=not devmode,
+            max_age=604800,
+        )
     return response, 200
