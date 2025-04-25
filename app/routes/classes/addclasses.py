@@ -17,7 +17,6 @@ from app.utilities.classes import (
     neededperiods,
 )
 from app.db import db
-import time
 from app.utilities.validation import validate_room
 from app.utilities.responses import error_response, success_response
 
@@ -54,7 +53,14 @@ def addclasses_post():
     user = request.user
     if len(get_periods_of_user_classes(user)) == len(neededperiods):
         return error_response("You already have all of your classes."), 400
-    classes = [course for course in request.json if "day: t" not in course.strip().lower() and "day: w" not in course.strip().lower() and course.strip() != "" and not course.strip().lower().startswith("start: ")]
+    classes = [
+        course for course in request.json
+        if "day: t" not in course.strip().lower()
+        and "day: w" not in course.strip().lower()
+        and course.strip() != ""
+        and not course.strip().lower().startswith("start: ")
+        and not course.strip().lower().startswith("end: ") # I have not confirmed this is a real value, but just in case
+    ]
     app.logger.debug(f"Classes: {classes}")
     if len(classes) % 5 != 0:
         return (
@@ -85,12 +91,12 @@ async def process_existing_course(course, user):
     """Add a user to an existing course."""
     period = course[0].strip()
     room = course[4].strip().replace("Room: ", "")
-    
+
     # Skip if user already has a class in this period
     user_periods = get_periods_of_user_classes(user)
     if period in user_periods:
         return
-    
+
     # Get course and add user if not already enrolled
     newclass = get_course(period, room)
     if newclass and not check_if_user_in_class(user, newclass):
@@ -102,30 +108,30 @@ async def process_course(course, user):
     period = course[0].strip()
     name = course[1].strip().removeprefix("MS ")
     room = course[4].strip().replace("Room: ", "")
-    
+
     # Validate period
     if period not in neededperiods:
         app.logger.debug(f"Invalid period: {period}")
         return error_response("Invalid period for a course."), 400
-    
+
     # Check if user already has a class in this period
     user_periods = get_periods_of_user_classes(user)
     if period in user_periods:
         return None
-    
+
     # Validate room and name
     if not validate_room(room):
         app.logger.debug(f"Invalid room number: {room}")
         return error_response("Invalid room number for a course."), 400
-    
+
     if better_profanity.profanity.contains_profanity(name):
         app.logger.debug(f"Course name with profanity: {name}")
         return error_response("Invalid course name."), 400
-    
+
     # Process the class
     if check_if_class_exists(room, period):
         return None
-        
+
     # Create class and add user
     createdclass = add_class(
         name, period, room, created_by=user.username, commit=False

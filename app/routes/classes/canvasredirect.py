@@ -6,6 +6,9 @@ from app import app
 from app.utilities.config import canvas_url
 from app.utilities.classes import get_user_current_period
 from app.utilities.users import verify_user
+from app.utilities.responses import error_response
+
+valid_paths = ["assignments", "grades", "announcements", "discussions", "modules"]
 
 @app.route("/canvas")
 @verify_user
@@ -34,6 +37,9 @@ def canvas_with_path(path):
     if period is None or period["course"] is None or period["course"].canvasid is None:
         reason = "no current period" if period is None else "no course for period" if period["course"] is None else "course has no Canvas ID"
         app.logger.debug(f"Redirecting user {user.username} to Canvas homepage: {reason}")
-        return redirect(f"{canvas_url}/{path}")
+        return redirect(f"{canvas_url}/")
     app.logger.debug(f"Redirecting user {user.username} to Canvas course {period['course'].canvasid} with path {path}")
+    if path not in valid_paths:
+        app.logger.debug(f"Invalid path {path}")
+        return error_response("Invalid path", {"valid_paths": valid_paths}), 400
     return redirect(f"{canvas_url}/courses/{period['course'].canvasid}/{path}")

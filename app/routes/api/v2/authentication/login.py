@@ -16,10 +16,10 @@ def api_login_post():
     """
     username = request.json.get("username")
     password = request.json.get("password")
-    app.logger.debug(f"Processing api v2 login for {username} and {password[:3] + '*' * (len(password) - 2)}")
+    app.logger.debug(f"Processing api v2 login for {username}")
     ttype = request.json.get("type")
     expiry = request.json.get("expiry", None)
-    app.logger.debug(f"Processing api v2 login for {username} and {password[:3] + '*' * (len(password) - 2)} with type {type} and expiry {expiry}")
+    app.logger.debug(f"Processing api v2 login for {username} with type {type} and expiry {expiry}")
     if expiry:
         expiry = datetime.fromtimestamp(expiry, timezone.utc)
     if type not in ["app", "api"]:

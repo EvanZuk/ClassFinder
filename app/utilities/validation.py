@@ -14,7 +14,7 @@ def validate_email(email: str):
     Args:
         email (str): The email to check.
     """
-    return re.fullmatch(r"[a-z]*\.[a-z]*[0-9]{0,1}(@s.stemk12.org|@stemk12.org)", email)
+    return len(email) <= 50 and len(email) >= 15 and re.fullmatch(r"[a-z]*\.[a-z]*[0-9]{0,1}(@s.stemk12.org|@stemk12.org)", email)
 
 
 def validate_username(username: str):
@@ -46,4 +46,4 @@ def validate_room(room: str):
     Returns:
         bool: True if the room is valid, False otherwise
     """
-    return re.fullmatch(r"(E?[0-9]{3}B?)|MS Cafe", room)
+    return re.fullmatch(r"(E?[0-9]{3}B?)|MS Cafe|PTECH", room)

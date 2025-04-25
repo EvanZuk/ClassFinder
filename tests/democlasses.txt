@@ -9,12 +9,12 @@ DAY: T
     Class2
     Time
     Teacher
-    Room: 111
+    Room: 111B
     7
     Class3
     Time
     Teacher
-    Room: E222
+    Room: E222B
     9
     Class4
     Time
@@ -47,4 +47,4 @@ Day: W
     Class 7
     Time
     Teacher
-    Room: E224 
+    Room: PTECH
