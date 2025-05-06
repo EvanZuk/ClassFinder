@@ -12,6 +12,8 @@ from datetime import datetime
 from flask import Flask, request
 from flask_apscheduler import APScheduler
 from app.utilities.config import devmode
+import requests
+import ipaddress
 start_init_time = datetime.now()
 app = Flask(__name__, template_folder="templates", static_folder="static")
 
@@ -23,10 +25,37 @@ def beforerequest():
     """
     Fixes the IP address when proxied through Cloudflare.
     """
-    if request.headers.get("Cf-Connecting-Ip"):
-        request.remote_addr = request.headers.get("Cf-Connecting-Ip")
+    request.proxy_remote_addr = request.remote_addr
+    # app.logger.debug("Proxy address: %s", request.proxy_remote_addr)
+    request.origin_remote_addr = request.headers.get("X-Real-IP") or request.headers.get("X-Forwarded-For", request.remote_addr)
+    # app.logger.debug("Origin address: %s", request.origin_remote_addr)
+    request.remote_addr = request.headers.get("Cf-Connecting-Ip", request.origin_remote_addr)
+    # app.logger.debug("Remote address: %s", request.remote_addr)
+    # The below is not used for cloudflare, but is here for other code, feel free to move it to a new function
     request.user = None
     request.token = None
+
+@app.before_request
+def before_request():
+    """
+    Checks if the incoming request is from a Cloudflare IP address.
+    """
+    request.is_cloudflare = False
+    if devmode or app.config.get("TESTING"):
+        return
+    if app.config.get("CLOUDFLARE_IP_RANGES"):
+        request_ip = ipaddress.ip_address(request.origin_remote_addr)
+        for ip_range in app.config["CLOUDFLARE_IP_RANGES"]:
+            if request_ip in ipaddress.ip_network(ip_range, strict=False):
+                app.logger.debug("Request from IP %s is in CloudFlare IP ranges", request.remote_addr)
+                request.is_cloudflare = True
+                return  # IP is in allowed range, continue with the request
+        app.logger.warning("Request from IP %s not in CloudFlare IP ranges (%s)", request.remote_addr, request_ip)
+        return {"message": "You seem to be bypassing CloudFlare, or your IP is using IPv6.", "status": "error"}, 403
+    else:
+        app.logger.warning("CLOUDFLARE_IP_RANGES not set. ClassFinder cannot access https://www.cloudflare.com/ips-v4.")
+        app.logger.warning("People may be able to bypass rate limits.")
+        return
 
 app.secret_key = os.environ.get("APP_KEY", "devkey")
 
@@ -209,6 +238,22 @@ werkzeug_handler.setFormatter(CustomWerkzeugFormatter())
 werkzeug_handler.addFilter(lambda record: "Exception" in record.getMessage() or "Traceback" in record.getMessage())
 werkzeug_logger.addHandler(werkzeug_handler)
 logging.basicConfig(handlers=[werkzeug_handler], level=app.logger.level)
+
+# Request CloudFlare IP ranges
+if not devmode and not app.config.get("TESTING"):
+    cf_ip_ranges_req = requests.get("https://www.cloudflare.com/ips-v4", timeout=10)
+    if cf_ip_ranges_req.status_code != 200:
+        app.logger.critical("Failed to get CloudFlare IP ranges. Status code: %s", cf_ip_ranges_req.status_code)
+        sys.exit(1)
+    else:
+        cf_ip_ranges = cf_ip_ranges_req.text.splitlines()
+        app.logger.debug("CloudFlare IP ranges request successful")
+        cf_ip_ranges = [ip for ip in cf_ip_ranges if not ip.startswith("#")]
+        app.logger.debug(f"CloudFlare IP ranges: {cf_ip_ranges}")
+else:
+    app.logger.debug("Running in dev/test mode, not requesting CloudFlare IP ranges")
+    cf_ip_ranges = []
+app.config["CLOUDFLARE_IP_RANGES"] = cf_ip_ranges
 
 end_init_time = datetime.now()
 
