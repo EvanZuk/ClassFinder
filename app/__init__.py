@@ -8,12 +8,12 @@ import os
 import sys
 import importlib
 import logging
+import ipaddress
 from datetime import datetime
 from flask import Flask, request
 from flask_apscheduler import APScheduler
-from app.utilities.config import devmode
 import requests
-import ipaddress
+from app.utilities.config import devmode
 start_init_time = datetime.now()
 app = Flask(__name__, template_folder="templates", static_folder="static")
 
@@ -42,20 +42,19 @@ def before_request():
     """
     request.is_cloudflare = False
     if devmode or app.config.get("TESTING"):
-        return
+        return None
     if app.config.get("CLOUDFLARE_IP_RANGES"):
         request_ip = ipaddress.ip_address(request.origin_remote_addr)
         for ip_range in app.config["CLOUDFLARE_IP_RANGES"]:
             if request_ip in ipaddress.ip_network(ip_range, strict=False):
                 app.logger.debug("Request from IP %s is in CloudFlare IP ranges", request.remote_addr)
                 request.is_cloudflare = True
-                return  # IP is in allowed range, continue with the request
+                return None # IP is in allowed range, continue with the request
         app.logger.warning("Request from IP %s not in CloudFlare IP ranges (%s)", request.remote_addr, request_ip)
         return {"message": "You seem to be bypassing CloudFlare, or your IP is using IPv6.", "status": "error"}, 403
-    else:
-        app.logger.warning("CLOUDFLARE_IP_RANGES not set. ClassFinder cannot access https://www.cloudflare.com/ips-v4.")
-        app.logger.warning("People may be able to bypass rate limits.")
-        return
+    app.logger.warning("CLOUDFLARE_IP_RANGES not set. ClassFinder cannot access https://www.cloudflare.com/ips-v4.")
+    app.logger.warning("People may be able to bypass rate limits.")
+    return None
 
 app.secret_key = os.environ.get("APP_KEY", "devkey")
 
