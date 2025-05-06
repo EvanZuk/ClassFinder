@@ -50,7 +50,7 @@ def before_request():
                 app.logger.debug("Request from IP %s is in CloudFlare IP ranges", request.remote_addr)
                 request.is_cloudflare = True
                 return None # IP is in allowed range, continue with the request
-        app.logger.warning("Request from IP %s not in CloudFlare IP ranges (%s)", request.remote_addr, request_ip)
+        app.logger.warning("Request from IP %s not in CloudFlare IP ranges (oip: %s, pip: %s)", request.remote_addr, request.origin_remote_addr, request.proxy_remote_addr)
         return {"message": "You seem to be bypassing CloudFlare, or your IP is using IPv6.", "status": "error"}, 403
     app.logger.warning("CLOUDFLARE_IP_RANGES not set. ClassFinder cannot access https://www.cloudflare.com/ips-v4.")
     app.logger.warning("People may be able to bypass rate limits.")
