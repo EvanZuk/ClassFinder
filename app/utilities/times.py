@@ -643,14 +643,17 @@ for d, dtimes in classtime_dict.items():
         classtime_dict[d]['classtimes'] = dtimes['classtimes']
     # Lunch does not have a bell delay
 
-def get_current_day():
+def get_current_day(oday: date=None):
     """
     Get the current day of the week, as defined by the schedule.
 
     Returns:
         int: The simulated day of the week.
     """
-    day = datetime.today().date()
+    if oday:
+        day = oday
+    else:
+        day = datetime.today().date()
     with app.app_context():
         schedule = Schedule.query.filter_by(day=day).first()
     if schedule:
