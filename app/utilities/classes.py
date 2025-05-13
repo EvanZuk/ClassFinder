@@ -106,7 +106,7 @@ def get_user_current_period(user: User):
     return current_period | {"lunch": None, "course": currentcourse}
 
 
-def get_today_courses(user: User):
+def get_today_courses(user: User, day: int = None):
     """
     Retrieve the list of courses for the given user that are scheduled for today.
 
@@ -117,8 +117,7 @@ def get_today_courses(user: User):
         list: A list of courses that the user has scheduled for today.
     """
     app.logger.debug(f"Retrieving today's courses for user {user.username}")
-    user_periods = [time["period"] for time in get_classtimes()]
-    app.logger.debug(f"Retrieved user periods: {user_periods}")
+    user_periods = [time["period"] for time in get_classtimes(day)]
     app.logger.debug(f"User {user.username} periods: {user_periods}")
     newcourses = []
     for course in user.classes:
@@ -288,6 +287,21 @@ def set_canvas_id(course: Class, canvasid: int):
     db.session.commit()
     return course
 
+def get_period_for_user(user: User, period: int):
+    """
+    Get the course for a user in a specific period.
+
+    Args:
+        user (User): The user object.
+        period (int): The period to check.
+
+    Returns:
+        Class: The course object for the user in the specified period, or None if not found.
+    """
+    for course in user.classes:
+        if course.period == period:
+            return course
+    return None
 
 def set_lunch(course: Class, lunch: typing.Literal["A", "B", "C"]):
     """

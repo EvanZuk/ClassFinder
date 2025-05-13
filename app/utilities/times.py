@@ -650,24 +650,46 @@ def get_current_day(oday: date=None):
     Returns:
         int: The simulated day of the week.
     """
-    if oday:
+    if oday is not None:
+        app.logger.debug(f"Getting simulated day {oday}")
         day = oday
     else:
+        app.logger.debug("Getting current day")
         day = datetime.today().date()
     with app.app_context():
+        app.logger.debug(f"Getting schedule for {day}")
         schedule = Schedule.query.filter_by(day=day).first()
     if schedule:
+        app.logger.debug(f"Schedule found for {day}: {schedule.type}")
         return schedule.type
-    return datetime.today().weekday()
+    app.logger.debug(f"No schedule found for {day}, using current day")
+    return day.weekday()
 
-def get_classtimes():
+def get_classtimes(day: int=None):
     """
     Get the class times for the current day.
 
     Returns:
         list: A list of class times.
     """
-    return classtime_dict[get_current_day()]['classtimes']
+    return classtime_dict[get_current_day() if day is None else day]['classtimes']
+
+def get_classtime_by_period(period: str, passing: bool=False, day: int=None):
+    """
+    Get the class time for a specific period.
+
+    Args:
+        period (str): The period to get the class time for.
+        passing (bool): Whether to get the passing time.
+
+    Returns:
+        dict: The class time for the specified period.
+    """
+    classtimes = get_classtimes(day)
+    for classtime in classtimes:
+        if classtime['period'] == period and classtime['passing'] == passing:
+            return classtime
+    return None
 
 def get_lunchtimes():
     """

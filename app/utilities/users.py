@@ -307,7 +307,7 @@ def verify_user( # pylint: disable=dangerous-default-value, too-many-statements
             request.user = None
             request.token = None
             auth = request.headers.get("Authorization")
-            token = request.cookies.get("token")
+            token = request.cookies.get("token") or kwargs.get("authtoken")
             if auth:
                 if auth.startswith("Bearer "):
                     app.logger.debug("Trying bearer authentication for " + func.__name__)
