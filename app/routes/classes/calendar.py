@@ -4,7 +4,7 @@ Allows exporting classes to a icalendar file for use in google calendar
 from datetime import date, timedelta, datetime
 import pytz
 from ics import Calendar, Event
-from flask import request, send_file
+from flask import request, send_file, render_template
 from app import app
 from app.utilities.config import canvas_url
 from app.utilities.users import verify_user
@@ -14,8 +14,9 @@ from app.utilities.classes import get_today_courses
 GEN_CAL_LENGTH = 91  # Number of days to generate calendar for
 
 @app.route('/<authtoken>/calendar.ics')
+@app.route('/calendar.ics')
 @verify_user(required_scopes=[['read-classes']])
-def calendar_req(authtoken): # pylint: disable=unused-argument
+def calendar_req(authtoken=None): # pylint: disable=unused-argument
     """Generate a calendar file for the current and next 90 days."""
     start_datetime = datetime.now()
     app.logger.info(f"Generating calendar for {request.user.username}")
@@ -56,7 +57,12 @@ def generate_events_for_date(calendar, current_date):
         return
 
     # Add day type event
-    add_day_type_event(calendar, current_date, current_day)
+    if 'adddaytype' in request.args:
+        app.logger.debug(f"Adding day type event for {current_date}")
+        # Add an all-day event indicating the schedule type
+        add_day_type_event(calendar, current_date, current_day)
+    else:
+        app.logger.debug(f"Skipping day type event for {current_date}")
 
     # Add events for each class
     for course in classes:
