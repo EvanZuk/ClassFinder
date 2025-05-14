@@ -4,6 +4,7 @@ Handles the timer page
 from datetime import datetime
 from flask import render_template, url_for, redirect, request, make_response
 from app import app
+from app.utilities.config import status
 from app.utilities.classes import get_user_current_period, get_current_period
 from app.utilities.users import verify_user
 
@@ -22,7 +23,7 @@ def timer():
                 return render_template('timer.html', nextclass="nothing")
             return redirect(url_for('dashboard'))
         formatted_time = datetime.combine(datetime.now().date(), period['end']).strftime('%m/%d/%Y %I:%M:%S %p')
-        response = make_response(render_template('timer.html', nextclass=formatted_time))
+        response = make_response(render_template('timer.html', nextclass=formatted_time, status=status))
         # if period is not None:
         #     end_time = datetime.combine(datetime.today(), period['end'])
         # else:
@@ -36,7 +37,7 @@ def timer():
             return render_template('timer.html', nextclass="nothing")
         return redirect(url_for('dashboard'))
     formatted_time = datetime.combine(datetime.now().date(), period['end']).strftime('%m/%d/%Y %I:%M:%S %p')
-    response = make_response(render_template('timer.html', nextclass=formatted_time))
+    response = make_response(render_template('timer.html', nextclass=formatted_time, status=status))
     # if period is not None:
     #     end_time = datetime.combine(datetime.today(), period['end'])
     # else:

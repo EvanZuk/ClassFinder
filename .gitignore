@@ -167,4 +167,5 @@ docker-compose.override.yml
 dockertmp/
 
 # Other
+data
 data/
