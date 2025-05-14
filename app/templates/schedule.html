@@ -61,7 +61,8 @@
             .then(data => {
                 if (data.status == "success") {
                     document.getElementById('status').innerText = data.message;
-                    window.location.href = '/admin';
+                    window.location.reload()
+                    // window.location.href = '/admin';
                 } else {
                     document.getElementById('status').innerText = 'Failed: ' + data.message;
                 }
