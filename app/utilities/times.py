@@ -458,19 +458,11 @@ classtime_dict = {
     },
     5: { # No school
         "classtimes": [],
-        "lunchtimes": {
-            "A": {"start": time(0, 0), "end": time(0, 0)},
-            "B": {"start": time(0, 0), "end": time(0, 0)},
-            "C": {"start": time(0, 0), "end": time(0, 0)},
-        }
+        "lunchtimes": {}
     },
     6: { # No school
         "classtimes": [],
-        "lunchtimes": {
-            "A": {"start": time(0, 0), "end": time(0, 0)},
-            "B": {"start": time(0, 0), "end": time(0, 0)},
-            "C": {"start": time(0, 0), "end": time(0, 0)},
-        }
+        "lunchtimes": {}
     },
     7: { # Early Release Blue
         "classtimes": [
@@ -538,11 +530,7 @@ classtime_dict = {
                 "lunchactive": False,
             },
         ],
-        "lunchtimes": {
-            "A": {"start": time(0, 0), "end": time(0, 0)},
-            "B": {"start": time(0, 0), "end": time(0, 0)},
-            "C": {"start": time(0, 0), "end": time(0, 0)},
-        }
+        "lunchtimes": {}
     },
     8: { # Early Release Gold
         "classtimes": [
@@ -610,11 +598,7 @@ classtime_dict = {
                 "lunchactive": False,
             },
         ],
-        "lunchtimes": {
-            "A": {"start": time(0, 0), "end": time(0, 0)},
-            "B": {"start": time(0, 0), "end": time(0, 0)},
-            "C": {"start": time(0, 0), "end": time(0, 0)},
-        }
+        "lunchtimes": {}
     },
 }
 readable_days = {
@@ -691,14 +675,14 @@ def get_classtime_by_period(period: str, passing: bool=False, day: int=None):
             return classtime
     return None
 
-def get_lunchtimes():
+def get_lunchtimes(day: int=None):
     """
     Get the lunch times for the current day.
 
     Returns:
         dict: A dictionary of lunch
     """
-    return classtime_dict[get_current_day()]['lunchtimes']
+    return classtime_dict[get_current_day() if day is None else day]['lunchtimes']
 
 def set_schedule(start: date, end: date, simulated_day: int):
     """
@@ -724,6 +708,20 @@ def set_schedule(start: date, end: date, simulated_day: int):
             db.session.delete(existing_schedule)
         db.session.add(schedule)
     db.session.commit()
+
+def day_has_override(day: date) -> bool:
+    """
+    Check if a day has an override.
+
+    Args:
+        day (date): The day to check.
+
+    Returns:
+        bool: True if the day has an override, False otherwise.
+    """
+    with app.app_context():
+        schedule = Schedule.query.filter_by(day=day).first()
+    return schedule is not None and schedule.type != day.weekday()
 
 def create_schedule_pdf( # pylint: disable=too-many-arguments, too-many-positional-arguments, too-many-locals, too-many-branches, too-many-statements
         user: User=None,

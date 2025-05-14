@@ -8,7 +8,7 @@ from flask import request, send_file
 from app import app
 from app.utilities.config import canvas_url
 from app.utilities.users import verify_user
-from app.utilities.times import get_current_day, get_classtime_by_period, readable_days
+from app.utilities.times import get_current_day, get_classtime_by_period, readable_days, get_lunchtimes
 from app.utilities.classes import get_today_courses
 
 GEN_CAL_LENGTH = 91  # Number of days to generate calendar for
@@ -92,9 +92,13 @@ def add_day_type_event(calendar, current_date, current_day):
     calendar.events.add(event)
 
 
-def add_class_event(calendar, course, current_date, current_day):
+def add_class_event(calendar, course, current_date, current_day, ignore_lunch=False):
     """Add a class event to the calendar."""
     classtime = get_classtime_by_period(period=course.period, passing=False, day=current_day)
+    app.logger.info(f"Adding class event for {classtime}")
+    if classtime['lunchactive'] and not ignore_lunch:
+        add_class_with_lunch_event(calendar, course, classtime, current_date, current_day)
+        return
     denver_tz = pytz.timezone('America/Denver')
     start_time = denver_tz.localize(datetime.combine(current_date, classtime['start']))
     end_time = denver_tz.localize(datetime.combine(current_date, classtime['end']))
@@ -104,15 +108,136 @@ def add_class_event(calendar, course, current_date, current_day):
     event.begin = start_time
     event.end = end_time
     event.description = f"In room {course.room}"
-    event.location = course.room
+    event.location = f"Room {course.room}"
 
     if course.canvasid:
         event.url = f"{canvas_url}/courses/{course.canvasid}"
 
     calendar.events.add(event)
 
+def add_class_with_lunch_event(calendar, course, classtime, current_date, current_day):
+    """
+    Add a class event with lunch to the calendar.
+    Splits the event into two or three parts, depending on if it is A, B, or C lunch.
+    """
+    app.logger.info(f"Adding class with lunch event for {course.name} (lunch {course.lunch})")
+
+    denver_tz = pytz.timezone('America/Denver')
+    start_time = denver_tz.localize(datetime.combine(current_date, classtime['start']))
+    end_time = denver_tz.localize(datetime.combine(current_date, classtime['end']))
+
+    lunchtimes = get_lunchtimes(current_day)
+    if course.lunch not in lunchtimes:
+        app.logger.debug(f"Invalid lunch type '{course.lunch}' for {course.name}, skipping lunch event")
+        add_class_event(calendar, course, current_date, current_day, ignore_lunch=True)
+        return
+    lunch_start_time = denver_tz.localize(datetime.combine(current_date, lunchtimes[course.lunch]['start']))
+    lunch_end_time = denver_tz.localize(datetime.combine(current_date, lunchtimes[course.lunch]['end']))
+
+    app.logger.debug(f"Class time: {start_time.time()} - {end_time.time()}, Lunch: {lunch_start_time.time()} - {lunch_end_time.time()}")
+
+    # Before: A
+    # During: B
+    # After: C
+    if course.lunch == "A":
+        add_a_lunch_event(calendar, course, start_time, end_time, lunch_start_time, lunch_end_time)
+    elif course.lunch == "B":
+        add_b_lunch_event(calendar, course, start_time, end_time, lunch_start_time, lunch_end_time)
+    elif course.lunch == "C":
+        add_c_lunch_event(calendar, course, start_time, end_time, lunch_start_time, lunch_end_time)
+    else:
+        # If the lunch is not A, B, or C, we just add the class event, this should not happen
+        app.logger.warning(f"Invalid lunch type '{course.lunch}' for {course.name}, adding class event only")
+        add_class_event(calendar, course, current_date, current_day, ignore_lunch=True)
+
+    app.logger.debug(f"Finished adding events for {course.name} with lunch {course.lunch}")
+
+
+def add_a_lunch_event(calendar, course, start_time, end_time, lunch_start_time, lunch_end_time):
+    """Add A lunch events (lunch first, then class)."""
+    app.logger.debug(f"Processing A lunch for {course.name}: lunch first, then class")
+    
+    # Lunch
+    event = Event()
+    event.name = "Lunch"
+    event.begin = lunch_start_time
+    event.end = lunch_end_time
+    event.description = "Lunch"
+    calendar.events.add(event)
+    
+    # Class
+    event = Event()
+    event.name = course.name
+    event.begin = lunch_end_time
+    event.end = end_time
+    event.description = f"In room {course.room}"
+    event.location = f"Room {course.room}"
+    if course.canvasid:
+        event.url = f"{canvas_url}/courses/{course.canvasid}"
+    calendar.events.add(event)
+
+
+def add_b_lunch_event(calendar, course, start_time, end_time, lunch_start_time, lunch_end_time):
+    """Add B lunch events (class, lunch, then class)."""
+    app.logger.debug(f"Processing B lunch for {course.name}: class, lunch, then class")
+    
+    # Before lunch
+    event = Event()
+    event.name = course.name
+    event.begin = start_time
+    event.end = lunch_start_time
+    event.description = f"In room {course.room}"
+    event.location = f"Room {course.room}"
+    if course.canvasid:
+        event.url = f"{canvas_url}/courses/{course.canvasid}"
+    calendar.events.add(event)
+
+    # Lunch
+    event = Event()
+    event.name = "Lunch"
+    event.begin = lunch_start_time
+    event.end = lunch_end_time
+    event.description = "Lunch"
+    calendar.events.add(event)
+
+    # After lunch
+    event = Event()
+    event.name = course.name
+    event.begin = lunch_end_time
+    event.end = end_time
+    event.description = f"In room {course.room}"
+    event.location = f"Room {course.room}"
+    if course.canvasid:
+        event.url = f"{canvas_url}/courses/{course.canvasid}"
+    calendar.events.add(event)
+
+
+def add_c_lunch_event(calendar, course, start_time, end_time, lunch_start_time, lunch_end_time):
+    """Add C lunch events (class first, then lunch)."""
+    app.logger.debug(f"Processing C lunch for {course.name}: class first, then lunch")
+    
+    # Class
+    event = Event()
+    event.name = course.name
+    app.logger.debug(f"Class beginning time: {start_time.time()}, lunch start time: {lunch_start_time.time()}")
+    event.begin = start_time
+    event.end = lunch_start_time
+    event.description = f"In room {course.room}"
+    event.location = f"Room {course.room}"
+    if course.canvasid:
+        event.url = f"{canvas_url}/courses/{course.canvasid}"
+    calendar.events.add(event)
+
+    # Lunch
+    event = Event()
+    event.name = "Lunch"
+    event.begin = lunch_start_time
+    event.end = lunch_end_time
+    event.description = "Lunch"
+    calendar.events.add(event)
 
 def add_passing_period_event(calendar, course, current_date, current_day):
+
     """Add a passing period event to the calendar."""
     passing_classtime = get_classtime_by_period(period=course.period, passing=True, day=current_day)
     denver_tz = pytz.timezone('America/Denver')
@@ -124,7 +249,7 @@ def add_passing_period_event(calendar, course, current_date, current_day):
     event.begin = start_time
     event.end = end_time
     event.description = f"Passing period for {course.name} in room {course.room}"
-    event.location = course.room
+    event.location = f"Room {course.room}"
 
     calendar.events.add(event)
 
