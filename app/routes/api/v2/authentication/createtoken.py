@@ -36,6 +36,7 @@ def api_v2_createscopedtoken():
     token = create_token(
         user.username,
         "api",
-        scopes=scopes
+        scopes=scopes,
+        noexpiry=scopes == ["calendar"] # The calendar scope is a special case
     )
     return jsonify(token.token)
