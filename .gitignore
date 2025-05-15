@@ -166,6 +166,9 @@ cython_debug/
 docker-compose.override.yml
 dockertmp/
 
+# Custom docker build script
+after-build.sh
+
 # Other
 data
 data/
