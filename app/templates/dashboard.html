@@ -39,7 +39,7 @@
             {% endif %}
                 <ul id="classes">
                     {% for class in currentclasses|sort(attribute='period') %}
-                        <li style="padding: 15px" class="class {% if currentperiod.period == class.period %}currentperiod{%endif%}" {% if class.canvasid %} onclick="window.location.href = '{{canvasurl}}/courses/{{class.canvasid}}'" {%endif%}>
+                        <li style="padding: 15px" class="class{% if currentperiod.period == class.period %} currentperiod{%endif%}" {% if class.canvasid %} onclick="window.location.href = '{{canvasurl}}/courses/{{class.canvasid}}'" {%endif%}>
                             {{class.name}}
                             <br>
                             <span style="font-size: 0.8em;">{{class.room}}</span>
