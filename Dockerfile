@@ -66,7 +66,7 @@ RUN rm -rf tests pytest.ini
 
 RUN if [ -f after-build.sh ]; then \
         chmod +x after-build.sh && \
-        ./after-build.sh; \
+        source ./after-build.sh; \
     fi
 # Switch back to the non-privileged user.
 USER appuser
