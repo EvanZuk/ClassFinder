@@ -4,7 +4,7 @@ Handles error codes.
 """
 
 import random
-from flask import render_template
+from flask import render_template, request
 from app import app
 from app.utilities.responses import error_response
 
@@ -32,4 +32,5 @@ def internal_server_error(e):
     app.logger.error(e)
     app.logger.error(f"Error code: {errorcode}")
     ret_dict = {"error_code": errorcode}
+    request.error_code = errorcode
     return error_response("Internal server error", ret_dict), 500
