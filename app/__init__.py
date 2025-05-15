@@ -204,12 +204,15 @@ def log_response(response):
     response.headers["Pragma"] = "no-cache"
     response.headers["Expires"] = "0"
     # Log the request
+    req_url = request.path
+    if req_url.endswith("/calendar.ics"):
+        req_url = "/calendar.ics"
     try:
         request_logs.append({
             "time": request.start_time,
             "returntime": datetime.now(),
             "method": request.method,
-            "url": request.path,
+            "url": req_url,
             "returncode": response.status_code,
             "error_code": request.error_code,
         })
