@@ -13,6 +13,14 @@ from app.utilities.classes import get_today_courses
 
 GEN_CAL_LENGTH = 91  # Number of days to generate calendar for
 
+@app.route('/calendar')
+@verify_user()
+def calendar_page():
+    """
+    Render the calendar page.
+    """
+    return render_template('calendar.html')
+
 @app.route('/<authtoken>/calendar.ics')
 @app.route('/calendar.ics')
 @verify_user(required_scopes=[['read-classes']])
@@ -36,14 +44,12 @@ def calendar_req(authtoken=None): # pylint: disable=unused-argument
     app.logger.debug(f"Calendar generated in {datetime.now() - start_datetime}")
     return send_file(calendar_path, as_attachment=True, download_name="calendar.ics", mimetype="text/calendar")
 
-
 def generate_events_for_date_range(calendar, days):
     """Generate calendar events for a specified number of days."""
     for i in range(0, days):
         current_date = date.today() + timedelta(days=i)
         app.logger.debug(f"Generating calendar for {current_date}")
         generate_events_for_date(calendar, current_date)
-
 
 def generate_events_for_date(calendar, current_date):
     """Generate calendar events for a specific date."""
@@ -71,7 +77,6 @@ def generate_events_for_date(calendar, current_date):
         if "passing" in request.args:
             add_passing_period_event(calendar, course, current_date, current_day)
 
-
 def handle_no_classes_day(calendar, current_date):
     """Handle days with no classes."""
     # Skip weekends
@@ -87,7 +92,6 @@ def handle_no_classes_day(calendar, current_date):
     event.description = "No school today"
     calendar.events.add(event)
 
-
 def add_day_type_event(calendar, current_date, current_day):
     """Add an all-day event indicating the schedule type."""
     event = Event()
@@ -96,7 +100,6 @@ def add_day_type_event(calendar, current_date, current_day):
     event.make_all_day()
     event.description = f"School is a {readable_days[current_day]} schedule today."
     calendar.events.add(event)
-
 
 def add_class_event(calendar, course, current_date, current_day, ignore_lunch=False):
     """Add a class event to the calendar."""
@@ -250,7 +253,6 @@ def add_passing_period_event(calendar, course, current_date, current_day):
     event.location = f"Room {course.room}"
 
     calendar.events.add(event)
-
 
 def add_end_of_calendar_event(calendar):
     """Add an event marking the end of the calendar."""
