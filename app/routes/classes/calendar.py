@@ -13,7 +13,7 @@ from app.utilities.classes import get_today_courses
 
 GEN_CAL_LENGTH = 91  # Number of days to generate calendar for
 
-@app.route('/calendar')
+@app.route('/classes/calendar')
 @verify_user()
 def calendar_page():
     """
@@ -23,7 +23,7 @@ def calendar_page():
 
 @app.route('/<authtoken>/calendar.ics')
 @app.route('/calendar.ics')
-@verify_user(required_scopes=[['read-classes']])
+@verify_user(required_scopes=[['read-classes'], ['calendar']])
 def calendar_req(authtoken=None): # pylint: disable=unused-argument
     """Generate a calendar file for the current and next 90 days."""
     start_datetime = datetime.now()

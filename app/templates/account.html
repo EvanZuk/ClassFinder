@@ -14,6 +14,7 @@
         {% if classestoadd|length > 0 %}<h2>You still need to add {{classestoadd|length}} classes.</h2> <button onclick="window.location.href = '/addclasses'">Add classes</button>{% endif %}
         {% if needcanvaslink %}<button onclick="window.location.href = '/classes/canvaslink'">Link canvas classes</button>{% endif %}
         <button onclick="window.location.href = '/classes/exportschedule'">Print your schedule</button>
+        <button onclick="window.location.href = '/classes/calendar'">Create calendar</button>
         <button onclick="window.location.href = '/logout'">Log out</button>
         <button onclick="window.location.href = '/account/delete'">Delete account</button>
         {% if user.classes|length > 0%}
