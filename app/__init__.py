@@ -9,6 +9,7 @@ import sys
 import importlib
 import logging
 import ipaddress
+import re
 from datetime import datetime
 from flask import Flask, request
 from flask_apscheduler import APScheduler
@@ -47,9 +48,8 @@ def before_request():
         request_ip = ipaddress.ip_address(request.origin_remote_addr)
         for ip_range in app.config["CLOUDFLARE_IP_RANGES"]:
             if request_ip in ipaddress.ip_network(ip_range, strict=False):
-                app.logger.debug("Request from IP %s is in CloudFlare IP ranges", request.remote_addr)
                 request.is_cloudflare = True
-                return None # IP is in allowed range, continue with the request
+                return None
         app.logger.warning(
             "Request from IP %s not in CloudFlare IP ranges (oip: %s, pip: %s)",
             request.remote_addr,
@@ -61,6 +61,26 @@ def before_request():
     app.logger.warning("CLOUDFLARE_IP_RANGES not set. ClassFinder cannot access https://www.cloudflare.com/ips-v4.")
     app.logger.warning("People may be able to bypass rate limits.")
     return None
+
+# Analytics
+logs: list[dict[str, any]] = []
+## Logs structure:
+## {
+##     "time": "datetime()",
+##     "level": "INFO",
+##     "message": "message",
+##     "path": "path",
+##     "line": num,
+## }
+request_logs: list[dict[str, any]] = []
+## Request logs structure:
+## {
+##     "time": "datetime()",
+##     "returntime": "datetime()",
+##     "method": "GET",
+##     "url": "/api/v1/some/endpoint",
+##     "returncode": 200
+## }
 
 app.secret_key = os.environ.get("APP_KEY", "devkey")
 
@@ -83,6 +103,14 @@ class CustomFormatter(logging.Formatter):
             "CRITICAL": "\033[91m" # red
         }.get(record.levelname, reset_color)  # default to no color
         bold = "\033[1m"
+        # Strip ANSI color codes from log messages
+        logs.append({
+            "time": datetime.now(),
+            "level": record.levelname,
+            "message": re.sub(r'\033\[[0-9;]*m', '', record.getMessage()),
+            "path": relative_path,
+            "line": record.lineno,
+        })
         if os.path.basename(record.pathname) == "__init__.py":
             return f"{bold}{level_color}{record.levelname}{reset_color}{level_color}: {record.getMessage().replace('\033[0m', '\033[0m'+level_color)}{reset_color}" # pylint: disable=line-too-long
         return f"{bold}{level_color}{record.levelname}{reset_color}{level_color} in {bold}{relative_path}{reset_color}{level_color} at {bold}{record.lineno}{reset_color}{level_color}: {record.getMessage()}{reset_color}" # pylint: disable=line-too-long
@@ -106,6 +134,7 @@ def log_request():
     """
     Logs the request method and path with the parameters.
     """
+    request.error_code = None
     reset_color = "\033[0m"
     method_colors = {
         "GET": "\033[92m",  # green
@@ -125,6 +154,7 @@ def log_request():
         if params.get("token"):
             params["token"] = params["token"][:3] + "*" * (len(params["token"]) - 2)
     app.logger.debug(f"Processing {method_color}{request.method}{reset_color} {request.path} with {str(params)}")
+    request.start_time = datetime.now()
 
 @app.after_request
 def log_response(response):
@@ -173,6 +203,18 @@ def log_response(response):
     response.headers["Cache-Control"] = "no-cache, no-store, must-revalidate"
     response.headers["Pragma"] = "no-cache"
     response.headers["Expires"] = "0"
+    # Log the request
+    try:
+        request_logs.append({
+            "time": request.start_time,
+            "returntime": datetime.now(),
+            "method": request.method,
+            "url": request.path,
+            "returncode": response.status_code,
+            "error_code": request.error_code,
+        })
+    except Exception as e: # pylint: disable=broad-exception-caught
+        app.logger.error("Failed to log request: %s", e)
     return response
 
 def import_routes(directory):
@@ -193,6 +235,17 @@ def import_routes(directory):
                 imatime = datetime.now()
                 app.logger.debug(f"Imported {module_name.removeprefix("app.routes.")} in {(imatime - imbtime).total_seconds()}s")
 
+def get_logs():
+    """
+    Returns the logs.
+    """
+    return logs
+
+def get_request_logs():
+    """
+    Returns the request logs.
+    """
+    return request_logs
 
 import_routes(os.path.join(os.path.dirname(__file__), "routes"))
 
