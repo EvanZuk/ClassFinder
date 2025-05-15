@@ -2,7 +2,8 @@
 """
 Static routes for the application.
 """
-
+import os
+from flask import Response
 from flask import send_from_directory, render_template
 from app import app
 from app.utilities.config import devmode
@@ -12,7 +13,22 @@ def index_css():
     """
     Serves the index.css file.
     """
-    return send_from_directory("static", "index.css")
+
+    if not devmode:
+        return send_from_directory("static", "index.css")
+
+    # Read index.css
+    with open(os.path.join(app.static_folder, "index.css"), "r", encoding="UTF-8") as f:
+        css_content = f.read()
+
+    # Append colors-dev.css
+    try:
+        with open(os.path.join(app.static_folder, "colors-dev.css"), "r", encoding="UTF-8") as f:
+            css_content += "\n\n/* Development mode styles */\n" + f.read()
+    except (IOError, FileNotFoundError):
+        app.logger.warning("colors-dev.css not found")
+
+    return Response(css_content, mimetype="text/css")
 
 @app.route("/favicon.ico")
 def favicon():

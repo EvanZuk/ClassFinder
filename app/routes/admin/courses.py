@@ -88,9 +88,6 @@ def delete_all_courses():
     except FileNotFoundError:
         shutil.copy(f"instance/{dbfile}", f"instance/{newfile}")
     for course in get_all_courses():
-        if "Access" in course.name:
-            app.logger.debug(f"Skipping course: {course.name}")
-            continue
         app.logger.info(f"Deleting course: {course.name}")
         remove_class(course)
     return success_response("All courses deleted."), 200

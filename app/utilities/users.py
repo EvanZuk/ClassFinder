@@ -80,7 +80,13 @@ def check_password(username: str, password: str):
         return True
     return False
 
-def create_token(username: str, tokentype: Literal["api", "refresh", "system", "app", "admin", "ext"], expiry: datetime = None, scopes: list = None):
+def create_token(
+    username: str,
+    tokentype: Literal["api", "refresh", "system", "app", "admin", "ext"],
+    expiry: datetime = None,
+    scopes: list = None,
+    noexpiry: bool = False
+):
     """
     Create a token for a user
 
@@ -93,20 +99,23 @@ def create_token(username: str, tokentype: Literal["api", "refresh", "system", "
         Token: The token that was created
     """
     nexpiry = expiry
-    if nexpiry is None:
-        nexpiry = datetime.now()
-        if tokentype in ("api", "app"):
-            nexpiry += timedelta(days=60)
-        elif tokentype == "refresh":
-            nexpiry += timedelta(days=7)
-        elif tokentype == "system":
-            nexpiry += timedelta(days=30)
-        elif tokentype == "admin":
-            nexpiry += timedelta(hours=1)
-        elif tokentype == "ext":
-            nexpiry += timedelta(days=90)
-        else:
-            nexpiry += timedelta(days=1)
+    if noexpiry:
+        nexpiry = None
+    else:
+        if nexpiry is None:
+            nexpiry = datetime.now()
+            if tokentype in ("api", "app"):
+                nexpiry += timedelta(days=60)
+            elif tokentype == "refresh":
+                nexpiry += timedelta(days=7)
+            elif tokentype == "system":
+                nexpiry += timedelta(days=30)
+            elif tokentype == "admin":
+                nexpiry += timedelta(hours=1)
+            elif tokentype == "ext":
+                nexpiry += timedelta(days=90)
+            else:
+                nexpiry += timedelta(days=1)
     token = Token(
         token=os.urandom(30).hex(), user_id=username, type=tokentype, expire=expiry, scopes=" ".join(scopes) if scopes is not None else None
     )
@@ -307,7 +316,7 @@ def verify_user( # pylint: disable=dangerous-default-value, too-many-statements
             request.user = None
             request.token = None
             auth = request.headers.get("Authorization")
-            token = request.cookies.get("token")
+            token = request.cookies.get("token") or kwargs.get("authtoken")
             if auth:
                 if auth.startswith("Bearer "):
                     app.logger.debug("Trying bearer authentication for " + func.__name__)

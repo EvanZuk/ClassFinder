@@ -8,3 +8,5 @@ better-profanity
 requests
 Flask-Migrate
 reportlab
+ics
+pytz

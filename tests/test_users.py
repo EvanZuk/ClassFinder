@@ -223,3 +223,22 @@ def test_schedule_pdf(client, token):
         pytest.fail("Failed to get 2nd schedule pdf: {response.status_code}")
     if response.content_type != "application/pdf":
         pytest.fail("Failed to get 2nd schedule pdf: {response.content_type}")
+
+def test_calendar(client, token):
+    """
+    Tests the calendar route
+    """
+    response = client.get("/classes/calendar", headers={"Authorization": f"Bearer {token}"})
+    assert response.status_code == 200
+    assert response.content_type == 'text/html; charset=utf-8'
+    assert b"Create Calendar" in response.data
+    response = client.get("/download/calendar.ics", headers={"Authorization": f"Bearer {token}"})
+    assert response.status_code == 200
+    assert response.content_type == 'text/calendar; charset=utf-8'
+    assert b"BEGIN:VCALENDAR" in response.data
+    assert b"END:VCALENDAR" in response.data
+    response = client.get(f"/{token}/calendar.ics")
+    assert response.status_code == 200
+    assert response.content_type == 'text/calendar; charset=utf-8'
+    assert b"BEGIN:VCALENDAR" in response.data
+    assert b"END:VCALENDAR" in response.data
