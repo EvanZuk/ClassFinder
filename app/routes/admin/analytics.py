@@ -67,7 +67,7 @@ def calculate_analytics(request_logs):
         for code, count in sorted(status_codes.items(), key=lambda x: x[1], reverse=True)
     ]
 
-    # Calculate path analytics
+    # Calculate path+method analytics
     path_time = defaultdict(list)
     path_count = Counter()
 
@@ -81,54 +81,63 @@ def calculate_analytics(request_logs):
             continue
 
         path = log.get("url")
-        path_count[path] += 1
+        method = log.get("method", "GET")
+        if path.endswith("/calendar.ics"):
+            path = "/calendar.ics"
+        elif path.startswith("/resetpassword") and path != "/resetpassword":
+            path = "/resetpassword/final"
+        elif path.startswith("/register") and path != "/register":
+            path = "/register/final"
+
+        path_method = f"{method} {path}"
+        path_count[path_method] += 1
 
         # Calculate processing time in milliseconds
         if "time" in log and "returntime" in log:
             try:
                 time_diff = (log["returntime"] - log["time"]).total_seconds() * 1000
-                path_time[path].append(time_diff)
+                path_time[path_method].append(time_diff)
             except (TypeError, AttributeError):
                 # Skip if time calculation fails
                 pass
 
-    # Calculate total time spent on paths
+    # Calculate total time spent on path+method
     path_total_time = {
-        path: sum(times) for path, times in path_time.items()
+        path_method: sum(times) for path_method, times in path_time.items()
     }
 
-    # Calculate total time across all paths for percentage
+    # Calculate total time across all path+method for percentage
     total_processing_time = sum(path_total_time.values()) if path_total_time else 1  # Avoid div by 0
 
     analytics["path_time_total"] = [
         {
-            "path": path,
+            "path": path_method,
             "total_time_ms": round(total_time, 2),
-            "count": path_count[path],
+            "count": path_count[path_method],
             "time_percentage": round((total_time / total_processing_time) * 100, 2)
         }
-        for path, total_time in sorted(path_total_time.items(), key=lambda x: x[1], reverse=True)
+        for path_method, total_time in sorted(path_total_time.items(), key=lambda x: x[1], reverse=True)
     ][:20]  # Top 20
 
-    # Most requested paths
+    # Most requested path+method
     total_requests = sum(path_count.values())
     analytics["most_requested_paths"] = [
         {
-            "path": path,
+            "path": path_method,
             "count": count,
             "percentage": round((count / total_requests) * 100, 2)
         }
-        for path, count in path_count.most_common(20)  # Top 20
+        for path_method, count in path_count.most_common(20)  # Top 20
     ]
 
-    # Average time per path
+    # Average time per path+method
     path_avg_time = {
-        path: sum(times) / len(times) if times else 0
-        for path, times in path_time.items()
+        path_method: sum(times) / len(times) if times else 0
+        for path_method, times in path_time.items()
     }
     analytics["path_time_avg"] = [
-        {"path": path, "avg_time_ms": round(avg_time, 2), "count": path_count[path]}
-        for path, avg_time in sorted(path_avg_time.items(), key=lambda x: x[1], reverse=True)
+        {"path": path_method, "avg_time_ms": round(avg_time, 2), "count": path_count[path_method]}
+        for path_method, avg_time in sorted(path_avg_time.items(), key=lambda x: x[1], reverse=True)
     ][:20]  # Top 20
 
     return analytics
