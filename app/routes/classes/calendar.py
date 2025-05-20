@@ -23,7 +23,7 @@ def calendar_page():
 
 @app.route('/<authtoken>/calendar.ics')
 @app.route('/calendar.ics')
-@verify_user(required_scopes=[['read-classes'], ['calendar']])
+@verify_user(required_scopes=[['read-classes'], ['calendar']], onfail=lambda: ("Your token is invalid", 401))
 def calendar_req(authtoken=None): # pylint: disable=unused-argument
     """Generate a calendar file for the current and next 90 days."""
     start_datetime = datetime.now()
